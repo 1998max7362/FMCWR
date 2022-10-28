@@ -13,14 +13,15 @@ from Clamp import Clamp
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle('Главное меню')
         layout = QHBoxLayout(self)
         self.settings = SettingsWindow()
-        self.dockSettings = QDockWidget("Settings")
+        self.dockSettings = QDockWidget("Настройки")
         self.dockSettings.setWidget(self.settings)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettings)
 
-        self.dockGraph0 = QDockWidget("Chart 0")
-        self.dockGraph1 = QDockWidget("Chart 1")
+        self.dockGraph0 = QDockWidget("График 0")
+        self.dockGraph1 = QDockWidget("График 1")
         Chart0 = QWidget()
         Chart0.setMinimumSize(300,200)
         Chart1 = QWidget()

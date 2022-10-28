@@ -17,35 +17,37 @@ class SettingsWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки")
+        self.setFixedWidth(440)
         layout = QVBoxLayout(self)
 
         self.SignalTypeSwitchlamp = Clamp()
         self.SignalSourceSwitchClamp = Clamp()
         self.PeriodClamp = Clamp()
         
-        self.SignalsType = []
-        SignalTypeSelecter = QButtonGroup(self)
-        self.SignalsType.append(QRadioButton("Тип сигнала 1"))
-        self.SignalsType.append(QRadioButton("Тип сигнала 2"))
-        for Signal in self.SignalsType:
-            SignalTypeSelecter.addButton(Signal)
-            layout.addWidget(Signal)
-        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SINE,0))
-        self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,1))
+        self.DefaultFont = QFont('Times',10)
+
+        self.SignalTypeInit()
+        layout.addWidget(self.signalTypesGroupBox)
 
         self.Period = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),"Период:", "мкс")
+        self.Period.label.setFont(self.DefaultFont)
+        self.Period.labelUnits.setFont(self.DefaultFont)
         self.Period.LineEdit.setText('0')
+        self.Period.LineEdit.setFont(self.DefaultFont)
         self.Period.LineEdit.setValidator(QDoubleValidator(
                 0.0, # bottom
                 100.0, # top
                 1, # decimals 
                 notation=QDoubleValidator.StandardNotation))
-        layout.addWidget(self.Period)
+        layout.addWidget(self.Period, alignment=Qt.AlignTop)
 
         SourceSelecterLayout = QHBoxLayout()
         self.Source1 = QLabel('Передатчик')
-        self.Source1.setMaximumWidth(80)
+        self.Source1.setMaximumWidth(110)
+        self.Source1.setFont(self.DefaultFont)
         self.Source2 = QLabel('Приёмник')
+        self.Source2.setMaximumWidth(90)
+        self.Source2.setFont(self.DefaultFont)
         self.SignalSourceSelecter = AnimatedToggle(
             bar_color=Qt.lightGray,
             handle_color=Qt.darkGray,
@@ -61,14 +63,40 @@ class SettingsWindow(QWidget):
         ButtonLayout = QHBoxLayout()
         self.SaveButton = ClampedPushButton('Сохранить')
         self.LoadButton = ClampedPushButton('Загрузить')
+        self.SaveButton.setFont(self.DefaultFont)
+        self.LoadButton.setFont(self.DefaultFont)
         ButtonLayout.addWidget(self.SaveButton)
         ButtonLayout.addWidget(self.LoadButton)
         layout.addLayout(ButtonLayout)
+
+        layout.addStretch()
+
+    def SignalTypeInit(self):
+        self.signalTypesGroupBox = QGroupBox('Тип сигнала')
+        self.signalTypesGroupBox.setFont(QFont('Times',15))
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        self.signalTypesGroupBox.setLayout(layout)
+        self.SignalsType = []
+        SignalTypeSelecter = QButtonGroup(self)
+        self.SignalsType.append(QRadioButton())
+        self.SignalsType.append(QRadioButton())
+        for Signal in self.SignalsType:
+            SignalTypeSelecter.addButton(Signal)
+            layout.addWidget(Signal)
+        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SINE,0))
+        self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,1))
+        self.SignalsType[0].setIcon(QIcon('Icons/Triangle2.png'))
+        self.SignalsType[0].setIconSize(QSize(400,255)) 
+        self.SignalsType[1].setIcon(QIcon('Icons/Triangle2.png'))
+        self.SignalsType[1].setIconSize(QSize(400,255))
+
+
     
     def SignalSourceSwitched(self,source): # 0 - первый источник, 2 - второй источник
-        boldFont = QFont()
+        boldFont = QFont('Times',10)
         boldFont.setBold(True)
-        unboldFont = QFont()
+        unboldFont = QFont('Times',10)
         unboldFont.setBold(False)
         if source == 0:
             self.Source1.setFont(boldFont)

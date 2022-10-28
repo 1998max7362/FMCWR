@@ -162,16 +162,16 @@ class NamedLineEditHorizontal(QWidget):
     def __init__(self, lineEdit:ClampedLineEdit, name:str, units = None):
         super().__init__()
         layoutVert = QHBoxLayout(self)
-        label = QLabel(name)
-        layoutVert.addWidget(label)
+        self.label = QLabel(name)
+        layoutVert.addWidget(self.label)
         layoutVert.addWidget(lineEdit)
         if units:
-            labelUnits = QLabel(units)
-            layoutVert.addWidget(labelUnits)
-            labelUnits.setFixedWidth(30)
+            self.labelUnits = QLabel(units)
+            layoutVert.addWidget(self.labelUnits)
+            self.labelUnits.setFixedWidth(30)
         self.LineEdit = lineEdit
         self.LineEdit.setFixedWidth(100)
-        label.setFixedWidth(100)
+        self.label.setFixedWidth(100)
         
 
 class ClampedAction(QAction):
