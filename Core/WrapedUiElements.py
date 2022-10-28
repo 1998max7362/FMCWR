@@ -142,7 +142,7 @@ class ClampedLineEdit(QLineEdit):
             self.Text.Send(0)    
         else:
             self.Text.Send(self.__convertFromForm(self.text()))
-        print(self.text())
+
 
     def handleReceiveText(self, value):
         self.setText(self.__convertToForm(value))

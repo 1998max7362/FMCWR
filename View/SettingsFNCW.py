@@ -86,7 +86,7 @@ class SettingsWindow(QWidget):
             RadioButton.blockSignals(False)
         self.SignalsType[buttonNum].blockSignals(True)
         self.SignalTypeSwitchlamp.Send(signalType)
-        # print(signalType)
+        print(signalType)
 
     def convertBackToFloat(self, value):
         try:
