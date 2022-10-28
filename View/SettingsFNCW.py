@@ -12,6 +12,8 @@ from PyQt5.QtCore import QSize
 from SignalSource import SignalSource
 from SignalType import SignalType
 from WrapedUiElements import *
+from PyQt5.QtGui import * 
+from PyQt5.QtCore import *
 
 class SettingsWindow(QWidget):
     def __init__(self):
@@ -34,11 +36,14 @@ class SettingsWindow(QWidget):
         self.Period.labelUnits.setFont(self.DefaultFont)
         self.Period.LineEdit.setText('0')
         self.Period.LineEdit.setFont(self.DefaultFont)
-        self.Period.LineEdit.setValidator(QDoubleValidator(
-                0.0, # bottom
-                100.0, # top
-                1, # decimals 
-                notation=QDoubleValidator.StandardNotation))
+        # asad = QRegExp("[-+]?[0-9]{0,2}\.?[0-9]+")
+        # asad = QRegExp('/^[-+]?[0-9]{1,2}\.?[0-9]$/')
+        self.Period.LineEdit.setValidator(QRegExpValidator(QRegExp("[-+]?[0-9]*\.?[0-9]+")))
+        # self.Period.LineEdit.setValidator(QDoubleValidator(
+        #         0.0, # bottom
+        #         100.0, # top
+        #         1, # decimals 
+        #         notation=QDoubleValidator.StandardNotation))
         layout.addWidget(self.Period, alignment=Qt.AlignTop)
 
         SourceSelecterLayout = QHBoxLayout()
@@ -91,7 +96,6 @@ class SettingsWindow(QWidget):
         self.SignalsType[1].setIcon(QIcon('Icons/Triangle2.png'))
         self.SignalsType[1].setIconSize(QSize(400,255))
 
-
     
     def SignalSourceSwitched(self,source): # 0 - первый источник, 2 - второй источник
         boldFont = QFont('Times',10)
@@ -123,10 +127,6 @@ class SettingsWindow(QWidget):
             pass
     def convertToStr(self, value):
         return str(value)
-
-
-
-
 
 
 

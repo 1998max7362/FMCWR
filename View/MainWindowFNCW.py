@@ -30,6 +30,12 @@ class MainWindow(QMainWindow):
         self.dockGraph0.setWidget(Chart1)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
+
+        self.settings.Period.LineEdit.Text.HandleWithSend(self.SendPeriod)
+
+    def SendPeriod(self,smth):
+        print(smth)
+
         
 
 
