@@ -36,9 +36,7 @@ class SettingsWindow(QWidget):
         self.Period.labelUnits.setFont(self.DefaultFont)
         self.Period.LineEdit.setText('0')
         self.Period.LineEdit.setFont(self.DefaultFont)
-        # asad = QRegExp("[-+]?[0-9]{0,2}\.?[0-9]+")
-        # asad = QRegExp('/^[-+]?[0-9]{1,2}\.?[0-9]$/')
-        self.Period.LineEdit.setValidator(QRegExpValidator(QRegExp("[-+]?[0-9]*\.?[0-9]+")))
+        self.Period.LineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1,2}")))
         # self.Period.LineEdit.setValidator(QDoubleValidator(
         #         0.0, # bottom
         #         100.0, # top
