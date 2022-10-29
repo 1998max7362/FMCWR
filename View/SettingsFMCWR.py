@@ -87,7 +87,7 @@ class SettingsWindow(QWidget):
         for Signal in self.SignalsType:
             SignalTypeSelecter.addButton(Signal)
             layout.addWidget(Signal)
-        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SINE,0))
+        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.LINE,0))
         self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,1))
         self.SignalsType[0].setIcon(QIcon('Icons/Triangle2.png'))
         self.SignalsType[0].setIconSize(QSize(400,255)) 
