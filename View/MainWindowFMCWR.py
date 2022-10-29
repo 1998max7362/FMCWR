@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 import numpy as np
 from PyQt5 import QtWidgets
 from SettingsFMCWR import SettingsWindow
+from mainGraph import GraphWindow
 
 
 from Clamp import Clamp
@@ -22,12 +23,12 @@ class MainWindow(QMainWindow):
 
         self.dockGraph0 = QDockWidget("График 0")
         self.dockGraph1 = QDockWidget("График 1")
-        Chart0 = QWidget()
-        Chart0.setMinimumSize(300,200)
-        Chart1 = QWidget()
-        Chart1.setMinimumSize(300,200)
-        self.dockGraph0.setWidget(Chart0)
-        self.dockGraph0.setWidget(Chart1)
+        self.Chart0 = GraphWindow()
+        self.Chart0.setMinimumSize(300,200)
+        self.Chart1 = QWidget()
+        self.Chart1.setMinimumSize(300,200)
+        self.dockGraph0.setWidget(self.Chart0)
+        self.dockGraph1.setWidget(self.Chart1)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
 
