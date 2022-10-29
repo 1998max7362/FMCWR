@@ -63,14 +63,14 @@ class SettingsWindow(QWidget):
         SourceSelecterLayout.addWidget(self.Source2)
         layout.addLayout(SourceSelecterLayout)
 
-        ButtonLayout = QHBoxLayout()
-        self.SaveButton = ClampedPushButton('Сохранить')
-        self.LoadButton = ClampedPushButton('Загрузить')
-        self.SaveButton.setFont(self.DefaultFont)
-        self.LoadButton.setFont(self.DefaultFont)
-        ButtonLayout.addWidget(self.SaveButton)
-        ButtonLayout.addWidget(self.LoadButton)
-        layout.addLayout(ButtonLayout)
+        # ButtonLayout = QHBoxLayout()
+        # self.SaveButton = ClampedPushButton('Сохранить')
+        # self.LoadButton = ClampedPushButton('Загрузить')
+        # self.SaveButton.setFont(self.DefaultFont)
+        # self.LoadButton.setFont(self.DefaultFont)
+        # ButtonLayout.addWidget(self.SaveButton)
+        # ButtonLayout.addWidget(self.LoadButton)
+        # layout.addLayout(ButtonLayout)
 
         layout.addStretch()
 
