@@ -23,6 +23,8 @@ class MainWindow(QMainWindow):
         self.settings = SettingsWindow()
         # self.dockSettings = QDockWidget("Настройки")
         self.dockSettings = QDockWidget()
+        self.dockSettings.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+
         self.dockSettings.setWidget(self.settings)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettings)
 
