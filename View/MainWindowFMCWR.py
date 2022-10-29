@@ -35,7 +35,9 @@ class MainWindow(QMainWindow):
         Chart1 = QWidget()
         Chart1.setMinimumSize(300,200)
         self.dockGraph0.setWidget(Chart0)
-        self.dockGraph0.setWidget(Chart1)
+        self.dockGraph1.setWidget(Chart1)
+        self.dockGraph0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockGraph1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
 
