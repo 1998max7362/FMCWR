@@ -17,13 +17,16 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Главное меню')
+        # разметка
         layout = QHBoxLayout(self)
+        # добавление виджетов
         self.settings = SettingsWindow()
         self.dockSettings = QDockWidget("Настройки")
         self.dockGraph0 = QDockWidget("График 0")
         self.dockGraph1 = QDockWidget("График 1")
         self.Chart0 = GraphWindow()
         self.Chart1 = WaterFallWindow()
+        # настройки виджетов
         self.Chart0.setMinimumSize(300,200)
         self.Chart1.setMinimumSize(300,200)
         self.dockSettings.setWidget(self.settings)
@@ -32,7 +35,6 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettings)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
-
         # включение демоверсии
         self.demo = Clamp()
         self.demo.ConnectTo(self.Chart1.demo)
