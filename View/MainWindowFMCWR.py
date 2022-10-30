@@ -1,4 +1,6 @@
 import sys
+
+from mainWaterfall import WaterFallWindow
 sys.path.insert(0, "././Core/")
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
@@ -25,7 +27,7 @@ class MainWindow(QMainWindow):
         self.dockGraph1 = QDockWidget("График 1")
         self.Chart0 = GraphWindow()
         self.Chart0.setMinimumSize(300,200)
-        self.Chart1 = QWidget()
+        self.Chart1 = WaterFallWindow()
         self.Chart1.setMinimumSize(300,200)
         self.dockGraph0.setWidget(self.Chart0)
         self.dockGraph1.setWidget(self.Chart1)
