@@ -76,6 +76,7 @@ class WaterFallWindow(QWidget):
 
     def receiveDemo(self, data: bool):
         self.demo.ReceivedValue = data
+        pass
 
 
 
