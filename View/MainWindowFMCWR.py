@@ -27,40 +27,32 @@ class MainWindow(QMainWindow):
 
 
         # разметка
-
         layout = QHBoxLayout(self)
         # добавление виджетов
         self.settings = SettingsWindow()
-        # self.dockSettings = QDockWidget("Настройки")
         self.dockSettings = QDockWidget()
         self.dockSettings.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
 
         self.dockSettings.setWidget(self.settings)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettings)
 
-        self.dockGraph0 = QDockWidget("График 0")
-        self.dockGraph1 = QDockWidget("График 1")
         Chart0 = QWidget()
         Chart0.setMinimumSize(300,200)
         Chart1 = QWidget()
         Chart1.setMinimumSize(300,200)
-        self.dockGraph0.setWidget(Chart0)
-        self.dockGraph1.setWidget(Chart1)
-        self.dockGraph0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
-        self.dockGraph1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
 
-        self.dockSettings = QDockWidget("Настройки")
+
         self.dockGraph0 = QDockWidget("График 0")
         self.dockGraph1 = QDockWidget("График 1")
+        self.dockGraph0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockGraph1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
         self.Chart0 = GraphWindow()
         self.Chart1 = WaterFallWindow()
         # настройки виджетов
         self.Chart0.setMinimumSize(300,200)
         self.Chart1.setMinimumSize(300,200)
-        self.dockSettings.setWidget(self.settings)
         self.dockGraph0.setWidget(self.Chart0)
         self.dockGraph1.setWidget(self.Chart1)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettings)
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
