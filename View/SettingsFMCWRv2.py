@@ -25,6 +25,8 @@ class SettingsWindow(QWidget):
         self.SignalTypeSwitchlamp = Clamp()
         self.SignalSourceSwitchClamp = Clamp()
         self.PeriodClamp = Clamp()
+        self.StartStopClamp = Clamp()
+        self.isMeasuring = False
         
         self.DefaultFont = QFont('Times',10)
 
@@ -63,16 +65,27 @@ class SettingsWindow(QWidget):
         SourceSelecterLayout.addWidget(self.Source2)
         layout.addLayout(SourceSelecterLayout)
 
-        ButtonLayout = QHBoxLayout()
-        self.SaveButton = ClampedPushButton('Сохранить')
-        self.LoadButton = ClampedPushButton('Загрузить')
-        self.SaveButton.setFont(self.DefaultFont)
-        self.LoadButton.setFont(self.DefaultFont)
-        ButtonLayout.addWidget(self.SaveButton)
-        ButtonLayout.addWidget(self.LoadButton)
-        layout.addLayout(ButtonLayout)
+        self.StartStopButton = ClampedToggleButton('Start','100,0,0')
+        self.StartStopButton.Text_NOT_CLICKED = ('Start')
+        self.StartStopButton.Text_LEFT_CLICKED = ('Stop')
+        self.StartStopButton.setFont(self.DefaultFont)
+        self.StartStopButton.Style_NOT_CLICKED = "background-color: white"
+        self.StartStopButton.Style_LEFT_CLICKED = "background-color: green"
+        self.StartStopButton.toState(ToggleButtonState.NOT_CLICKED)
+        self.StartStopButton.customContextMenuRequested.disconnect(self.StartStopButton.rightClickHandler)
+        self.StartStopButton.customContextMenuRequested.connect(self.NoneMethod)
+        # self.StartStopButton.setToolTip('Запуск устройства')
+        self.StartStopButton.clicked.connect(self.StartStop)
 
+        layout.addWidget(self.StartStopButton)
         layout.addStretch()
+
+    def NoneMethod(self):
+        pass 
+
+    def StartStop(self):
+        self.isMeasuring = not(self.isMeasuring)
+        print(self.isMeasuring)
 
     def SignalTypeInit(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
