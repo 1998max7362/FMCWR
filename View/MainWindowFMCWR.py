@@ -1,5 +1,4 @@
 import sys
-
 from mainWaterfall import WaterFallWindow
 sys.path.insert(0, "././Core/")
 from PyQt5.QtWidgets import *
@@ -9,8 +8,6 @@ import numpy as np
 from PyQt5 import QtWidgets
 from SettingsFMCWR import SettingsWindow
 from mainGraph import GraphWindow
-
-
 from Clamp import Clamp
 
 class MainWindow(QMainWindow):
@@ -44,9 +41,6 @@ class MainWindow(QMainWindow):
 
     def SendPeriod(self,smth):
         print(smth)
-
-        
-
 
 if __name__ == '__main__':
 
