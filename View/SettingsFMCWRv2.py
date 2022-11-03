@@ -1,4 +1,3 @@
-from operator import truediv
 import sys
 sys.path.insert(0, "././Core/")
 from PyQt5.QtWidgets import *
@@ -85,6 +84,7 @@ class SettingsWindow(QWidget):
 
     def StartStop(self):
         self.isMeasuring = not(self.isMeasuring)
+        self.StartStopClamp.Send(self.isMeasuring)
         print(self.isMeasuring)
 
     def SignalTypeInit(self):

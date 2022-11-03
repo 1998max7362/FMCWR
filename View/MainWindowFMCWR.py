@@ -10,10 +10,8 @@ from PyQt5 import QtWidgets
 from SettingsFMCWRv2 import SettingsWindow
 
 from mainGraph import GraphWindow
-
-
-
 from Clamp import Clamp
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
