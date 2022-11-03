@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import * 
 from PyQt5.QtCore import *
 
+sentinel = -1
+
 class simpleSignal(QObject):
     output = pyqtSignal(object)
     def emit(self,obj):
@@ -17,9 +19,9 @@ class simpleSignal(QObject):
 
 
 class MyWindow(QWidget):
-    def __init__(self,q):
+    def __init__(self):
         super().__init__()
-        self.q = q
+        self.q = Queue()
         self.counter = MyCounter()
         layout = QVBoxLayout(self)
         BTNlayout = QHBoxLayout()
@@ -37,14 +39,22 @@ class MyWindow(QWidget):
 
     def start(self):
         print('started')
-        self.y = multiprocessing.Process(target=self.counter.StartCount, args=(self.q))
+        data=[1,2]
+        self.y = multiprocessing.Process(target=self.counter.StartCount, args=(data,self.q))
         self.y.start()
     
     def stop(self):
         try:
             print('Stop')
             self.y.terminate()
-            print('aaaa')
+
+            while True:
+                data = self.q.get()
+                print('data found to be processed: {}'.format(data))
+                if data is sentinel:
+                    self.q.close()
+                    self.q.join_thread()
+                    break
         except:
             'Процесс еще не был запущен'
 
@@ -53,7 +63,7 @@ class MyCounter():
         super().__init__()
         self.i = 0
     
-    def StartCount(self,q):
+    def StartCount(self,data,q):
         while True:
             self.i = self.i+1
             q.put(self.i)
@@ -64,7 +74,7 @@ class MyCounter():
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     q=Queue()
-    main = MyWindow(q)
+    main = MyWindow()
     main.show()
 
     sys.exit(app.exec_())
