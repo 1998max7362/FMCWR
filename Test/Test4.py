@@ -17,8 +17,9 @@ class simpleSignal(QObject):
 
 
 class MyWindow(QWidget):
-    def __init__(self):
+    def __init__(self,q):
         super().__init__()
+        self.q = q
         self.counter = MyCounter()
         layout = QVBoxLayout(self)
         BTNlayout = QHBoxLayout()
@@ -36,29 +37,26 @@ class MyWindow(QWidget):
 
     def start(self):
         print('started')
-        self.y = multiprocessing.Process(target=self.counter.StartCount)
+        self.y = multiprocessing.Process(target=self.counter.StartCount, args=(self.q))
         self.y.start()
     
     def stop(self):
         try:
             print('Stop')
             self.y.terminate()
-            print(self.counter.i)
+            print('aaaa')
         except:
             'Процесс еще не был запущен'
-        finally:
-            print('finished')
-
 
 class MyCounter():
     def __init__(self,):
         super().__init__()
         self.i = 0
     
-    def StartCount(self):
+    def StartCount(self,q):
         while True:
             self.i = self.i+1
-            print(self.i)
+            q.put(self.i)
             time.sleep(1)
 
     
@@ -66,7 +64,7 @@ class MyCounter():
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     q=Queue()
-    main = MyWindow()
+    main = MyWindow(q)
     main.show()
 
     sys.exit(app.exec_())
