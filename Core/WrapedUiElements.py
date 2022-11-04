@@ -77,7 +77,15 @@ class ClampedToggleButton(QPushButton):
         self.Style_NOT_CLICKED = "border-width: 5px; border-style: hidden; background-color: rgba"+str(self.Color)
         self.Style_LEFT_CLICKED = "border-width: 5px; border-style: outset; background-color: rgba"+str(self.Color)
         self.Style_RIGHT_CLICKED = "border-width: 5px; border-style: inset; background-color: rgba"+str(self.Color)
-        self.setStyleSheet("border-width: 5px; border-style: hidden; background-color: rgba"+str(self.Color))
+        
+        self.Style_NOT_CLICKED = "background-color: rgba"+str(self.Color)
+        self.Style_LEFT_CLICKED = "background-color: rgba"+str(self.Color)
+        self.Style_RIGHT_CLICKED = "background-color: rgba"+str(self.Color)
+        
+        self.Text_NOT_CLICKED = self.text()
+        self.Text_LEFT_CLICKED = self.text()
+        self.Text_RIGHT_CLICKED = self.text()
+        # self.setStyleSheet(self.Style_NOT_CLICKED)
         
         self.InitColor=color
 
@@ -110,18 +118,21 @@ class ClampedToggleButton(QPushButton):
             a[3] = 0.4
             self.Color=tuple(a)
             self.setStyleSheet(self.Style_NOT_CLICKED)
+            self.setText(self.Text_NOT_CLICKED)
             # self.setStyleSheet("border-style: hidden")
         if(state == ToggleButtonState.LEFT_CLICKED):
             a=list(self.Color)
             a[3] = 0.2
             self.Color=tuple(a)
             self.setStyleSheet(self.Style_LEFT_CLICKED)
+            self.setText(self.Text_LEFT_CLICKED)
             # self.setStyleSheet("border-style: outset")
         if(state == ToggleButtonState.RIGHT_CLICKED):
             a=list(self.Color)
             a[3] = 1
             self.Color=tuple(a)
             self.setStyleSheet(self.Style_RIGHT_CLICKED)
+            self.setText(self.Text_RIGHT_CLICKED)
         self.state = state
 
 
