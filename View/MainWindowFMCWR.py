@@ -56,10 +56,11 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
         # Подключение модулей
         self.demo = Clamp()
-        self.demo.ConnectTo(self.Chart1.demo)
+        #self.demo.ConnectTo(self.Chart1.demo)
         self.demo.ConnectTo(self.transmitter.demo)
         self.settings.StartStopClamp.ConnectTo(self.input)
         self.transmitter.output.ConnectTo(self.Chart0.input)
+        self.transmitter.output.ConnectTo(self.Chart1.input)
 
         # включение демоверсии
         self.demo.Send(True)
@@ -67,6 +68,7 @@ class MainWindow(QMainWindow):
             self.i = 0
             self.timer = QTimer()
             self.output.ConnectTo(self.Chart0.input)
+            self.output.ConnectTo(self.Chart1.input)
             self.input.HandleWithReceive(self.startReceived)
 
         self.settings.Period.LineEdit.Text.HandleWithSend(self.SendPeriod)
@@ -112,8 +114,8 @@ class MainWindow(QMainWindow):
         dt = 1/fs
         pi = np.pi
         m = 0.3
-        f0 = 5000
-        f1 = 500
+        f0 = 40000
+        f1 = 5000
         Un = 100
         # init timer
         self.i += 1
