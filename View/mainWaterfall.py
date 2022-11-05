@@ -8,7 +8,6 @@ from scipy import signal
 from PyQt5.QtGui import QFont
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
-import sys
 import matplotlib.pyplot as plt
 from Clamp import Clamp
 
