@@ -1,6 +1,5 @@
 import sys
 sys.path.insert(0, "././Core/")
-from pyqtspecgram import pyqtspecgram
 import pyqtgraph as pg
 import numpy as np
 import scipy as sp
@@ -8,35 +7,50 @@ from scipy import signal
 from PyQt5.QtGui import QFont
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
-import sys
 import matplotlib.pyplot as plt
 from Clamp import Clamp
+from threading import Thread
 
 
 class WaterFallWindow(QWidget):
     def __init__(self):
         super().__init__()
+        # Выводы модуля
+        self.input = Clamp()
+        self.y = np.array([])
         # Проверка демоверсии
         self.demo = Clamp()
+        self.demo.ReceivedValue = False
         self.demo.HandleWithReceive(self.receiveDemo)
         # Разметка окна
         wFallWindowLayout = QHBoxLayout(self)
-        # plotWidget
+        # настройки plotWidget
         self.graphWidget = pg.PlotWidget()
-        self.graphWidget.setBackground('w')
+        self.graphWidget.setBackground('k')
+        self.graphWidget.getPlotItem().hideAxis('bottom')
+        self.graphWidget.getViewBox().invertY(True)
+        pg.setConfigOptions(antialias=True, leftButtonPan=True, imageAxisOrder='row-major')
+        self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
+        self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
+        cm = pg.colormap.get('viridis')
+        self.img = pg.ImageItem()
+        cm = pg.colormap.get('viridis')
+        self.img.setColorMap(cm)
+        self.graphWidget.addItem(self.img)
+        minv, maxv = np.nanmin(np.nanmin(-40)), np.nanmax(np.nanmax(10))
+        bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
+        bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
         # настройки спектрограммы
         self.fs = 192e3
-        tSeg = 0.1
+        tSeg = 0.001
         self.nPerseg = int(tSeg*self.fs)
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
-        s = self.createTestSignal()
-        # расчет спектрограммы
-        img = self.specImage(s)
+        # расчет и построение спектрограммы
+        self.input.HandleWithReceive(self.thStart)
         # Подключение виджета к разметке 
         wFallWindowLayout.addWidget(self.graphWidget)
-        # Построение спектрограммы
-        self.graphWidget.addItem(img)
+        
 
     # методы класса
     def createTestSignal(self):
@@ -57,26 +71,47 @@ class WaterFallWindow(QWidget):
         return testSig
     # построение спектрограммы
     def specImage(self, s):
-        f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
-        logSpectra = 10*np.log10(spectra)
-        cm = pg.colormap.get('viridis')
-        img = pg.ImageItem()
-        img.setImage(logSpectra)
-        img.setColorMap(cm)
-        tr = pg.QtGui.QTransform()
-        tr.scale(np.max(t)/len(t), self.fs/self.nfft)
-        # вставить шкалу уровней
-        minv, maxv = np.nanmin(np.nanmin(logSpectra[logSpectra != -np.inf])), np.nanmax(np.nanmax(logSpectra))
-        bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
-        bar.setImageItem(img, insert_in=self.graphWidget.plotItem)  
-        img.setTransform(tr)
-        self.graphWidget.plotItem.setLabel(axis='left', text='Частота, Гц')
-        self.graphWidget.plotItem.setLabel(axis='bottom', text='Время, с')
-        return img
+        if self.demo.ReceivedValue:
+            f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
+            logSpectra = 10*np.log10(spectra)
+            self.img.setImage(logSpectra.T)
+            tr = pg.QtGui.QTransform()
+            tr.scale(self.fs/self.nfft, np.max(t)/len(t))
+            # вставить шкалу уровней
+            minv, maxv = np.nanmin(np.nanmin(logSpectra[logSpectra != -np.inf])), np.nanmax(np.nanmax(logSpectra))
+            #bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
+            #bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)  
+            self.img.setTransform(tr)
+            self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
+            self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
+            self.graphWidget.addItem(self.img)
+        elif not(self.demo.ReceivedValue):
+            #self.y = self.y[1:]
+            f, t, spectra = signal.spectrogram(np.real(self.y), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
+            logSpectra = 10*np.log10(spectra)
+            self.img.setImage(logSpectra.T)
+            tr = pg.QtGui.QTransform()
+            tr.scale(self.fs/self.nfft, 1)
+            # вставить шкалу уровней 
+            self.img.setTransform(tr)
 
     def receiveDemo(self, data: bool):
         self.demo.ReceivedValue = data
-        pass
+        if self.demo.ReceivedValue:
+            self.demo.ConnectTo(self.input)
+            self.demo.Send(self.createTestSignal())
+            self.demo.DisconnectTo(self.input)
+            pass
+        else:
+            pass
+
+    def thStart(self, s):
+        self.y = np.append(self.y, s[1])
+        if len(self.y) > self.nPerseg:
+            if len(self.y) > 10*self.nPerseg:
+                self.y = self.y[1:]
+            th = Thread(target=self.specImage, args=(self.y,))
+            th.start()
 
 
 
