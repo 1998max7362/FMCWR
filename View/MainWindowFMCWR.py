@@ -12,7 +12,6 @@ from mainGraph import GraphWindow
 from Transmitter import Transmitter
 from Clamp import Clamp
 from PyQt5.QtCore import QTimer
-import math
 
 
 class MainWindow(QMainWindow):

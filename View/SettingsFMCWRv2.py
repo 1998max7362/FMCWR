@@ -73,7 +73,7 @@ class SettingsWindow(QWidget):
         self.StartStopButton.toState(ToggleButtonState.NOT_CLICKED)
         self.StartStopButton.customContextMenuRequested.disconnect(self.StartStopButton.rightClickHandler)
         self.StartStopButton.customContextMenuRequested.connect(self.NoneMethod)
-        # self.StartStopButton.setToolTip('Запуск устройства')
+        self.StartStopButton.setToolTip('Запуск устройства')
         self.StartStopButton.clicked.connect(self.StartStop)
 
         layout.addWidget(self.StartStopButton)
