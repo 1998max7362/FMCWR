@@ -43,14 +43,14 @@ class Worker(QRunnable):
     def run(self):
         try:
             while True:
-                result = self.fn(*self.args, **self.kwargs)
-                print(result)
+                self.result = self.fn(*self.args, **self.kwargs)
+                print(self.result)
                 time.sleep(0.2)
                 while self.is_paused:
                     time.sleep(0)
-                if self.show_results:
-                    self.signals.result.emit(result)
-                    self.show_results = False
+                # if self.show_results:
+                #     self.signals.result.emit(self.result)
+                #     self.show_results = False
                 if self.is_killed:
                     break
         except:
@@ -69,12 +69,13 @@ class Worker(QRunnable):
     
     def show(self):
         self.show_results = True
+        self.signals.result.emit(self.result)
 
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        tranciever = Tranciever()
+        self.tranciever = Tranciever()
         self.started_1 = False
         self.started_2 = False
         # Some buttons
@@ -83,70 +84,62 @@ class MainWindow(QMainWindow):
         w.setLayout(l)
         self.threadpool = QThreadPool()
 
-        btn_start_1 = QPushButton("Start")
-        btn_stop_1 = QPushButton("Stop")
-        btn_pause_1 = QPushButton("Pause")
-        btn_resume_1 = QPushButton("Resume")
-        btn_show_results_1 = QPushButton("Show Results")
+        self.btn_start_1 = QPushButton("Start")
+        self.btn_stop_1 = QPushButton("Stop")
+        self.btn_pause_1 = QPushButton("Pause")
+        self.btn_resume_1 = QPushButton("Resume")
+        self.btn_show_results_1 = QPushButton("Show Results")
+        self.btn_start_1.pressed.connect(self.start_1)
 
         l1 = QHBoxLayout()
         l1.addWidget(QLabel('Процесс 1'))
-        l1.addWidget(btn_start_1)
-        l1.addWidget(btn_stop_1)
-        l1.addWidget(btn_pause_1)
-        l1.addWidget(btn_resume_1)
-        l1.addWidget(btn_show_results_1)
+        l1.addWidget(self.btn_start_1)
+        l1.addWidget(self.btn_stop_1)
+        l1.addWidget(self.btn_pause_1)
+        l1.addWidget(self.btn_resume_1)
+        l1.addWidget(self.btn_show_results_1)
 
         l.addLayout(l1)
-        
-        self.worker_1 = Worker(tranciever.Transmit)
-        self.worker_1.signals.result.connect(self.print_output_1)
-        btn_start_1.pressed.connect(self.start_1)
-        btn_stop_1.pressed.connect(self.worker_1.kill)
-        btn_pause_1.pressed.connect(self.worker_1.pause)
-        btn_resume_1.pressed.connect(self.worker_1.resume)
-        btn_show_results_1.pressed.connect(self.worker_1.show)
 
-
-        btn_start_2 = QPushButton("Start")
-        btn_stop_2 = QPushButton("Stop")
-        btn_pause_2 = QPushButton("Pause")
-        btn_resume_2 = QPushButton("Resume")
-        btn_show_results_2 = QPushButton("Show Results")
+        self.btn_start_2 = QPushButton("Start")
+        self.btn_stop_2 = QPushButton("Stop")
+        self.btn_pause_2 = QPushButton("Pause")
+        self.btn_resume_2 = QPushButton("Resume")
+        self.btn_show_results_2 = QPushButton("Show Results")
+        self.btn_start_2.pressed.connect(self.start_2)
 
         l2 = QHBoxLayout()
         l2.addWidget(QLabel('Процесс 2'))
-        l2.addWidget(btn_start_2)
-        l2.addWidget(btn_stop_2)
-        l2.addWidget(btn_pause_2)
-        l2.addWidget(btn_resume_2)
-        l2.addWidget(btn_show_results_2)
+        l2.addWidget(self.btn_start_2)
+        l2.addWidget(self.btn_stop_2)
+        l2.addWidget(self.btn_pause_2)
+        l2.addWidget(self.btn_resume_2)
+        l2.addWidget(self.btn_show_results_2)
 
         l.addLayout(l2)
 
-        self.worker_2 = Worker(tranciever.Reciev)
-        self.worker_2.signals.result.connect(self.print_output_2)
-        btn_start_2.pressed.connect(self.start_2)
-        btn_stop_2.pressed.connect(self.worker_2.kill)
-        btn_pause_2.pressed.connect(self.worker_2.pause)
-        btn_resume_2.pressed.connect(self.worker_2.resume)
-        btn_show_results_2.pressed.connect(self.worker_2.show)
         
         self.setCentralWidget(w)
-
+    
     def start_1(self):
-        if self.started_1 == False:
-            self.threadpool.start(self.worker_1)
-        else:
-            print('уже идет')
-        self.started_1 = True
+        self.worker_1 = Worker(self.tranciever.Transmit)
+        self.worker_1.signals.result.connect(self.print_output_1)
+        self.btn_stop_1.pressed.connect(self.worker_1.kill)
+        self.btn_pause_1.pressed.connect(self.worker_1.pause)
+        self.btn_resume_1.pressed.connect(self.worker_1.resume)
+        self.btn_show_results_1.pressed.connect(self.worker_1.show)
+        self.threadpool.start(self.worker_1)
 
+    
     def start_2(self):
-        if self.started_2 == False:
-            self.threadpool.start(self.worker_2)
-        else:
-            print('уже идет')
-        self.started_2 = True
+        self.worker_2 = Worker(self.tranciever.Reciev)
+        self.worker_2.signals.result.connect(self.print_output_2)
+        self.btn_stop_2.pressed.connect(self.worker_2.kill)
+        self.btn_pause_2.pressed.connect(self.worker_2.pause)
+        self.btn_resume_2.pressed.connect(self.worker_2.resume)
+        self.btn_show_results_2.pressed.connect(self.worker_2.show)
+        self.threadpool.start(self.worker_2)
+
 
     def print_output_1(self, s):
         QMessageBox.about(self, "Внимание", 'Текущий результат по процессу 1: %s' %s)
