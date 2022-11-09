@@ -48,9 +48,6 @@ class Worker(QRunnable):
                 time.sleep(0.2)
                 while self.is_paused:
                     time.sleep(0)
-                # if self.show_results:
-                #     self.signals.result.emit(self.result)
-                #     self.show_results = False
                 if self.is_killed:
                     break
         except:
