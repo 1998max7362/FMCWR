@@ -33,6 +33,8 @@ class GraphWindow(QWidget):
 
 
     # классовые методы
+
+    # построение графиков
     def plotData(self, data: list):
         self.x.append(data[0])
         self.y.append(data[1])
@@ -43,6 +45,7 @@ class GraphWindow(QWidget):
 
         self.data_line.setData(self.x, np.real(self.y))
 
+    # очистка графиков
     def clearPlots(self):
         self.graphWidget.clear()
 

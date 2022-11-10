@@ -95,6 +95,7 @@ class WaterFallWindow(QWidget):
             # вставить шкалу уровней 
             self.img.setTransform(tr)
 
+    # получить демо сигнал, если включен демо-режим
     def receiveDemo(self, data: bool):
         self.demo.ReceivedValue = data
         if self.demo.ReceivedValue:
@@ -104,15 +105,17 @@ class WaterFallWindow(QWidget):
             pass
         else:
             pass
-
+    
+    # начало обработки
     def thStart(self, s):
         self.y = np.append(self.y, s[1]) # накопление данных
         if len(self.y) > self.nPerseg:
             if len(self.y) > 10*self.nPerseg:
                 self.y = self.y[1:]
-            th = Thread(target=self.specImage, args=(self.y,))
+            th = Thread(target=self.specImage, args=(self.y,)) # в потоке лежит функция получения спектрограммы
             th.start()
 
+    # очищение графиков
     def clearPlots(self):
         self.graphWidget.clear()
 
