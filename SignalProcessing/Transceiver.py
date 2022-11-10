@@ -1,15 +1,15 @@
 # this file contains class as a driver to audiodevice
 # python-sounddevice module has to be installed first
 
-import sounddevice as sd
-import numpy as np
+import argparse
 import queue
 import sys
 
-from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
+import numpy as np
+import sounddevice as sd
+from matplotlib.animation import FuncAnimation
 
-import argparse
 
 class Transceiver():
     """ This class is a wrapper to sounddevice object 
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     tr = Transceiver()          # create object
     print(tr.getAudioDevices()) # show all mic devices
     tr.setDevice(0)             # choose device with hostapi = 0
-    tr.setChannels(1)         # set number of input channels
-    tr.setFs(44100.0)             # set samplerate
-    tr.run_plot()
+    tr.setChannels(1)           # set number of input channels
+    tr.setFs(44100.0)           # set samplerate
+    tr.run_plot()               # run mic viewer
     
