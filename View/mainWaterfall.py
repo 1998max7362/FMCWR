@@ -47,7 +47,7 @@ class WaterFallWindow(QWidget):
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
-        self.input.HandleWithReceive(self.thStart)
+        self.input.HandleWithReceive(self.thStart) 
         # Подключение виджета к разметке 
         wFallWindowLayout.addWidget(self.graphWidget)
         
@@ -106,7 +106,7 @@ class WaterFallWindow(QWidget):
             pass
 
     def thStart(self, s):
-        self.y = np.append(self.y, s[1])
+        self.y = np.append(self.y, s[1]) # накопление данных
         if len(self.y) > self.nPerseg:
             if len(self.y) > 10*self.nPerseg:
                 self.y = self.y[1:]
