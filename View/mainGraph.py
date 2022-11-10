@@ -43,6 +43,9 @@ class GraphWindow(QWidget):
 
         self.data_line.setData(self.x, np.real(self.y))
 
+    def clearPlots(self):
+        self.graphWidget.clear()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

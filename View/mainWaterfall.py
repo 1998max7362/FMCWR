@@ -113,6 +113,9 @@ class WaterFallWindow(QWidget):
             th = Thread(target=self.specImage, args=(self.y,))
             th.start()
 
+    def clearPlots(self):
+        self.graphWidget.clear()
+
 
 
 if __name__ == '__main__':
