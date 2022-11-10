@@ -25,7 +25,9 @@ class SettingsWindow(QWidget):
         self.SignalSourceSwitchClamp = Clamp()
         self.PeriodClamp = Clamp()
         self.StartStopClamp = Clamp()
+        self.PauseResumeClamp = Clamp()
         self.isMeasuring = False
+        self.Paused = False
         
         self.DefaultFont = QFont('Times',10)
 
@@ -77,10 +79,29 @@ class SettingsWindow(QWidget):
         self.StartStopButton.clicked.connect(self.StartStop)
 
         layout.addWidget(self.StartStopButton)
+
+        
+        self.PauseResumeButton = ClampedToggleButton('Pause','100,0,0')
+        self.PauseResumeButton.Text_NOT_CLICKED = ('Pause')
+        self.PauseResumeButton.Text_LEFT_CLICKED = ('Resume')
+        self.PauseResumeButton.setFont(self.DefaultFont)
+        self.PauseResumeButton.Style_NOT_CLICKED = "background-color: white"
+        self.PauseResumeButton.Style_LEFT_CLICKED = "background-color: green"
+        self.PauseResumeButton.toState(ToggleButtonState.NOT_CLICKED)
+        self.PauseResumeButton.customContextMenuRequested.disconnect(self.PauseResumeButton.rightClickHandler)
+        self.PauseResumeButton.customContextMenuRequested.connect(self.NoneMethod)
+        self.PauseResumeButton.setToolTip('Запуск устройства')
+        self.PauseResumeButton.clicked.connect(self.PauseResume)
+
+        layout.addWidget(self.PauseResumeButton)
         layout.addStretch()
 
     def NoneMethod(self):
         pass 
+
+    def PauseResume(self):
+        self.Paused = not(self.Paused)
+        self.PauseResumeClamp.Send(self.Paused)
 
     def StartStop(self):
         self.isMeasuring = not(self.isMeasuring)

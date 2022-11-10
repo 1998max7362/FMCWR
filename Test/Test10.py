@@ -12,11 +12,13 @@ class Tranciever():
     def __init__(self) -> None:
         self.i = 0
         self.k = 0
-    def Transmit(self):
-        self.i=self.i+1
+        self.i_adder = 1
+        self.k_adder = 1
+    def Transmit(self,q):
+        self.i=self.i+self.i_adder
         return(self.i)
-    def Reciev(self):
-        self.k=self.k+1
+    def Reciev(self,q):
+        self.k=self.k+self.k_adder
         return(self.k)
 
 class WorkerSignals(QObject):
@@ -41,9 +43,10 @@ class Worker(QRunnable):
 
     @pyqtSlot()
     def run(self):
+        i=0
         try:
             while True:
-                self.result = self.fn(*self.args, **self.kwargs)
+                self.result = self.fn(i,*self.args, **self.kwargs)
                 print(self.result)
                 time.sleep(0.2)
                 while self.is_paused:
@@ -86,7 +89,9 @@ class MainWindow(QMainWindow):
         self.btn_pause_1 = QPushButton("Pause")
         self.btn_resume_1 = QPushButton("Resume")
         self.btn_show_results_1 = QPushButton("Show Results")
+        self.btn_changeAdder_1 = QPushButton("Увеличить adder")
         self.btn_start_1.pressed.connect(self.start_1)
+        self.btn_changeAdder_1.pressed.connect(self.ChangeAdder_1)
 
         l1 = QHBoxLayout()
         l1.addWidget(QLabel('Процесс 1'))
@@ -95,6 +100,7 @@ class MainWindow(QMainWindow):
         l1.addWidget(self.btn_pause_1)
         l1.addWidget(self.btn_resume_1)
         l1.addWidget(self.btn_show_results_1)
+        l1.addWidget(self.btn_changeAdder_1)
 
         l.addLayout(l1)
 
@@ -103,7 +109,9 @@ class MainWindow(QMainWindow):
         self.btn_pause_2 = QPushButton("Pause")
         self.btn_resume_2 = QPushButton("Resume")
         self.btn_show_results_2 = QPushButton("Show Results")
+        self.btn_changeAdder_2 = QPushButton("Увеличить adder")
         self.btn_start_2.pressed.connect(self.start_2)
+        self.btn_changeAdder_2.pressed.connect(self.ChangeAdder_2)
 
         l2 = QHBoxLayout()
         l2.addWidget(QLabel('Процесс 2'))
@@ -112,6 +120,7 @@ class MainWindow(QMainWindow):
         l2.addWidget(self.btn_pause_2)
         l2.addWidget(self.btn_resume_2)
         l2.addWidget(self.btn_show_results_2)
+        l2.addWidget(self.btn_changeAdder_2)
 
         l.addLayout(l2)
 
@@ -144,7 +153,11 @@ class MainWindow(QMainWindow):
     def print_output_2(self, s):
         QMessageBox.about(self, "Внимание", 'Текущий результат по процессу 2: %s' %s)
 
+    def ChangeAdder_1(self):
+        self.tranciever.i_adder = self.tranciever.i_adder+1
 
+    def ChangeAdder_2(self):
+        self.tranciever.k_adder = self.tranciever.k_adder+1        
 
 if __name__ == '__main__':
 
