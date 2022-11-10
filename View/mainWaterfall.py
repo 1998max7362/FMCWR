@@ -89,7 +89,7 @@ class WaterFallWindow(QWidget):
             self.graphWidget.addItem(self.img)
         elif not(self.demo.ReceivedValue):
             #self.y = self.y[1:]
-            f, t, spectra = signal.spectrogram(np.real(self.y), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
+            f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
             logSpectra = 10*np.log10(spectra)
             self.img.setImage(logSpectra.T)
             tr = pg.QtGui.QTransform()
@@ -112,9 +112,9 @@ class WaterFallWindow(QWidget):
     def thStart(self, s):
         self.y = np.append(self.y, s[1]) # накопление данных
         if len(self.y) > self.nPerseg:
-            #if len(self.y) > 10*self.nPerseg:
-            #    self.y = self.y[1:]
-            th = Thread(target=self.specImage, args=(self.y[-1],)) # в потоке лежит функция получения спектрограммы
+            if len(self.y) > 10*self.nPerseg:
+                self.y = self.y[1:]
+            th = Thread(target=self.specImage, args=(self.y,)) # в потоке лежит функция получения спектрограммы
             th.start()
 
     # очищение графиков
