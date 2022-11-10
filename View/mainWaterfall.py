@@ -18,6 +18,7 @@ class WaterFallWindow(QWidget):
         # Выводы модуля
         self.input = Clamp()
         self.y = np.array([])
+        self.spectra = np.array([])
         # Проверка демоверсии
         self.demo = Clamp()
         self.demo.ReceivedValue = False
@@ -47,7 +48,7 @@ class WaterFallWindow(QWidget):
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
-        self.input.HandleWithReceive(self.thStart)
+        self.input.HandleWithReceive(self.thStart) 
         # Подключение виджета к разметке 
         wFallWindowLayout.addWidget(self.graphWidget)
         
@@ -73,7 +74,8 @@ class WaterFallWindow(QWidget):
     def specImage(self, s):
         if self.demo.ReceivedValue:
             f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
-            logSpectra = 10*np.log10(spectra)
+            self.spectra = np.append(self.spectra, spectra)
+            logSpectra = 10*np.log10(self.spectra)
             self.img.setImage(logSpectra.T)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft, np.max(t)/len(t))
@@ -95,6 +97,7 @@ class WaterFallWindow(QWidget):
             # вставить шкалу уровней 
             self.img.setTransform(tr)
 
+    # получить демо сигнал, если включен демо-режим
     def receiveDemo(self, data: bool):
         self.demo.ReceivedValue = data
         if self.demo.ReceivedValue:
@@ -104,14 +107,19 @@ class WaterFallWindow(QWidget):
             pass
         else:
             pass
-
+    
+    # начало обработки
     def thStart(self, s):
-        self.y = np.append(self.y, s[1])
+        self.y = np.append(self.y, s[1]) # накопление данных
         if len(self.y) > self.nPerseg:
-            if len(self.y) > 10*self.nPerseg:
-                self.y = self.y[1:]
-            th = Thread(target=self.specImage, args=(self.y,))
+            #if len(self.y) > 10*self.nPerseg:
+            #    self.y = self.y[1:]
+            th = Thread(target=self.specImage, args=(self.y[-1],)) # в потоке лежит функция получения спектрограммы
             th.start()
+
+    # очищение графиков
+    def clearPlots(self):
+        self.graphWidget.clear()
 
 
 
