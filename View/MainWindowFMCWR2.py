@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
 
 from SettingsFMCWRv3 import SettingsWindow
-from mainWaterfall import WaterFallWindow
+from mainWaterfall2 import WaterFallWindow
 from mainGraph import GraphWindow
 from Clamp import Clamp
 from Worker import CountingWorker, Worker
@@ -21,6 +21,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('Главное меню')
         self.threadpool = QThreadPool()
+        self.y = np.array([])
 
         self._createActions()
         self._connectActions()
@@ -108,6 +109,7 @@ class MainWindow(QMainWindow):
 
     def StartStop(self,start_stop):
         if start_stop:
+            # self.Chart0.clearPlots()
             self.settings.PauseResumeButton.setEnabled(True)
             if self.source == SignalSource.TRANSMITTER:
                 self.worker_1 = CountingWorker(self.Tranciver.Transmit)
@@ -122,6 +124,16 @@ class MainWindow(QMainWindow):
 
     def sigSent(self,sig):
         self.outputClamp.Send(sig)
+
+        self.y = np.append(self.y, sig[1])
+        if len(self.y)>193:
+            self.Chart1.specImage(self.y[0:193])
+            # self.y
+
+        # self.worker_2 = Worker(self.Chart1.thStart, sig)
+        # self.threadpool.start(self.worker_2)
+
+        # self.Chart1.thStart(sig)
     
     def PauseResume(self,state):
         if state:
