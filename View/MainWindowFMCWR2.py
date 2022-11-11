@@ -6,9 +6,10 @@ from PyQt5.QtCore import Qt
 import numpy as np
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
+import time
 
 from SettingsFMCWRv3 import SettingsWindow
-from mainWaterfall2 import WaterFallWindow
+from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
 from Clamp import Clamp
 from Worker import CountingWorker, Worker
@@ -22,6 +23,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Главное меню')
         self.threadpool = QThreadPool()
         self.y = np.array([])
+        self.fl = True
 
         self._createActions()
         self._connectActions()
@@ -122,18 +124,30 @@ class MainWindow(QMainWindow):
             self.settings.PauseResumeButton.setEnabled(False)
             self.worker_1.kill()
 
+    # def sigSent(self,sig): # более менее рабочий варик
+    #     self.outputClamp.Send(sig)
+    #     self.y = np.append(self.y, sig[1])
+    #     if len(self.y)>193:
+    #         self.Chart1.specImage(self.y[0:193])
+    #         self.y = np.array([])
+
     def sigSent(self,sig):
         self.outputClamp.Send(sig)
-
         self.y = np.append(self.y, sig[1])
-        if len(self.y)>193:
+        if self.fl:
+            self.fl = False
+            self.worker_2 = Worker(self.spectShow)
+            self.threadpool.start(self.worker_2)
+    
+    def spectShow(self):
+        while len(self.y)<194:
+            time.sleep(0)
+        else:
+            print(self.y[-1])
             self.Chart1.specImage(self.y[0:193])
-            # self.y
-
-        # self.worker_2 = Worker(self.Chart1.thStart, sig)
-        # self.threadpool.start(self.worker_2)
-
-        # self.Chart1.thStart(sig)
+            self.y = np.array([])
+            
+            
     
     def PauseResume(self,state):
         if state:

@@ -93,8 +93,8 @@ class WaterFallWindow(QWidget):
             if (self.First):
                 self.spectra = spectra
                 self.First = False
-                print(np.shape(spectra))
-                print(np.shape(self.spectra))
+                # print(np.shape(spectra))
+                # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
                 self.img.setImage(logSpectra)
                 tr = pg.QtGui.QTransform()
@@ -104,7 +104,7 @@ class WaterFallWindow(QWidget):
                 self.y = np.array([])
             else:
                 self.spectra = np.vstack((self.spectra, spectra))
-                print(np.shape(self.spectra))
+                # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(self.spectra)
                 self.img.setImage(logSpectra)
                 tr = pg.QtGui.QTransform()
