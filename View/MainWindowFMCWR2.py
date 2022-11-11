@@ -143,7 +143,6 @@ class MainWindow(QMainWindow):
         while len(self.y)<194:
             time.sleep(0)
         else:
-            print(self.y[-1])
             self.Chart1.specImage(self.y[0:193])
             self.y = np.array([])
             
