@@ -17,6 +17,7 @@ class GraphWindow(QWidget):
         self.i = 0
         self.x = []
         self.y = []
+        self.clearClamp = Clamp()
         # разметка окна
         GraphWindowLayout=QHBoxLayout(self)
         # создание графического виджета
@@ -24,12 +25,13 @@ class GraphWindow(QWidget):
         # глобальные настройки графического виджета
         pg.setConfigOptions(antialias=True)
         self.graphWidget.setBackground('w')
-        pen = pg.mkPen(color=(255, 0, 0))
-        self.data_line =  self.graphWidget.plotItem.plot(self.x, self.y, pen=pen)
+        self.pen = pg.mkPen(color=(255, 0, 0))
+        self.data_line =  self.graphWidget.plotItem.plot(self.x, self.y, pen=self.pen)
         # расстановка элементов в разметку
         GraphWindowLayout.addWidget(self.graphWidget)
         # Действия по приходу данных
         self.input.HandleWithReceive(self.plotData)
+        self.clearClamp.HandleWithReceive(self.clearPlots)
 
 
     # классовые методы
@@ -46,8 +48,11 @@ class GraphWindow(QWidget):
         self.data_line.setData(self.x, np.real(self.y))
 
     # очистка графиков
-    def clearPlots(self):
-        self.graphWidget.clear()
+    def clearPlots(self, data: bool):
+        self.x = []
+        self.y = []
+        self.graphWidget.removeItem(self.data_line)
+        self.data_line = self.graphWidget.plotItem.plot(self.x, self.y, pen=self.pen)
 
 
 if __name__ == '__main__':

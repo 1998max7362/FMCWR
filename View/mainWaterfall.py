@@ -104,6 +104,8 @@ class WaterFallWindow(QWidget):
                 self.y = np.array([])
             else:
                 self.spectra = np.vstack((self.spectra, spectra))
+                if len(self.spectra[:,0]) >= 10:
+                    self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(self.spectra)
                 self.img.setImage(logSpectra)
@@ -133,7 +135,7 @@ class WaterFallWindow(QWidget):
             th.start()
         
     # очищение графиков
-    def clearPlots(self):
+    def clearPlots(self, data: bool):
         self.graphWidget.clear()
 
 

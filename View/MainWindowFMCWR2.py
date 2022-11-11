@@ -74,6 +74,8 @@ class MainWindow(QMainWindow):
         self.SwitchSource(SignalSource.TRANSMITTER)
 
         self.outputClamp.ConnectTo(self.Chart0.input)
+        self.clearClamp = Clamp()
+        self.clearClamp.ConnectTo(self.Chart0.clearClamp)
         # self.outputClamp.ConnectTo(self.Chart1.input)
 
 
@@ -111,7 +113,7 @@ class MainWindow(QMainWindow):
 
     def StartStop(self,start_stop):
         if start_stop:
-            # self.Chart0.clearPlots()
+            self.clearClamp.Send(True)
             self.settings.PauseResumeButton.setEnabled(True)
             if self.source == SignalSource.TRANSMITTER:
                 self.worker_1 = CountingWorker(self.Tranciver.Transmit)
