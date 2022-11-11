@@ -1,1 +1,4 @@
-.vscode
+__pycache__/
+/Core/__pycache__/
+/View/__pycache__/
+*.wav
