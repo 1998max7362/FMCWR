@@ -113,6 +113,8 @@ class MainWindow(QMainWindow):
 
     def StartStop(self,start_stop):
         if start_stop:
+            self.Chart0.clearPlots(True)
+            # self.Chart1.clearPlots(True)
             self.clearClamp.Send(True)
             self.settings.PauseResumeButton.setEnabled(True)
             if self.source == SignalSource.TRANSMITTER:
@@ -125,13 +127,6 @@ class MainWindow(QMainWindow):
             self.settings.PauseResumeButton.toState(ToggleButtonState.NOT_CLICKED)
             self.settings.PauseResumeButton.setEnabled(False)
             self.worker_1.kill()
-
-    # def sigSent(self,sig): # более менее рабочий варик
-    #     self.outputClamp.Send(sig)
-    #     self.y = np.append(self.y, sig[1])
-    #     if len(self.y)>193:
-    #         self.Chart1.specImage(self.y[0:193])
-    #         self.y = np.array([])
 
     def sigSent(self,sig):
         self.outputClamp.Send(sig)
