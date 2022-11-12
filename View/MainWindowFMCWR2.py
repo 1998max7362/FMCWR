@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, "././Core/")
+sys.path.insert(0, "././SignalProcessing/")
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -15,6 +16,7 @@ from Clamp import Clamp
 from Worker import CountingWorker, Worker
 from TestTransiver import TestTranciver
 from SignalSource import SignalSource
+from Transceiver import Transceiver
 from WrapedUiElements import *
 
 class MainWindow(QMainWindow):
@@ -40,7 +42,11 @@ class MainWindow(QMainWindow):
         # добавление виджетов
         self.settings = SettingsWindow()
         self.dockSettings = QDockWidget()
-        self.Tranciver = TestTranciver()
+        # self.Tranciver = TestTranciver()
+        self.RealTranciver = Transceiver()
+        self.RealTranciver.setDevice(0)             # choose device with hostapi = 0
+        self.RealTranciver.setChannels(1)           # set number of input channels
+        self.RealTranciver.setFs(45100.0) 
 
         self.dockSettings.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
 
@@ -80,7 +86,7 @@ class MainWindow(QMainWindow):
 
 
     def SendPeriod(self,Period):
-        self.Tranciver.T = Period*1e-3
+        # self.Tranciver.T = Period*1e-3
         print(Period)
 
     def _createMenubar(self):
@@ -114,19 +120,33 @@ class MainWindow(QMainWindow):
     def StartStop(self,start_stop):
         if start_stop:
             self.Chart0.clearPlots(True)
+            # self.RealTranciver.run_realtime(start_stop)
+            self.worker_3 = Worker(self.RealTranciver.run_realtime, start_stop)
+            self.worker_1 = Worker(self.readQueue)
             # self.Chart1.clearPlots(True)
             # self.clearClamp.Send(True)
-            self.settings.PauseResumeButton.setEnabled(True)
-            if self.source == SignalSource.TRANSMITTER:
-                self.worker_1 = CountingWorker(self.Tranciver.Transmit)
-            if self.source == SignalSource.RECIEVER:
-                self.worker_1 = CountingWorker(self.Tranciver.Reciev)   
-            self.worker_1.signals.result.connect(self.sigSent)
+        #     self.settings.PauseResumeButton.setEnabled(True)
+        #     if self.source == SignalSource.TRANSMITTER:
+        #         # self.worker_1 = CountingWorker(self.Tranciver.Transmit)
+        #         self.worker_1 = Worker(self.RealTranciver.run_realtime, 0)
+        #     if self.source == SignalSource.RECIEVER:
+        #         # self.worker_1 = CountingWorker(self.Tranciver.Reciev)   
+        #         pass
+        #     self.worker_1.signals.result.connect(self.sigSent)
             self.threadpool.start(self.worker_1)
-        else:
-            self.settings.PauseResumeButton.toState(ToggleButtonState.NOT_CLICKED)
-            self.settings.PauseResumeButton.setEnabled(False)
-            self.worker_1.kill()
+            self.threadpool.start(self.worker_3)
+        # else:
+        #     self.settings.PauseResumeButton.toState(ToggleButtonState.NOT_CLICKED)
+        #     self.settings.PauseResumeButton.setEnabled(False)
+        #     self.worker_1.kill()
+
+    def readQueue(self):
+        while True:
+            if(self.RealTranciver.received_signal.empty()): 
+                continue
+            currentData = self.RealTranciver.received_signal.get()
+            print(currentData)
+
 
     def sigSent(self,sig):
         self.outputClamp.Send(sig)

@@ -4,7 +4,7 @@
 import argparse
 import queue
 import sys
-
+import time
 import matplotlib.pyplot as plt
 import numpy as np
 import sounddevice as sd
@@ -82,7 +82,7 @@ class Transceiver():
             print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         self.received_signal.put(indata[:, self.mapping])
-
+        
     def recplot_callback(self,indata, frames, time, status):
         # save downsampled data in quere to show
         """This is called (from a separate thread) for each audio block."""
@@ -90,6 +90,7 @@ class Transceiver():
             print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         self.plotdata_signal.put(indata[::self.downsample, self.mapping])
+        pass
 
     def update_plot(self,frame):
         # plt callback update frame
@@ -133,26 +134,30 @@ class Transceiver():
             ani = FuncAnimation(fig, self.update_plot, interval=self.interval, blit=True)
             with stream:
                 plt.show()
+            
         except Exception as e:
             self.parser.exit(type(e).__name__ + ': wow ' + str(e))
 
-    def run_realtime(self,devid):
+    def run_realtime(self,fl):
         # testbench to save data in query
         # create input stream
         try:
             stream = sd.InputStream(
-            device=devid, channels=1,
-            samplerate=self.fs, callback=self.recplay_callback)
+                device=self.device, channels=max(self.channels),
+                samplerate=self.samplerate, callback=self.recplay_callback)
             with stream:
-                pass
+                while fl:
+                    pass
         except Exception as e:
             print(type(e).__name__ + ': ' + str(e))
 
 if __name__ == "__main__":
     tr = Transceiver()          # create object
+    a = tr.getAudioDevices()
     print(tr.getAudioDevices()) # show all mic devices
     tr.setDevice(0)             # choose device with hostapi = 0
     tr.setChannels(1)           # set number of input channels
-    tr.setFs(44100.0)           # set samplerate
-    tr.run_plot()               # run mic viewer
+    tr.setFs(45100.0)           # set samplerate
+    # tr.run_plot()               # run mic viewer
+    tr.run_realtime()
     
