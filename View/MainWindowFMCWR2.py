@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
         if start_stop:
             self.Chart0.clearPlots(True)
             # self.Chart1.clearPlots(True)
-            self.clearClamp.Send(True)
+            # self.clearClamp.Send(True)
             self.settings.PauseResumeButton.setEnabled(True)
             if self.source == SignalSource.TRANSMITTER:
                 self.worker_1 = CountingWorker(self.Tranciver.Transmit)
