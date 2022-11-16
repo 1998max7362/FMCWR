@@ -159,5 +159,5 @@ if __name__ == "__main__":
     tr.setChannels(1)           # set number of input channels
     tr.setFs(45100.0)           # set samplerate
     # tr.run_plot()               # run mic viewer
-    tr.run_realtime()
+    tr.run_realtime(True)
     
