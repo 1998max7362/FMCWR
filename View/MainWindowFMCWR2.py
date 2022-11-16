@@ -121,6 +121,7 @@ class MainWindow(QMainWindow):
         if start_stop:
             self.Chart0.clearPlots(True)
             # self.RealTranciver.run_realtime(start_stop)
+            self.RealTranciver.run_realtime(start_stop)
             self.worker_3 = Worker(self.RealTranciver.run_realtime, start_stop)
             self.worker_1 = Worker(self.readQueue)
             # self.Chart1.clearPlots(True)
@@ -135,7 +136,8 @@ class MainWindow(QMainWindow):
         #     self.worker_1.signals.result.connect(self.sigSent)
             self.threadpool.start(self.worker_1)
             self.threadpool.start(self.worker_3)
-        # else:
+        else:
+            self.RealTranciver.fl = False
         #     self.settings.PauseResumeButton.toState(ToggleButtonState.NOT_CLICKED)
         #     self.settings.PauseResumeButton.setEnabled(False)
         #     self.worker_1.kill()

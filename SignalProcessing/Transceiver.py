@@ -141,12 +141,13 @@ class Transceiver():
     def run_realtime(self,fl):
         # testbench to save data in query
         # create input stream
+        self.fl = fl
         try:
             stream = sd.InputStream(
                 device=self.device, channels=max(self.channels),
                 samplerate=self.samplerate, callback=self.recplay_callback)
             with stream:
-                while fl:
+                while self.fl:
                     pass
         except Exception as e:
             print(type(e).__name__ + ': ' + str(e))
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     print(tr.getAudioDevices()) # show all mic devices
     tr.setDevice(0)             # choose device with hostapi = 0
     tr.setChannels(1)           # set number of input channels
-    tr.setFs(45100.0)           # set samplerate
+    tr.setFs(44100.0)           # set samplerate
     # tr.run_plot()               # run mic viewer
     tr.run_realtime(True)
     
