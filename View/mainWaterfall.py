@@ -21,7 +21,7 @@ class WaterFallWindow(QWidget):
         self.First = True
         # Проверка демоверсии
         self.demo = Clamp()
-        self.demo.ReceivedValue = False
+        self.demo.ReceivedValue = True
         self.demo.HandleWithReceive(self.receiveDemo)
         # Разметка окна
         wFallWindowLayout = QHBoxLayout(self)
@@ -43,17 +43,26 @@ class WaterFallWindow(QWidget):
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
         # настройки спектрограммы
         self.fs = 192e3
-        tSeg = 0.001
-        self.nPerseg = int(tSeg*self.fs)
+        self.tSeg = 200
+        self.nPerseg = int(self.tSeg*self.fs/1000)
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
         self.input.HandleWithReceive(self.thStart) 
         # Подключение виджета к разметке 
         wFallWindowLayout.addWidget(self.graphWidget)
-        
+
 
     # методы класса
+    # def set_fs(self,fs):
+    #     self.fs = fs
+    #     self.nPerseg = int(self.tSeg*self.fs/1000)
+    #     self.nfft = 100*self.nPerseg
+    # def set_tSeg(self,tSeg):
+    #     self.tSeg = tSeg
+    #     self.nPerseg = int(self.tSeg*self.fs/1000)
+    #     self.nfft = 100*self.nPerseg
+
     def createTestSignal(self):
         # Тестовый сигнал для водопада
         pi = np.pi
@@ -70,6 +79,7 @@ class WaterFallWindow(QWidget):
         hz = np.linspace(0, fs/2, int(np.floor(len(testSig)/2)+1))
         spectra = 2*np.abs(sp.fft.fft(testSig)/pnts)
         return testSig
+
     # построение спектрограммы
     def specImage(self, s):
         if self.demo.ReceivedValue:

@@ -29,7 +29,7 @@ class Transceiver():
     # methods
     def __init__(self) -> None:
         #instance properties
-
+        self.working = False
         # input channels to plot (default: the first)
         self.channels = None
         # input device (numeric ID or substring)
@@ -66,11 +66,11 @@ class Transceiver():
         show_defaults = device_info['default_samplerate']
         self.samplerate = float(fs)
         print('Default samplerate is ', show_defaults, ' set ',fs, '\n')
-    
+
     def getAudioDevices(self):
         # show all input sounddevices
         return sd.query_devices(kind='input')
-    
+
     def setTransmittedSignal(self,pattern):
         # do nothing
         pass
@@ -81,8 +81,22 @@ class Transceiver():
         if status:
             print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
+        # print(indata[:, self.mapping])
         self.received_signal.put(indata[:, self.mapping])
-        
+
+    def run_realtime(self):
+        # testbench to save data in query
+        # create input stream
+        try:
+            stream = sd.InputStream(
+                device=self.device, channels=max(self.channels),
+                samplerate=self.samplerate, callback=self.recplay_callback)
+            with stream:
+                while self.working:
+                    pass
+        except Exception as e:
+            print(type(e).__name__ + ': ' + str(e))
+
     def recplot_callback(self,indata, frames, time, status):
         # save downsampled data in quere to show
         """This is called (from a separate thread) for each audio block."""
@@ -120,7 +134,7 @@ class Transceiver():
             self.lines = ax.plot(self.plotdata)
             if len(self.channels) > 1:
                 ax.legend([f'channel {c}' for c in self.channels],
-                  loc='lower left', ncol=len(self.channels))
+                loc='lower left', ncol=len(self.channels))
             ax.axis((0, len(self.plotdata), -1, 1))
             ax.set_yticks([0])
             ax.yaxis.grid(True)
@@ -137,20 +151,6 @@ class Transceiver():
             
         except Exception as e:
             self.parser.exit(type(e).__name__ + ': wow ' + str(e))
-
-    def run_realtime(self,fl):
-        # testbench to save data in query
-        # create input stream
-        self.fl = fl
-        try:
-            stream = sd.InputStream(
-                device=self.device, channels=max(self.channels),
-                samplerate=self.samplerate, callback=self.recplay_callback)
-            with stream:
-                while self.fl:
-                    pass
-        except Exception as e:
-            print(type(e).__name__ + ': ' + str(e))
 
 if __name__ == "__main__":
     tr = Transceiver()          # create object
