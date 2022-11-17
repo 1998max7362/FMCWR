@@ -43,8 +43,8 @@ class WaterFallWindow(QWidget):
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
         # настройки спектрограммы
         self.fs = 192e3
-        tSeg = 0.001
-        self.nPerseg = int(tSeg*self.fs)
+        self.tSeg = 0.001
+        self.nPerseg = int(self.tSeg*self.fs)
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
@@ -54,6 +54,16 @@ class WaterFallWindow(QWidget):
         
 
     # методы класса
+    def set_fs(self,fs):
+        self.fs = fs
+        self.nPerseg = int(self.tSeg*self.fs)
+        self.nfft = 100*self.nPerseg
+        
+    def set_tSeg(self,set_tSeg):
+        self.set_tSeg = set_tSeg
+        self.nPerseg = int(self.tSeg*self.fs)
+        self.nfft = 100*self.nPerseg
+
     def createTestSignal(self):
         # Тестовый сигнал для водопада
         pi = np.pi

@@ -41,7 +41,7 @@ class GraphWindow(QWidget):
         self.x.append(data[0])
         self.y.append(data[1])
 
-        if len(self.x) >= 500:
+        if len(self.x) >= 1136:
             self.x = self.x[1:]
             self.y = self.y[1:]
 

@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
             self.Tranciver.working = True
             self.executor.submit(self.Tranciver.run_realtime)
             self.executor.submit(self.Process_2)
-            # self.executor.submit(self.Process_3)
+            self.executor.submit(self.Process_3)
         else:
             self.Tranciver.working = False
     

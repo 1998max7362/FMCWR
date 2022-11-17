@@ -148,7 +148,9 @@ class MainWindow(QMainWindow):
             if(self.RealTranciver.received_signal.empty()): 
                 continue
             currentData = self.RealTranciver.received_signal.get()
-            self.Chart1.specImage(currentData[0:193])
+            y = np.zeros(193)
+            # self.Chart1.specImage(currentData[0:193])
+            self.Chart1.specImage(y)
             print(currentData)
 
 

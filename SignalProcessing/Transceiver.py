@@ -159,6 +159,6 @@ if __name__ == "__main__":
     tr.setDevice(0)             # choose device with hostapi = 0
     tr.setChannels(1)           # set number of input channels
     tr.setFs(44100.0)           # set samplerate
-    # tr.run_plot()               # run mic viewer
-    tr.run_realtime(True)
+    tr.run_plot()               # run mic viewer
+    # tr.run_realtime(True)
     
