@@ -54,6 +54,8 @@ class GraphWindow(QWidget):
         self.graphWidget.removeItem(self.data_line)
         self.data_line = self.graphWidget.plotItem.plot(self.x, self.y, pen=self.pen)
 
+    def plotData_test(self, x,y):
+        self.data_line.setData(x, np.real(y))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
