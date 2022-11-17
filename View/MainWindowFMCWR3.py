@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
             self.Tranciver.working = True
             self.executor.submit(self.Tranciver.run_realtime)
             self.executor.submit(self.Process_2)
-            self.executor.submit(self.Process_3)
+            self.executor.submit(self.Process_4)
         else:
             self.Tranciver.working = False
     
@@ -148,6 +148,16 @@ class MainWindow(QMainWindow):
                 c=c+1
                 self.Chart0.plotData([c,s])
 
+    # def Process_4(self):
+    #     # self.Chart0.clearPlots(True)
+    #     c = np.arange(114)
+    #     while self.Tranciver.working:
+    #         if self.Tranciver.received_signal.empty(): 
+    #             continue
+    #         currentData = self.Tranciver.received_signal.get()
+    #         a = np.concatenate(currentData)
+    #         a=a[::10]
+    #         self.Chart0.plotData_test(c,a)
 
 if __name__ == '__main__':
 
