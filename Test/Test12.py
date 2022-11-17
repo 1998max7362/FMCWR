@@ -47,10 +47,10 @@ class MainWindow(QMainWindow):
         # Graph window settings
         self.Chart0 = GraphWindow()
         self.Chart1 = WaterFallWindow()
-        self.Chart1.set_fs(fs)
-        self.Chart1.set_tSeg(segment)
-        self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
-        self.Chart1.nfft = 100*1136 # НЕПОНЯТНО TODO
+        # self.Chart1.set_fs(fs)
+        # self.Chart1.set_tSeg(segment)
+        # self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
+        # self.Chart1.nfft = 100*1136 # НЕПОНЯТНО TODO
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
             if self.Tranciver.received_signal.empty(): 
                 continue
             currentData = self.Tranciver.received_signal.get()
-            self.Chart1.specImage(currentData)
+            self.Chart1.specImage(currentData[0:193])
             # print(currentData)
 
 

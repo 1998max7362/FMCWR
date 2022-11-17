@@ -43,8 +43,8 @@ class WaterFallWindow(QWidget):
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
         # настройки спектрограммы
         self.fs = 192e3
-        self.tSeg = 200
-        self.nPerseg = int(self.tSeg*self.fs/1000)
+        self.tSeg = 0.001
+        self.nPerseg = int(self.tSeg*self.fs)
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
