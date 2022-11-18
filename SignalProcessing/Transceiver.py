@@ -1,6 +1,6 @@
 # this file contains class as a driver to audiodevice
 # python-sounddevice module has to be installed first
-
+from PyQt5 import QtCore, QtWidgets
 import argparse
 import queue
 import sys
@@ -78,8 +78,8 @@ class Transceiver():
     def recplay_callback(self,indata, frames, time, status):
         # save data in query for saving
         """This is called (from a separate thread) for each audio block."""
-        if status:
-            print(status, file=sys.stderr)
+        # if status:
+        #     print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         # print(indata[:, self.mapping])
         self.received_signal.put(indata[:, self.mapping])
@@ -88,12 +88,13 @@ class Transceiver():
         # testbench to save data in query
         # create input stream
         try:
+            QtWidgets.QApplication.processEvents()
             stream = sd.InputStream(
                 device=self.device, channels=max(self.channels),
                 samplerate=self.samplerate, callback=self.recplay_callback)
             with stream:
                 while self.working:
-                    pass
+                    QtWidgets.QApplication.processEvents()
         except Exception as e:
             print(type(e).__name__ + ': ' + str(e))
 

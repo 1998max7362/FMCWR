@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, "././Core/")
 sys.path.insert(0, "././SignalProcessing/")
 sys.path.insert(0, "././View/")
+sys.path.insert(0, "././Test/")
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -11,6 +12,7 @@ from PyQt5.QtCore import *
 import time
 from threading import Thread
 import concurrent.futures as cf
+import queue
 
 from SettingsFMCWRv3 import SettingsWindow
 from mainWaterfall import WaterFallWindow
@@ -20,6 +22,7 @@ from Worker import *
 from TestTransiver import TestTranciver
 from SignalSource import SignalSource
 from Transceiver import Transceiver
+# from TestTranciever import Transceiver
 from WrapedUiElements import *
 
 class MainWindow(QMainWindow):
@@ -27,7 +30,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('Главное меню')
         self.y = np.array([])
-        self.executor = cf.ThreadPoolExecutor()
+        self.threadpool = QThreadPool()
 
         self._createActions()
         self._connectActions()
@@ -86,7 +89,6 @@ class MainWindow(QMainWindow):
         self.PauseResumeClamp.ConnectFrom(self.settings.PauseResumeClamp)
         self.PauseResumeClamp.HandleWithReceive(self.PauseResume)
 
-        # self.outputClamp.ConnectTo(self.Chart1.input)
 
 
     def SendPeriod(self,Period):
@@ -117,9 +119,12 @@ class MainWindow(QMainWindow):
         print(start_stop)
         if start_stop:
             self.Tranciver.working = True
-            self.executor.submit(self.Tranciver.run_realtime)
-            self.executor.submit(self.Process_2)
-            self.executor.submit(self.Process_3)
+            self.worker_1  = Worker(self.Tranciver.run_realtime)
+            self.worker_2  = Worker(self.Process_2)
+            self.worker_3  = Worker(self.Process_3)
+            self.threadpool.start(self.worker_1)
+            self.threadpool.start(self.worker_2)
+            self.threadpool.start(self.worker_3)
         else:
             self.Tranciver.working = False
     
@@ -128,38 +133,33 @@ class MainWindow(QMainWindow):
     
     def Process_2(self):
         while self.Tranciver.working:
-            if self.Tranciver.received_signal.empty(): 
-                time.sleep(0.1)
-                continue
-            currentData = self.Tranciver.received_signal.get()
-            a = np.concatenate(currentData)
-            self.Chart1.specImage(a)
-            # print(currentData)
+            QtWidgets.QApplication.processEvents()
+            try:
+                currentData = self.Tranciver.received_signal.get_nowait()
+                # a = currentData # for testTranciever
+                a = np.concatenate(currentData)
+                self.Chart1.specImage(a)
+            except queue.Empty:
+                    break    
 
     def Process_3(self):
         # self.Chart0.clearPlots(True)
         c = 0
         while self.Tranciver.working:
-            if self.Tranciver.received_signal.empty(): 
-                # time.sleep(0.1)
-                continue
-            currentData = self.Tranciver.received_signal.get()
-            a = np.concatenate(currentData)
-            a=a[::10]
-            for s in a:
-                c=c+1
-                self.Chart0.plotData([c,s])
+            QtWidgets.QApplication.processEvents()
+            try:
+                currentData = self.Tranciver.received_signal.get_nowait()
+                # a = currentData # for testTranciever
+                a = np.concatenate(currentData)
+                a=a[::10]
+                for s in a:
+                    QtWidgets.QApplication.processEvents()
+                    c=c+1
+                    self.Chart0.plotData([c,s])
+            except queue.Empty:
+                    break
 
-    # def Process_4(self):
-    #     # self.Chart0.clearPlots(True)
-    #     c = np.arange(114)
-    #     while self.Tranciver.working:
-    #         if self.Tranciver.received_signal.empty(): 
-    #             continue
-    #         currentData = self.Tranciver.received_signal.get()
-    #         a = np.concatenate(currentData)
-    #         a=a[::10]
-    #         self.Chart0.plotData_test(c,a)
+
 
 if __name__ == '__main__':
 

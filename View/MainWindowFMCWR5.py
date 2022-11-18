@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, "././Core/")
 sys.path.insert(0, "././SignalProcessing/")
 sys.path.insert(0, "././View/")
+sys.path.insert(0, "././Test/")
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -20,6 +21,7 @@ from Worker import *
 from TestTransiver import TestTranciver
 from SignalSource import SignalSource
 from Transceiver import Transceiver
+# from TestTranciever import Transceiver
 from WrapedUiElements import *
 
 class MainWindow(QMainWindow):
@@ -27,7 +29,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('Главное меню')
         self.y = np.array([])
-        self.executor = cf.ThreadPoolExecutor()
+        self.threadpool = QThreadPool()
 
         self._createActions()
         self._connectActions()
@@ -86,7 +88,6 @@ class MainWindow(QMainWindow):
         self.PauseResumeClamp.ConnectFrom(self.settings.PauseResumeClamp)
         self.PauseResumeClamp.HandleWithReceive(self.PauseResume)
 
-        # self.outputClamp.ConnectTo(self.Chart1.input)
 
 
     def SendPeriod(self,Period):
@@ -116,50 +117,48 @@ class MainWindow(QMainWindow):
     def StartStop(self,start_stop):
         print(start_stop)
         if start_stop:
+            self.Chart0.clearPlots(True)
             self.Tranciver.working = True
-            self.executor.submit(self.Tranciver.run_realtime)
-            self.executor.submit(self.Process_2)
-            self.executor.submit(self.Process_3)
+            self.worker_1  = Worker(self.Tranciver.run_realtime)
+            self.worker_2  = Worker(self.Process_2)
+            self.worker_3  = Worker(self.Process_3)
+            self.threadpool.start(self.worker_1) # получение данных с микрофона
+            # self.threadpool.start(self.worker_2) # строим спектрограмму
+            self.threadpool.start(self.worker_3) # строим осцилограмму
         else:
             self.Tranciver.working = False
+            with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
     
     def PauseResume(self, pause_resume):
         print(pause_resume)
     
     def Process_2(self):
         while self.Tranciver.working:
+            QtWidgets.QApplication.processEvents()
             if self.Tranciver.received_signal.empty(): 
-                time.sleep(0.1)
                 continue
-            currentData = self.Tranciver.received_signal.get()
+            currentData = self.Tranciver.received_signal.get_nowait()
+            # a = currentData # for testTranciever
             a = np.concatenate(currentData)
             self.Chart1.specImage(a)
-            # print(currentData)
 
     def Process_3(self):
         # self.Chart0.clearPlots(True)
         c = 0
         while self.Tranciver.working:
+            QtWidgets.QApplication.processEvents()
             if self.Tranciver.received_signal.empty(): 
-                # time.sleep(0.1)
                 continue
-            currentData = self.Tranciver.received_signal.get()
+            currentData = self.Tranciver.received_signal.get_nowait()
+            # a = currentData # for testTranciever
             a = np.concatenate(currentData)
             a=a[::10]
             for s in a:
+                QtWidgets.QApplication.processEvents()
                 c=c+1
                 self.Chart0.plotData([c,s])
 
-    # def Process_4(self):
-    #     # self.Chart0.clearPlots(True)
-    #     c = np.arange(114)
-    #     while self.Tranciver.working:
-    #         if self.Tranciver.received_signal.empty(): 
-    #             continue
-    #         currentData = self.Tranciver.received_signal.get()
-    #         a = np.concatenate(currentData)
-    #         a=a[::10]
-    #         self.Chart0.plotData_test(c,a)
+
 
 if __name__ == '__main__':
 
