@@ -82,6 +82,7 @@ class WaterFallWindow(QWidget):
         return testSig
     # построение спектрограммы
     def specImage(self, s):
+        QtWidgets.QApplication.processEvents()
         if self.demo.ReceivedValue:
             f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
             logSpectra = 10*np.log10(spectra)
