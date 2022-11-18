@@ -123,7 +123,7 @@ class MainWindow(QMainWindow):
             self.worker_2  = Worker(self.Process_2)
             self.worker_3  = Worker(self.Process_3)
             self.threadpool.start(self.worker_1) # получение данных с микрофона
-            # self.threadpool.start(self.worker_2) # строим спектрограмму
+            self.threadpool.start(self.worker_2) # строим спектрограмму
             self.threadpool.start(self.worker_3) # строим осцилограмму
         else:
             self.Tranciver.working = False
