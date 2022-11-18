@@ -12,7 +12,6 @@ from PyQt5.QtCore import *
 import time
 from threading import Thread
 import concurrent.futures as cf
-import queue
 
 from SettingsFMCWRv3 import SettingsWindow
 from mainWaterfall import WaterFallWindow
@@ -90,7 +89,6 @@ class MainWindow(QMainWindow):
         self.PauseResumeClamp.HandleWithReceive(self.PauseResume)
 
 
-
     def SendPeriod(self,Period):
         # self.Tranciver.T = Period*1e-3
         print(Period)
@@ -118,15 +116,15 @@ class MainWindow(QMainWindow):
     def StartStop(self,start_stop):
         print(start_stop)
         if start_stop:
+            self.Chart0.clearPlots(True)
             self.Tranciver.working = True
             self.worker_1  = Worker(self.Tranciver.run_realtime)
-            self.worker_2  = Worker(self.Process_2)
-            self.worker_3  = Worker(self.Process_3)
-            self.threadpool.start(self.worker_1)
-            self.threadpool.start(self.worker_2)
-            self.threadpool.start(self.worker_3)
+            self.threadpool.start(self.worker_1) # получение данных с микрофона
+            self.worker_4  = Worker(self.Process_4)
+            self.threadpool.start(self.worker_4) # общий
         else:
             self.Tranciver.working = False
+            with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
     
     def PauseResume(self, pause_resume):
         print(pause_resume)
@@ -134,30 +132,46 @@ class MainWindow(QMainWindow):
     def Process_2(self):
         while self.Tranciver.working:
             QtWidgets.QApplication.processEvents()
-            try:
-                currentData = self.Tranciver.received_signal.get_nowait()
-                # a = currentData # for testTranciever
-                a = np.concatenate(currentData)
-                self.Chart1.specImage(a)
-            except queue.Empty:
-                    break    
+            if self.Tranciver.received_signal.empty(): 
+                continue
+            currentData = self.Tranciver.received_signal.get_nowait()
+            # a = currentData # for testTranciever
+            a = np.concatenate(currentData)
+            self.Chart1.specImage(a)
 
     def Process_3(self):
         # self.Chart0.clearPlots(True)
         c = 0
         while self.Tranciver.working:
             QtWidgets.QApplication.processEvents()
-            try:
-                currentData = self.Tranciver.received_signal.get_nowait()
-                # a = currentData # for testTranciever
-                a = np.concatenate(currentData)
-                a=a[::10]
-                for s in a:
-                    QtWidgets.QApplication.processEvents()
-                    c=c+1
-                    self.Chart0.plotData([c,s])
-            except queue.Empty:
-                    break
+            if self.Tranciver.received_signal.empty(): 
+                continue
+            currentData = self.Tranciver.received_signal.get_nowait()
+            # a = currentData # for testTranciever
+            a = np.concatenate(currentData)
+            self.Chart1.specImage(a)
+            a=a[::10]
+            for s in a:
+                QtWidgets.QApplication.processEvents()
+                c=c+1
+                self.Chart0.plotData([c,s])
+
+    def Process_4(self):
+        self.c = 0
+        while self.Tranciver.working:
+            QtWidgets.QApplication.processEvents()
+            if self.Tranciver.received_signal.empty(): 
+                continue
+            currentData = self.Tranciver.received_signal.get_nowait()
+            # a = currentData # for testTranciever
+            a = np.concatenate(currentData)
+            self.Chart1.specImage(a)
+            a=a[::10]
+            for s in a:
+                QtWidgets.QApplication.processEvents()
+                self.c = self.c+1
+                self.Chart0.plotData([self.c,s])
+
 
 
 
