@@ -12,9 +12,9 @@ class Transceiver():
         t = np.arange(0, 1136, 1)*0.2
         sinewave = np.sin(2 * np.pi * self.fs * t)
         while self.working:
-            # QtWidgets.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
             self.received_signal.put(sinewave)
-            time.sleep(0.2)
+            # time.sleep(0.2)
 
     
     def setFs(self,fs = 44100):
