@@ -133,7 +133,6 @@ class MainWindow(QtWidgets.QMainWindow):
             #Processes some pending events for the calling thread
             #One can call this function occasionally when your program is busy performing a long operation 
             QtWidgets.QApplication.processEvents()
-
             def audio_callback(indata, frames, time, status):
                 self.q.put(indata[:: self.downsample, [0]])
             # uses sounddevice to obtain the input stream, check the InputStream for details
@@ -144,11 +143,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 callback=audio_callback,
             )
             with stream:
-
                 while True:
                     QtWidgets.QApplication.processEvents()
                     if self.go_on:
-
                         break
             self.enable_buttons()
 

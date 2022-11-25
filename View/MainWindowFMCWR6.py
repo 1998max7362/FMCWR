@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
             currentData = self.Tranciver.received_signal.get_nowait()
             # a = currentData # for testTranciever
             a = np.concatenate(currentData)
-            self.Chart1.specImage(a)
+            # self.Chart1.specImage(a)
             a=a[::10]
             for s in a:
                 QtWidgets.QApplication.processEvents()

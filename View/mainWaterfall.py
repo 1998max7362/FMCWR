@@ -115,7 +115,7 @@ class WaterFallWindow(QWidget):
                 self.y = np.array([])
             else:
                 self.spectra = np.vstack((self.spectra, spectra))
-                if len(self.spectra[:,0]) >= 10:
+                if len(self.spectra[:,0]) >= 20:
                     self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(self.spectra)
