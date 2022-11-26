@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         self.Tranciver.setDevice(0)             # choose device with hostapi = 0
         self.Tranciver.setChannels(1)           # set number of input channels
         self.Tranciver.setFs(fs) 
-        self.Tranciver.window = segment
+        self.Tranciver.interval = 10
 
         # Graph window settings
         self.Chart0 = GraphWindow()
@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
 
         self.timer = QtCore.QTimer()
         # self.timer.setInterval(self.interval)  # msec
-        self.timer.setInterval(3)
+        self.timer.setInterval(self.Tranciver.interval)
         self.timer.timeout.connect(self.Process_2)
         
         
@@ -149,7 +149,8 @@ class MainWindow(QMainWindow):
             #     QtWidgets.QApplication.processEvents()
             #     self.c = self.c+1
             #     self.Chart0.plotData([self.c,s])
-            self.Chart0.plotData_test(range(len(a)), a)
+            # self.Chart0.plotData_test(range(len(a)), a)
+            self.Chart0.plotData(a)
 
 
 
