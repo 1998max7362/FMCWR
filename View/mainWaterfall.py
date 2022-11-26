@@ -42,7 +42,7 @@ class WaterFallWindow(QWidget):
         bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
         # настройки спектрограммы
-        self.fs = 192e3
+        self.fs = 44.1e3
         tSeg = 0.001
         self.nPerseg = int(tSeg*self.fs)
         self.nfft = 100*self.nPerseg
