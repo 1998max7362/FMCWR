@@ -8,9 +8,9 @@ class WorkerSignals(QObject):
     result = pyqtSignal(object)
     progress = pyqtSignal(int)
 
-class Worker(QRunnable):
+class ContiniousWorker(QRunnable):
     def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
+        super(ContiniousWorker, self).__init__()
         self.signals = WorkerSignals()
 
         self.fn = fn
@@ -28,7 +28,7 @@ class Worker(QRunnable):
             while True:
                 self.result = self.fn(*self.args, **self.kwargs)
                 while self.is_paused:
-                    time.sleep(0)
+                    pass
                 if self.is_killed:
                     break
         except:
@@ -94,3 +94,22 @@ class CountingWorker(QRunnable):
     def show(self):
         self.show_results = True
         self.signals.result.emit(self.result)
+
+
+class Worker(QRunnable):
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        self.signals = WorkerSignals()
+
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            self.fn(*self.args, **self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))

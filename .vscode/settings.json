@@ -4,5 +4,7 @@
         "./Core",
         "./SignalGenerator",
         "./Test",
+        "./SignalProcessing",
+        
     ]
 }

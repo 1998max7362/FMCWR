@@ -42,9 +42,9 @@ class WaterFallWindow(QWidget):
         bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
         # настройки спектрограммы
-        self.fs = 44.1e3
-        tSeg = 0.001
-        self.nPerseg = int(tSeg*self.fs)
+        self.fs = 192e3
+        self.tSeg = 0.001
+        self.nPerseg = int(self.tSeg*self.fs)
         self.nfft = 100*self.nPerseg
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
@@ -54,6 +54,16 @@ class WaterFallWindow(QWidget):
         
 
     # методы класса
+    def set_fs(self,fs):
+        self.fs = fs
+        self.nPerseg = int(self.tSeg*self.fs)
+        self.nfft = 100*self.nPerseg
+        
+    def set_tSeg(self,set_tSeg):
+        self.set_tSeg = set_tSeg
+        self.nPerseg = int(self.tSeg*self.fs)
+        self.nfft = 100*self.nPerseg
+
     def createTestSignal(self):
         # Тестовый сигнал для водопада
         pi = np.pi
@@ -72,6 +82,7 @@ class WaterFallWindow(QWidget):
         return testSig
     # построение спектрограммы
     def specImage(self, s):
+        QtWidgets.QApplication.processEvents()
         if self.demo.ReceivedValue:
             f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
             logSpectra = 10*np.log10(spectra)
@@ -104,7 +115,7 @@ class WaterFallWindow(QWidget):
                 self.y = np.array([])
             else:
                 self.spectra = np.vstack((self.spectra, spectra))
-                if len(self.spectra[:,0]) >= 10:
+                if len(self.spectra[:,0]) >= 20:
                     self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(self.spectra)

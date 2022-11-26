@@ -1,10 +1,10 @@
 # this file contains class as a driver to audiodevice
 # python-sounddevice module has to be installed first
-
+from PyQt5 import QtCore, QtWidgets
 import argparse
 import queue
 import sys
-
+import time
 import matplotlib.pyplot as plt
 import numpy as np
 import sounddevice as sd
@@ -17,7 +17,7 @@ class Transceiver():
     """
     # class properties
     transmitted_signal = np.array([])
-    received_signal = queue.Queue()
+    received_signal = queue.Queue(maxsize=20)
 
     # prepare data for plot
     plotdata_signal = queue.Queue()
@@ -29,7 +29,7 @@ class Transceiver():
     # methods
     def __init__(self) -> None:
         #instance properties
-
+        self.working = False
         # input channels to plot (default: the first)
         self.channels = None
         # input device (numeric ID or substring)
@@ -66,11 +66,11 @@ class Transceiver():
         show_defaults = device_info['default_samplerate']
         self.samplerate = float(fs)
         print('Default samplerate is ', show_defaults, ' set ',fs, '\n')
-    
+
     def getAudioDevices(self):
         # show all input sounddevices
         return sd.query_devices(kind='input')
-    
+
     def setTransmittedSignal(self,pattern):
         # do nothing
         pass
@@ -78,10 +78,25 @@ class Transceiver():
     def recplay_callback(self,indata, frames, time, status):
         # save data in query for saving
         """This is called (from a separate thread) for each audio block."""
-        if status:
-            print(status, file=sys.stderr)
+        # if status:
+        #     print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
+        # print(indata[:, self.mapping])
         self.received_signal.put(indata[:, self.mapping])
+
+    def run_realtime(self):
+        # testbench to save data in query
+        # create input stream
+        try:
+            QtWidgets.QApplication.processEvents()
+            stream = sd.InputStream(
+                device=self.device, channels=max(self.channels),
+                samplerate=self.samplerate, callback=self.recplay_callback)
+            with stream:
+                while self.working:
+                    QtWidgets.QApplication.processEvents()
+        except Exception as e:
+            print(type(e).__name__ + ': ' + str(e))
 
     def recplot_callback(self,indata, frames, time, status):
         # save downsampled data in quere to show
@@ -90,6 +105,7 @@ class Transceiver():
             print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         self.plotdata_signal.put(indata[::self.downsample, self.mapping])
+        pass
 
     def update_plot(self,frame):
         # plt callback update frame
@@ -119,7 +135,7 @@ class Transceiver():
             self.lines = ax.plot(self.plotdata)
             if len(self.channels) > 1:
                 ax.legend([f'channel {c}' for c in self.channels],
-                  loc='lower left', ncol=len(self.channels))
+                loc='lower left', ncol=len(self.channels))
             ax.axis((0, len(self.plotdata), -1, 1))
             ax.set_yticks([0])
             ax.yaxis.grid(True)
@@ -133,26 +149,17 @@ class Transceiver():
             ani = FuncAnimation(fig, self.update_plot, interval=self.interval, blit=True)
             with stream:
                 plt.show()
+            
         except Exception as e:
             self.parser.exit(type(e).__name__ + ': wow ' + str(e))
 
-    def run_realtime(self,devid):
-        # testbench to save data in query
-        # create input stream
-        try:
-            stream = sd.InputStream(
-            device=devid, channels=1,
-            samplerate=self.fs, callback=self.recplay_callback)
-            with stream:
-                pass
-        except Exception as e:
-            print(type(e).__name__ + ': ' + str(e))
-
 if __name__ == "__main__":
     tr = Transceiver()          # create object
+    a = tr.getAudioDevices()
     print(tr.getAudioDevices()) # show all mic devices
     tr.setDevice(0)             # choose device with hostapi = 0
     tr.setChannels(1)           # set number of input channels
     tr.setFs(44100.0)           # set samplerate
     tr.run_plot()               # run mic viewer
+    # tr.run_realtime(True)
     

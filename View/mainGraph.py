@@ -41,7 +41,7 @@ class GraphWindow(QWidget):
         self.x.append(data[0])
         self.y.append(data[1])
 
-        if len(self.x) >= 500:
+        if len(self.x) >= 1136:
             self.x = self.x[1:]
             self.y = self.y[1:]
 
@@ -54,6 +54,8 @@ class GraphWindow(QWidget):
         self.graphWidget.removeItem(self.data_line)
         self.data_line = self.graphWidget.plotItem.plot(self.x, self.y, pen=self.pen)
 
+    def plotData_test(self, x,y):
+        self.data_line.setData(x, np.real(y))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
