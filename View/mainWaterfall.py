@@ -151,6 +151,13 @@ class WaterFallWindow(QWidget):
     def clearPlots(self, data: bool):
         self.graphWidget.clear()
 
+    def setMinX(self, minX):
+        self.graphWidget.setXRange(minX, self.graphWidget.viewRange()[0][1])
+
+    def setMaxX(self, maxX):
+        self.graphWidget.setXRange(self.graphWidget.viewRange()[0][0], maxX)
+
+
 
 
 if __name__ == '__main__':
