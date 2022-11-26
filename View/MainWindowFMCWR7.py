@@ -13,7 +13,7 @@ import time
 from threading import Thread
 import concurrent.futures as cf
 
-from SettingsFMCWRv3 import SettingsWindow
+from SettingsFMCWRv2 import SettingsWindow
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
 from Clamp import Clamp
@@ -44,7 +44,9 @@ class MainWindow(QMainWindow):
         self.Tranciver.setDevice(0)             # choose device with hostapi = 0
         self.Tranciver.setChannels(1)           # set number of input channels
         self.Tranciver.setFs(fs) 
-        self.Tranciver.interval = 10
+        self.Tranciver.interval = 1
+        
+        0
 
         # Graph window settings
         self.Chart0 = GraphWindow()
@@ -53,6 +55,7 @@ class MainWindow(QMainWindow):
         self.Chart1.set_tSeg(segment)
         self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
         self.Chart1.nfft = 100*1136 # НЕПОНЯТНО TODO
+        self.Chart0.graphWidget.setYRange(-1, 1)
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -85,16 +88,17 @@ class MainWindow(QMainWindow):
         
         self.StartSopClamp.ConnectFrom(self.settings.StartStopClamp)
         self.StartSopClamp.HandleWithReceive(self.StartStop)
-        self.PauseResumeClamp.ConnectFrom(self.settings.PauseResumeClamp)
+        # self.PauseResumeClamp.ConnectFrom(self.settings.PauseResumeClamp)
         self.PauseResumeClamp.HandleWithReceive(self.PauseResume)
 
         self.timer = QtCore.QTimer()
         # self.timer.setInterval(self.interval)  # msec
         self.timer.setInterval(self.Tranciver.interval)
         self.timer.timeout.connect(self.Process_2)
-        
-        
 
+        self.settings.xRangeMin.valueChanged.connect(self.Chart1.setMinX(self.settings.xRangeMin.value()))
+        self.settings.xRangeMax.valueChanged.connect(self.Chart1.setManX(self.settings.xRangeMin.value()))
+        
 
     def SendPeriod(self,Period):
         # self.Tranciver.T = Period*1e-3
