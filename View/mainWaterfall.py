@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import *
 import matplotlib.pyplot as plt
 from Clamp import Clamp
 from threading import Thread
+import pyqtspecgram
 
 
 class WaterFallWindow(QWidget):
@@ -40,7 +41,8 @@ class WaterFallWindow(QWidget):
         self.graphWidget.addItem(self.img)
         minv, maxv = np.nanmin(np.nanmin(-40)), np.nanmax(np.nanmax(10))
         bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
-        bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem) 
+        bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)
+        self.graphWidget.setXRange(0, 1000) 
         # настройки спектрограммы
         self.fs = 192e3
         self.tSeg = 0.001
@@ -148,6 +150,13 @@ class WaterFallWindow(QWidget):
     # очищение графиков
     def clearPlots(self, data: bool):
         self.graphWidget.clear()
+
+    def setMinX(self, minX):
+        self.graphWidget.setXRange(minX, self.graphWidget.viewRange()[0][1])
+
+    def setMaxX(self, maxX):
+        self.graphWidget.setXRange(self.graphWidget.viewRange()[0][0], maxX)
+
 
 
 
