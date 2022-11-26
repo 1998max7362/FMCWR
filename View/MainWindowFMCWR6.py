@@ -140,11 +140,11 @@ class MainWindow(QMainWindow):
             a = np.concatenate(currentData)
             self.Chart1.specImage(a)
             a=a[::10]
-            for s in a:
-                QtWidgets.QApplication.processEvents()
-                self.c = self.c+1
-                self.Chart0.plotData([self.c,s])
-            # self.Chart0.plotData_test(range(len(a)),a)
+            # for s in a:
+            #     QtWidgets.QApplication.processEvents()
+            #     self.c = self.c+1
+            #     self.Chart0.plotData([self.c,s])
+            self.Chart0.plotData_test(range(len(a)), a)
 
 
 

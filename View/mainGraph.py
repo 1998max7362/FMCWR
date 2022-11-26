@@ -27,6 +27,7 @@ class GraphWindow(QWidget):
         self.graphWidget.setBackground('w')
         self.pen = pg.mkPen(color=(255, 0, 0))
         self.data_line =  self.graphWidget.plotItem.plot(self.x, self.y, pen=self.pen)
+        self.graphWidget.setYRange(-1, 1)
         # расстановка элементов в разметку
         GraphWindowLayout.addWidget(self.graphWidget)
         # Действия по приходу данных
