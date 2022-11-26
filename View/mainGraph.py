@@ -18,6 +18,7 @@ class GraphWindow(QWidget):
         self.x = []
         self.y = np.array([])
         self.clearClamp = Clamp()
+        self.rangeClamp = Clamp()
         # разметка окна
         GraphWindowLayout=QHBoxLayout(self)
         # создание графического виджета
@@ -33,6 +34,7 @@ class GraphWindow(QWidget):
         # Действия по приходу данных
         self.input.HandleWithReceive(self.plotData)
         self.clearClamp.HandleWithReceive(self.clearPlots)
+        self.rangeClamp.HandleWithReceive(self.setRangeY)
 
 
     # классовые методы
@@ -58,6 +60,9 @@ class GraphWindow(QWidget):
 
     def plotData_test(self, x,y):
         self.data_line.setData(x, np.real(y))
+
+    def setRangeY(self, rangeVal: list):
+        self.graphWidget.setYRange(rangeVal[0], rangeVal[1])
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
