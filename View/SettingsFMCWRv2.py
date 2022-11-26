@@ -30,7 +30,18 @@ class SettingsWindow(QWidget):
         self.DefaultFont = QFont('Times',10)
 
         self.SignalTypeInit()
-        layout.addWidget(self.signalTypesGroupBox)
+        # layout.addWidget(self.signalTypesGroupBox)
+
+        # Настройка пределов отображения
+        self.xRangeMin = QSpinBox()
+        self.xRangeMin.setMinimum(0)
+        self.xRangeMin.setValue(0)
+        self.xRangeMax = QSpinBox()
+        self.xRangeMax.setMinimum(0)
+        self.xRangeMax.setMaximum(20000)
+        self.xRangeMax.setValue(20000)
+        layout.addWidget(self.xRangeMin)
+        layout.addWidget(self.xRangeMax)
 
         self.Period = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),"Период:", "мкс")
         self.Period.label.setFont(self.DefaultFont)
