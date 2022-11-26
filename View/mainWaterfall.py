@@ -17,6 +17,7 @@ class WaterFallWindow(QWidget):
         super().__init__()
         # Выводы модуля
         self.input = Clamp()
+        self.rangeClamp = Clamp()
         self.y = np.array([])
         self.First = True
         # Проверка демоверсии
@@ -52,6 +53,8 @@ class WaterFallWindow(QWidget):
         self.input.HandleWithReceive(self.thStart) 
         # Подключение виджета к разметке 
         wFallWindowLayout.addWidget(self.graphWidget)
+        # действие по клампам
+        self.rangeClamp.HandleWithReceive(self.setRangeX)
         
 
     # методы класса
@@ -150,11 +153,9 @@ class WaterFallWindow(QWidget):
     def clearPlots(self, data: bool):
         self.graphWidget.clear()
 
-    def setMinX(self, minX):
-        self.graphWidget.setXRange(minX, self.graphWidget.viewRange()[0][1])
+    def setRangeX(self, rangeVal: list):
+        self.graphWidget.setXRange(rangeVal[0], rangeVal[1])
 
-    def setMaxX(self, maxX):
-        self.graphWidget.setXRange(self.graphWidget.viewRange()[0][0], maxX)
 
 
 
