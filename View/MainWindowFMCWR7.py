@@ -149,8 +149,7 @@ class MainWindow(QMainWindow):
             #     QtWidgets.QApplication.processEvents()
             #     self.c = self.c+1
             #     self.Chart0.plotData([self.c,s])
-            # self.Chart0.plotData_test(range(len(a)), a)
-            self.Chart0.plotData(a)
+            self.Chart0.plotData_test(range(len(a)), a)
 
 
 
