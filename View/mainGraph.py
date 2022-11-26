@@ -16,7 +16,7 @@ class GraphWindow(QWidget):
         self.input = Clamp()
         self.i = 0
         self.x = []
-        self.y = []
+        self.y = np.array([])
         self.clearClamp = Clamp()
         # разметка окна
         GraphWindowLayout=QHBoxLayout(self)
@@ -39,14 +39,15 @@ class GraphWindow(QWidget):
 
     # построение графиков
     def plotData(self, data: list):
-        self.x.append(data[0])
-        self.y.append(data[1])
+        self.y = np.append(self.y,data)
+        # self.i += 1 
+        # self.x.append(self.i*np.array(range(len(data))))
 
-        if len(self.x) >= 1136:
-            self.x = self.x[1:]
-            self.y = self.y[1:]
+        if len(self.y) >= 1136:
+           self.y = self.y[len(data):]
 
-        self.data_line.setData(self.x, np.real(self.y))
+        # self.data_line.setData(self.x, np.real(self.y))
+        self.data_line.setData(np.real(self.y))
 
     # очистка графиков
     def clearPlots(self, data: bool):

@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
 
         self.timer = QtCore.QTimer()
         # self.timer.setInterval(self.interval)  # msec
-        self.timer.setInterval(3)
+        self.timer.setInterval(10)
         self.timer.timeout.connect(self.Process_2)
         
         
@@ -149,7 +149,7 @@ class MainWindow(QMainWindow):
             #     QtWidgets.QApplication.processEvents()
             #     self.c = self.c+1
             #     self.Chart0.plotData([self.c,s])
-            self.Chart0.plotData_test(range(len(a)), a)
+            self.Chart0.plotData(a)
 
 
 
