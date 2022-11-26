@@ -94,8 +94,8 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(self.Tranciver.interval)
         self.timer.timeout.connect(self.Process_2)
 
-        self.settings.xRangeClamp.ConnectTo()
-        self.settings.yRangeClamp.ConnectTo()
+        self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
+        self.settings.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
 
     def SendPeriod(self,Period):
         # self.Tranciver.T = Period*1e-3
