@@ -25,6 +25,8 @@ class SettingsWindow(QWidget):
         self.SignalSourceSwitchClamp = Clamp()
         self.PeriodClamp = Clamp()
         self.StartStopClamp = Clamp()
+        self.xRangeClamp = Clamp()
+        self.yRangeClamp = Clamp()
         self.isMeasuring = False
         
         self.DefaultFont = QFont('Times',10)
@@ -35,13 +37,24 @@ class SettingsWindow(QWidget):
         # Настройка пределов отображения
         self.xRangeMin = QSpinBox()
         self.xRangeMin.setMinimum(0)
+        self.xRangeMin.setMaximum(20000)
         self.xRangeMin.setValue(0)
         self.xRangeMax = QSpinBox()
         self.xRangeMax.setMinimum(0)
         self.xRangeMax.setMaximum(20000)
         self.xRangeMax.setValue(20000)
+        self.xRangeMin.valueChanged.connect(self.xRangeChanged)
+        self.xRangeMax.valueChanged.connect(self.xRangeChanged)
         layout.addWidget(self.xRangeMin)
         layout.addWidget(self.xRangeMax)
+        self.yRangeMin = QSpinBox()
+        self.yRangeMin.setValue(-1)
+        self.yRangeMax = QSpinBox()
+        self.yRangeMax.setValue(1)
+        layout.addWidget(self.yRangeMin)
+        layout.addWidget(self.yRangeMax)
+        self.yRangeMin.valueChanged.connect(self.yRangeChanged)
+        self.yRangeMax.valueChanged.connect(self.yRangeChanged)
 
         self.Period = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),"Период:", "мкс")
         self.Period.label.setFont(self.DefaultFont)
@@ -89,6 +102,12 @@ class SettingsWindow(QWidget):
 
         layout.addWidget(self.StartStopButton)
         layout.addStretch()
+    
+    def xRangeChanged(self,smth):
+        self.xRangeClamp.Send([self.xRangeMin.value(),self.xRangeMax.value()])
+    
+    def yRangeChanged(self,smth):
+        self.yRangeClamp.Send([self.yRangeMin.value(),self.yRangeMax.value()])
 
     def NoneMethod(self):
         pass 

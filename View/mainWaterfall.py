@@ -10,7 +10,6 @@ from PyQt5.QtWidgets import *
 import matplotlib.pyplot as plt
 from Clamp import Clamp
 from threading import Thread
-import pyqtspecgram
 
 
 class WaterFallWindow(QWidget):
