@@ -17,7 +17,7 @@ class Transceiver():
     """
     # class properties
     transmitted_signal = np.array([])
-    received_signal = queue.Queue(maxsize=20)
+    received_signal = queue.Queue(maxsize=10)
 
     # prepare data for plot
     plotdata_signal = queue.Queue()
