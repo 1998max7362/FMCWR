@@ -58,7 +58,6 @@ class SettingsWindow(QWidget):
         self.xRangeChanged(False)
         self.yRangeChanged(False)
 
-        self.StartStopClamp.ConnectTo()
 
     def deviceSettings(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -142,6 +141,8 @@ class SettingsWindow(QWidget):
     def StartStop(self):
         self.isMeasuring = not(self.isMeasuring)
         self.StartStopClamp.Send(self.isMeasuring)
+
+        self.deviceComboBox.setEnabled(not self.isMeasuring)
 
 if __name__ == '__main__':
 
