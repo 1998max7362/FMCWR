@@ -47,7 +47,8 @@ class WaterFallWindow(QWidget):
         self.fs = 192e3
         self.tSeg = 0.001
         self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = 100*self.nPerseg
+        self.nfft = self.nPerseg
+        self.lines = 50
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
         self.input.HandleWithReceive(self.thStart) 
@@ -116,10 +117,9 @@ class WaterFallWindow(QWidget):
                 tr.scale(self.fs/self.nfft, 1)
                 # вставить шкалу уровней 
                 self.img.setTransform(tr)
-                self.y = np.array([])
             else:
                 self.spectra = np.vstack((self.spectra, spectra))
-                if len(self.spectra[:,0]) >= 50:
+                if len(self.spectra[:,0]) >= self.lines:
                     self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(self.spectra)
@@ -128,8 +128,6 @@ class WaterFallWindow(QWidget):
                 tr.scale(self.fs/self.nfft, 1)
                 # вставить шкалу уровней 
                 self.img.setTransform(tr)
-                self.y = np.array([])
-
 
     # получить демо сигнал, если включен демо-режим
     def receiveDemo(self, data: bool):
