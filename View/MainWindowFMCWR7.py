@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
         self.Tranciver.setChannels(1)           # set number of input channels
         self.Tranciver.setFs(fs) 
         self.Tranciver.interval = 10
+        self.Tranciver.downsample = 1
 
         # Graph window settings
         self.Chart0 = GraphWindow()
