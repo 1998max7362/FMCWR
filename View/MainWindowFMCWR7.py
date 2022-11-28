@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Главное меню')
         self.y = np.array([])
         self.threadpool = QThreadPool()
+        self.threadpool.setMaxThreadCount(1)
 
         self._createActions()
         self._connectActions()
@@ -86,16 +87,19 @@ class MainWindow(QMainWindow):
         
         self.StartSopClamp.ConnectFrom(self.settings.StartStopClamp)
         self.StartSopClamp.HandleWithReceive(self.StartStop)
-        # self.PauseResumeClamp.ConnectFrom(self.settings.PauseResumeClamp)
-        self.PauseResumeClamp.HandleWithReceive(self.PauseResume)
 
         self.timer = QtCore.QTimer()
-        # self.timer.setInterval(self.interval)  # msec
         self.timer.setInterval(self.Tranciver.interval)
         self.timer.timeout.connect(self.Process_2)
 
         self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
         self.settings.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
+
+        self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
+    
+    def deviceUpdate(self,deviceName):
+        self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
+
 
     def SendPeriod(self,Period):
         # self.Tranciver.T = Period*1e-3
@@ -115,12 +119,6 @@ class MainWindow(QMainWindow):
         self.saveAction.triggered.connect(self.saveFile)
         self.loadAction.triggered.connect(self.loadFile)
 
-    def saveFile(self):
-        print('save')
-    
-    def loadFile(self):
-        print('load')
-
     def StartStop(self,start_stop):
         print(start_stop)
         if start_stop:
@@ -133,9 +131,7 @@ class MainWindow(QMainWindow):
             self.Tranciver.working = False
             self.timer.stop()
             with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
-    
-    def PauseResume(self, pause_resume):
-        print(pause_resume)
+            self.threadpool.clear()
 
     def Process_2(self):
         self.c = 0
@@ -146,14 +142,13 @@ class MainWindow(QMainWindow):
             a = np.concatenate(currentData)
             self.Chart1.specImage(a)
             a=a[::10]
-            # for s in a:
-            #     QtWidgets.QApplication.processEvents()
-            #     self.c = self.c+1
-            #     self.Chart0.plotData([self.c,s])
-            # self.Chart0.plotData_test(range(len(a)), a)
             self.Chart0.plotData(a)
 
-
+    def saveFile(self):
+        print('save')
+    
+    def loadFile(self):
+        print('load')
 
 
 if __name__ == '__main__':

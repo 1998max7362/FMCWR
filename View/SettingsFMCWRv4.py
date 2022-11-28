@@ -14,6 +14,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import * 
 from PyQt5.QtCore import Qt
+from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio
+from Clamp import Clamp
 
 class SettingsWindow(QWidget):
     def __init__(self):
@@ -22,9 +24,6 @@ class SettingsWindow(QWidget):
         self.setFixedWidth(440)
         layout = QVBoxLayout(self)
 
-        self.SignalTypeSwitchlamp = Clamp()
-        self.SignalSourceSwitchClamp = Clamp()
-        self.PeriodClamp = Clamp()
         self.StartStopClamp = Clamp()
         self.xRangeClamp = Clamp()
         self.yRangeClamp = Clamp()
@@ -32,42 +31,14 @@ class SettingsWindow(QWidget):
         
         self.DefaultFont = QFont('Times',10)
 
+        self.input_audio_deviceInfos = QAudioDeviceInfo.availableDevices(QAudio.AudioInput)
+        #  Настройка параметров устройства
+        self.deviceSettings()
+        layout.addWidget(self.DeviceSettingsGroupBox)
+
         #  Настройка параметров графиков
         self.graphSettingsInit()
         layout.addWidget(self.GraphSettingsGroupBox)
-
-
-        self.Period = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),"Период:", "мкс")
-        self.Period.label.setFont(self.DefaultFont)
-        self.Period.labelUnits.setFont(self.DefaultFont)
-        self.Period.LineEdit.setText('0')
-        self.Period.LineEdit.setFont(self.DefaultFont)
-        self.Period.LineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1,2}")))
-        # self.Period.LineEdit.setValidator(QDoubleValidator(
-        #         0.0, # bottom
-        #         100.0, # top
-        #         1, # decimals 
-        #         notation=QDoubleValidator.StandardNotation))
-        layout.addWidget(self.Period, alignment=Qt.AlignTop)
-
-        SourceSelecterLayout = QHBoxLayout()
-        self.Source1 = QLabel('Передатчик')
-        self.Source1.setMaximumWidth(110)
-        self.Source1.setFont(self.DefaultFont)
-        self.Source2 = QLabel('Приёмник')
-        self.Source2.setMaximumWidth(90)
-        self.Source2.setFont(self.DefaultFont)
-        self.SignalSourceSelecter = AnimatedToggle(
-            bar_color=Qt.lightGray,
-            handle_color=Qt.darkGray,
-            checked_color="#808080",
-            pulse_checked_color="#00FF00",
-            pulse_unchecked_color ="#00FF00")
-        self.SignalSourceSelecter.stateChanged.connect(self.SignalSourceSwitched)
-        SourceSelecterLayout.addWidget(self.Source1)
-        SourceSelecterLayout.addWidget(self.SignalSourceSelecter)
-        SourceSelecterLayout.addWidget(self.Source2)
-        layout.addLayout(SourceSelecterLayout)
 
         self.StartStopButton = ClampedToggleButton('Start','100,0,0')
         self.StartStopButton.Text_NOT_CLICKED = ('Start')
@@ -87,9 +58,25 @@ class SettingsWindow(QWidget):
         self.xRangeChanged(False)
         self.yRangeChanged(False)
 
+        self.StartStopClamp.ConnectTo()
+
+    def deviceSettings(self):
+        self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
+        self.DeviceSettingsGroupBox.setFont(QFont('Times',10))
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        self.DeviceSettingsGroupBox.setLayout(layout)
+
+        self.devices_list = []
+        for device in self.input_audio_deviceInfos:
+            self.devices_list.append(device.deviceName())
+        
+        self.deviceComboBox = ClampedComboBox()
+        self.deviceComboBox.addItems(self.devices_list)
+        layout.addWidget(self.deviceComboBox)
+
     def graphSettingsInit(self):
-        self.GraphSettingsGroupBox = QGroupBox('Настройка графиков')
-        # self.GraphSettingsGroupBox.setStyleSheet("::title{font-size:50px}")
+        self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
         layout = QGridLayout()
         layout.setSpacing(0)
@@ -155,37 +142,6 @@ class SettingsWindow(QWidget):
     def StartStop(self):
         self.isMeasuring = not(self.isMeasuring)
         self.StartStopClamp.Send(self.isMeasuring)
-    
-    def SignalSourceSwitched(self,source): # 0 - первый источник, 2 - второй источник
-        boldFont = QFont('Times',10)
-        boldFont.setBold(True)
-        unboldFont = QFont('Times',10)
-        unboldFont.setBold(False)
-        if source == 0:
-            self.Source1.setFont(boldFont)
-            self.Source2.setFont(unboldFont)
-            source = SignalSource.TRANSMITTER
-        if source == 2:
-            self.Source2.setFont(boldFont)
-            self.Source1.setFont(unboldFont)
-            source = SignalSource.RECIEVER
-        self.SignalSourceSwitchClamp.Send(source)
-        print(source)
-
-    def SignalTypeSwitched(self,signalType, buttonNum:int):
-        for RadioButton in self.SignalsType:
-            RadioButton.blockSignals(False)
-        self.SignalsType[buttonNum].blockSignals(True)
-        self.SignalTypeSwitchlamp.Send(signalType)
-        print(signalType)
-
-    def convertBackToFloat(self, value):
-        try:
-            return float(value)
-        except:
-            pass
-    def convertToStr(self, value):
-        return str(value)
 
 if __name__ == '__main__':
 
