@@ -54,7 +54,6 @@ class MainWindow(QMainWindow):
         self.Chart1.set_tSeg(segment)
         self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
         self.Chart1.nfft = 100*1136 # НЕПОНЯТНО TODO
-        self.Chart0.graphWidget.setYRange(-1, 1)
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
