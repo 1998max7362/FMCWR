@@ -42,7 +42,7 @@ class WaterFallWindow(QWidget):
         minv, maxv = np.nanmin(np.nanmin(-40)), np.nanmax(np.nanmax(10))
         bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)
-        self.graphWidget.setXRange(0, 1000) 
+        self.graphWidget.setXRange(0, 20000) 
         # настройки спектрограммы
         self.fs = 192e3
         self.tSeg = 0.001
@@ -119,7 +119,7 @@ class WaterFallWindow(QWidget):
                 self.y = np.array([])
             else:
                 self.spectra = np.vstack((self.spectra, spectra))
-                if len(self.spectra[:,0]) >= 100:
+                if len(self.spectra[:,0]) >= 20:
                     self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
                 logSpectra = 10*np.log10(self.spectra)

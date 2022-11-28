@@ -13,7 +13,7 @@ import time
 from threading import Thread
 import concurrent.futures as cf
 
-from SettingsFMCWRv2 import SettingsWindow
+from SettingsFMCWRv4 import SettingsWindow
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
 from Clamp import Clamp

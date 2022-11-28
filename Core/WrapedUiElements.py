@@ -2,6 +2,9 @@ from select import select
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
+from PyQt5.QtGui import * 
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import * 
 sys.path.insert(0, "././Core/")
 from Clamp import Clamp
 import enum
@@ -135,7 +138,6 @@ class ClampedToggleButton(QPushButton):
             self.setText(self.Text_RIGHT_CLICKED)
         self.state = state
 
-
 class ClampedLineEdit(QLineEdit):
     def __init__(self, convert, convertBack, defaultValue=None):
         super(ClampedLineEdit, self).__init__()
@@ -219,3 +221,51 @@ class ClampedLabel(QLabel):
     
     def changeLabel(self, message):
         self.setText(message)
+
+class NamedClampedSpinBox(QWidget):
+    def __init__(self,LabelText:str):
+        super(NamedClampedSpinBox, self).__init__()
+        layout=QHBoxLayout(self)
+        self.ValueClamp = Clamp()
+        self.label = QLabel(LabelText)
+        self.spinBox = QSpinBox()
+        self.warning =QLabel()
+        icon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
+        self.warning.setPixmap(icon.pixmap(QSize(20, 20)))
+        self.warning.setHidden(True)
+        layout.addWidget(self.label)
+        layout.addWidget(self.spinBox)
+        layout.addWidget(self.warning)
+        layout.addStretch()
+        self.spinBox.valueChanged.connect(self.ValueChanged)
+        self.ValueClamp.HandleWithReceive(self.ChangeValue)
+
+    def ChangeValue(self,value):
+        self.spinBox.setValue(value)
+    
+    def ValueChanged(self,value):
+        self.ValueClamp.Send(value)
+
+class NamedClampedDoubleSpinBox(QWidget):
+    def __init__(self,LabelText:str):
+        super(NamedClampedDoubleSpinBox, self).__init__()
+        layout=QHBoxLayout(self)
+        self.ValueClamp = Clamp()
+        self.label = QLabel(LabelText)
+        self.doubleSpinBox = QDoubleSpinBox()
+        self.warning =QLabel()
+        icon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
+        self.warning.setPixmap(icon.pixmap(QSize(20, 20)))
+        self.warning.setHidden(True)
+        layout.addWidget(self.label)
+        layout.addWidget(self.doubleSpinBox)
+        layout.addWidget(self.warning)
+        layout.addStretch()
+        self.doubleSpinBox.valueChanged.connect(self.ValueChanged)
+        self.ValueClamp.HandleWithReceive(self.ChangeValue)
+
+    def ChangeValue(self,value):
+        self.doubleSpinBox.setValue(value)
+    
+    def ValueChanged(self,value):
+        self.ValueClamp.Send(value)
