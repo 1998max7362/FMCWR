@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
             currentData = self.Tranciver.received_signal.get_nowait()
             a = np.concatenate(currentData)
             self.Chart1.specImage(a)
-            a=a[::10]
+            a=a[::10] #TODO убрать это
             self.Chart0.plotData(a)
 
     def saveFile(self):
