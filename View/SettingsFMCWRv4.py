@@ -96,11 +96,11 @@ class SettingsWindow(QWidget):
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
         layout=QVBoxLayout()
         self.GraphSettingsGroupBox.setLayout(layout)
-        
+
         self.IntervalLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Интервал обновления','мс') 
         self.IntervalLineEdit.label.setFixedWidth(200)
         self.IntervalLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]+")))
-        self.IntervalLineEdit.LineEdit.setText('30')
+        self.IntervalLineEdit.LineEdit.setText('10')
         layout.addWidget(self.IntervalLineEdit)
 
         gridLayout = QGridLayout()

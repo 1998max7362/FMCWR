@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
         self.StartSopClamp.HandleWithReceive(self.StartStop)
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(30)
+        self.timer.setInterval(10)
         self.timer.timeout.connect(self.Process_2)
 
         self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
@@ -120,12 +120,14 @@ class MainWindow(QMainWindow):
     def StartStop(self,start_stop):
         print(start_stop)
         if start_stop:
+            self.settings.DeviceSettingsGroupBox.setEnabled(False)
             self.Chart0.clearPlots(True)
             self.Tranciver.working = True
             self.worker_1  = Worker(self.Tranciver.run_realtime)
             self.threadpool.start(self.worker_1) # получение данных с микрофона
             self.timer.start()
         else:
+            self.settings.DeviceSettingsGroupBox.setEnabled(True)
             self.Tranciver.working = False
             self.timer.stop()
             with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
