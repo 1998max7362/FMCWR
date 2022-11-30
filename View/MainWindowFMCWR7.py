@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self._createMenubar()
 
         #  Signal Settings
-        fs = 45100
+        fs = 44100
         segment = 200 # ms
 
         # Tranciever
@@ -45,7 +45,6 @@ class MainWindow(QMainWindow):
         self.Tranciver.setDevice(0)             # choose device with hostapi = 0
         self.Tranciver.setChannels(1)           # set number of input channels
         self.Tranciver.setFs(fs) 
-        self.Tranciver.interval = 10
         self.Tranciver.downsample = 1
 
         # Graph window settings
@@ -89,7 +88,7 @@ class MainWindow(QMainWindow):
         self.StartSopClamp.HandleWithReceive(self.StartStop)
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(self.Tranciver.interval)
+        self.timer.setInterval(30)
         self.timer.timeout.connect(self.Process_2)
 
         self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
@@ -98,15 +97,11 @@ class MainWindow(QMainWindow):
         self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
         self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
         self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
+        self.settings.downSamplLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.downSampleClamp)
+        self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
     
     def deviceUpdate(self,deviceName):
         self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
-
-
-
-    def SendPeriod(self,Period):
-        # self.Tranciver.T = Period*1e-3
-        print(Period)
 
     def _createMenubar(self):
         menuBar = self.menuBar()
