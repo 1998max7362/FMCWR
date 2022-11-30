@@ -154,11 +154,11 @@ class ClampedLineEdit(QLineEdit):
             pass
             self.Text.Send(0)    
         else:
-            self.Text.Send(self.__convertFromForm(self.text()))
-
-
+            self.Text.Send(self.__convertFromForm(d))
+            self.setText(str(self.__convertFromForm(d)))
     def handleReceiveText(self, value):
-        self.setText(self.__convertToForm(value))
+        if value!=None:
+            self.setText(self.__convertToForm(value))
     def handleReceiveState(self, value:bool):
         self.setEnabled(value)
 

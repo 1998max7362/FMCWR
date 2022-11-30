@@ -81,15 +81,31 @@ class SettingsWindow(QWidget):
 
         self.SampleRateLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Частота дискретизации','Гц') 
         self.SampleRateLineEdit.label.setFixedWidth(200)
+        self.SampleRateLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]+")))
         self.SampleRateLineEdit.LineEdit.setText('44100')
         layout.addWidget(self.SampleRateLineEdit)
+
+        self.downSamplLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'downsample',None) 
+        self.downSamplLineEdit.label.setFixedWidth(200)
+        self.downSamplLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,2}")))
+        self.downSamplLineEdit.LineEdit.setText('1')
+        layout.addWidget(self.downSamplLineEdit)
 
     def graphSettingsInit(self):
         self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
-        layout = QGridLayout()
-        layout.setSpacing(0)
+        layout=QVBoxLayout()
         self.GraphSettingsGroupBox.setLayout(layout)
+        
+        self.IntervalLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Интервал обновления','мс') 
+        self.IntervalLineEdit.label.setFixedWidth(200)
+        self.IntervalLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]+")))
+        self.IntervalLineEdit.LineEdit.setText('30')
+        layout.addWidget(self.IntervalLineEdit)
+
+        gridLayout = QGridLayout()
+        layout.addLayout(gridLayout)
+        gridLayout.setSpacing(0)
         self.xMin = NamedClampedSpinBox('Xmin:')
         self.xMax = NamedClampedSpinBox('Xmax:')
         self.yMin = NamedClampedDoubleSpinBox('Ymin:')
@@ -102,10 +118,10 @@ class SettingsWindow(QWidget):
         self.xMax.label.setFixedWidth(70)
         self.yMin.label.setFixedWidth(70)
         self.yMax.label.setFixedWidth(70)
-        layout.addWidget(self.xMin,0,0)
-        layout.addWidget(self.xMax,1,0)
-        layout.addWidget(self.yMin,0,1)
-        layout.addWidget(self.yMax,1,1)
+        gridLayout.addWidget(self.xMin,0,0)
+        gridLayout.addWidget(self.xMax,1,0)
+        gridLayout.addWidget(self.yMin,0,1)
+        gridLayout.addWidget(self.yMax,1,1)
         self.xMin.spinBox.setMinimum(0)
         self.xMin.spinBox.setMaximum(20000)
         self.xMin.spinBox.setValue(0)
@@ -130,10 +146,16 @@ class SettingsWindow(QWidget):
         self.xMax.spinBox.valueChanged.connect(self.xRangeChanged)
         self.yMin.doubleSpinBox.valueChanged.connect(self.yRangeChanged)
         self.yMax.doubleSpinBox.valueChanged.connect(self.yRangeChanged)
+
+
     
     def convertToStr(self, value):
+        if value=='':
+            value=1
         return str(value)
     def convertBackToInt(self, value):
+        if value=='':
+            value=1
         return int(value)
 
     def xRangeChanged(self,smth):

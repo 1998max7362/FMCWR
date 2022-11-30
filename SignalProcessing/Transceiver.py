@@ -51,8 +51,11 @@ class Transceiver():
         # list of used channels
         self.mapping = None
 
+
         self.FsClamp = Clamp()
         self.FsClamp.HandleWithReceive(self.setFs)
+        self.downSampleClamp = Clamp()
+        self.downSampleClamp.HandleWithReceive(self.setDownSample)
         self.ErrorClamp=Clamp()
 
     def setChannels(self,ch = 1):
@@ -66,6 +69,9 @@ class Transceiver():
     def setDevice(self, hostapi = 0):
         # set device hostapi
         self.device = hostapi
+
+    def setDownSample(self, downSample):
+        self.downsample = downSample
 
     def setFs(self,fs = 44100):
         # set device sample rate
