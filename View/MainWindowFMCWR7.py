@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self._createMenubar()
 
         #  Signal Settings
-        fs = 44100
+        fs = 45100
         segment = 200 # ms
 
         # Tranciever
@@ -96,9 +96,12 @@ class MainWindow(QMainWindow):
         self.settings.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
 
         self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
+        self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
+        self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
     
     def deviceUpdate(self,deviceName):
         self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
+
 
 
     def SendPeriod(self,Period):
@@ -138,7 +141,6 @@ class MainWindow(QMainWindow):
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = self.Tranciver.received_signal.get_nowait()
-            # a = currentData # for testTranciever
             a = np.concatenate(currentData)
             self.Chart1.specImage(a)
             a=a[::10]
@@ -146,7 +148,7 @@ class MainWindow(QMainWindow):
 
     def saveFile(self):
         print('save')
-    
+
     def loadFile(self):
         print('load')
 

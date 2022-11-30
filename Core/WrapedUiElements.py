@@ -185,6 +185,7 @@ class NamedLineEditHorizontal(QWidget):
         self.LineEdit = lineEdit
         self.LineEdit.setFixedWidth(100)
         self.label.setFixedWidth(100)
+        layoutVert.addStretch()
         
 
 class ClampedAction(QAction):
@@ -220,7 +221,11 @@ class ClampedLabel(QLabel):
         self.TextClamp.HandleWithReceive(self.changeLabel)
     
     def changeLabel(self, message):
-        self.setText(message)
+        if message==None:
+            self.setHidden(True)
+        else:
+            self.setHidden(False)
+            self.setText(message)
 
 class NamedClampedSpinBox(QWidget):
     def __init__(self,LabelText:str):
@@ -254,8 +259,6 @@ class NamedClampedDoubleSpinBox(QWidget):
         self.label = QLabel(LabelText)
         self.doubleSpinBox = QDoubleSpinBox()
         self.warning =QLabel()
-        icon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
-        self.warning.setPixmap(icon.pixmap(QSize(20, 20)))
         self.warning.setHidden(True)
         layout.addWidget(self.label)
         layout.addWidget(self.doubleSpinBox)

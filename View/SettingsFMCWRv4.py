@@ -22,6 +22,7 @@ class SettingsWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)
+        self.warningIcon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
         layout = QVBoxLayout(self)
 
         self.StartStopClamp = Clamp()
@@ -53,6 +54,10 @@ class SettingsWindow(QWidget):
         self.StartStopButton.clicked.connect(self.StartStop)
 
         layout.addWidget(self.StartStopButton)
+
+        self.infoLabel = ClampedLabel()
+        self.infoLabel.setStyleSheet('font-size: 12px')
+        layout.addWidget(self.infoLabel)
         layout.addStretch()
 
         self.xRangeChanged(False)
@@ -74,6 +79,11 @@ class SettingsWindow(QWidget):
         self.deviceComboBox.addItems(self.devices_list)
         layout.addWidget(self.deviceComboBox)
 
+        self.SampleRateLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Частота дискретизации','Гц') 
+        self.SampleRateLineEdit.label.setFixedWidth(200)
+        self.SampleRateLineEdit.LineEdit.setText('44100')
+        layout.addWidget(self.SampleRateLineEdit)
+
     def graphSettingsInit(self):
         self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
@@ -84,6 +94,10 @@ class SettingsWindow(QWidget):
         self.xMax = NamedClampedSpinBox('Xmax:')
         self.yMin = NamedClampedDoubleSpinBox('Ymin:')
         self.yMax = NamedClampedDoubleSpinBox('Ymax:')
+        self.xMin.warning.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
+        self.xMax.warning.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
+        self.yMin.warning.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
+        self.yMax.warning.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
         self.xMin.label.setFixedWidth(70)
         self.xMax.label.setFixedWidth(70)
         self.yMin.label.setFixedWidth(70)
@@ -117,6 +131,11 @@ class SettingsWindow(QWidget):
         self.yMin.doubleSpinBox.valueChanged.connect(self.yRangeChanged)
         self.yMax.doubleSpinBox.valueChanged.connect(self.yRangeChanged)
     
+    def convertToStr(self, value):
+        return str(value)
+    def convertBackToInt(self, value):
+        return int(value)
+
     def xRangeChanged(self,smth):
         if self.xMin.spinBox.value()<=self.xMax.spinBox.value():
             self.xRangeClamp.Send([self.xMin.spinBox.value(),self.xMax.spinBox.value()])
@@ -152,3 +171,4 @@ if __name__ == '__main__':
     main.show()
 
     sys.exit(app.exec_())
+
