@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import *
 sys.path.insert(0, "././Core/")
 from Clamp import Clamp
 import enum
-
+from qtwidgets import Toggle, AnimatedToggle
 class ToggleButtonState(enum.Enum):
     NOT_CLICKED = 0
     LEFT_CLICKED = 1
@@ -272,3 +272,19 @@ class NamedClampedDoubleSpinBox(QWidget):
     
     def ValueChanged(self,value):
         self.ValueClamp.Send(value)
+class NamedHorizontalSwitcher(QWidget):
+    def __init__(self,leftName:str=None,rightName:str=None):
+        super(NamedHorizontalSwitcher, self).__init__()
+        layout = QHBoxLayout(self)
+        self.LeftLabel = QLabel(leftName)
+        self.RightLabel = QLabel(rightName)
+        self.Switcher = AnimatedToggle(
+            bar_color=Qt.lightGray,
+            handle_color=Qt.darkGray,
+            checked_color="#808080",
+            pulse_checked_color="#00FF00",
+            pulse_unchecked_color ="#00FF00")
+        layout.addWidget(self.LeftLabel)
+        layout.addWidget(self.Switcher)
+        layout.addWidget(self.RightLabel)
+        layout.addStretch()

@@ -23,10 +23,19 @@ from SignalSource import SignalSource
 from Transceiver import Transceiver
 # from TestTranciever import Transceiver
 from WrapedUiElements import *
+import queue
+from scipy.io.wavfile import write
+from scipy.io import wavfile
+from datetime import datetime
+
+
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.save_signal = queue.Queue()
+        self.wav_data=np.array([])
         self.setWindowTitle('Главное меню')
         self.y = np.array([])
         self.threadpool = QThreadPool()
@@ -39,6 +48,7 @@ class MainWindow(QMainWindow):
         #  Signal Settings
         fs = 44100
         segment = 200 # ms
+        self.signalType=SignalSource.RANGE
 
         # Tranciever
         self.Tranciver = Transceiver()
@@ -57,7 +67,7 @@ class MainWindow(QMainWindow):
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
-        self.PauseResumeClamp = Clamp()
+        self.SignalTypeClamp=Clamp()
 
         # разметка
         layout = QHBoxLayout(self)
@@ -86,6 +96,7 @@ class MainWindow(QMainWindow):
         
         self.StartSopClamp.ConnectFrom(self.settings.StartStopClamp)
         self.StartSopClamp.HandleWithReceive(self.StartStop)
+        self.SignalTypeClamp.HandleWithReceive(self.getSignalType)
 
         self.timer = QtCore.QTimer()
         self.timer.setInterval(10)
@@ -93,11 +104,12 @@ class MainWindow(QMainWindow):
 
         self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
         self.settings.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
+        self.settings.SignalTypeClamp.ConnectTo(self.SignalTypeClamp)
 
         self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
         self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
         self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
-        self.settings.downSamplLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.downSampleClamp)
+        # self.settings.downSamplLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.downSampleClamp) # не нужно
         self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
     
     def deviceUpdate(self,deviceName):
@@ -132,16 +144,32 @@ class MainWindow(QMainWindow):
             self.timer.stop()
             with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
             self.threadpool.clear()
+            while not self.save_signal.empty(): 
+                self.wav_data=np.append(self.wav_data, self.save_signal.get())
+            write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+
+    def loadData(self):
+        samplerate, data = wavfile.read('Data/example.wav')
+        pass
+
+    def getCurTime(self):
+        now = datetime.now()
+        current_time = now.strftime("%H_%M_%S")
+        return current_time
+
+    def getSignalType(self,SignalType):
+        self.signalType=SignalType
 
     def Process_2(self):
         self.c = 0
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
-            currentData = self.Tranciver.received_signal.get_nowait()
-            a = np.concatenate(currentData)
-            self.Chart1.specImage(a)
-            a=a[::10] #TODO убрать это
+            currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
+            a=currentData[::10] #TODO убрать это
+            # a=currentData
+            self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
+            self.save_signal.put(currentData)
 
     def saveFile(self):
         print('save')

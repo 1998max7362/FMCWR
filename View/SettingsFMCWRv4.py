@@ -28,6 +28,7 @@ class SettingsWindow(QWidget):
         self.StartStopClamp = Clamp()
         self.xRangeClamp = Clamp()
         self.yRangeClamp = Clamp()
+        self.SignalTypeClamp=Clamp()
         self.isMeasuring = False
         
         self.DefaultFont = QFont('Times',10)
@@ -91,6 +92,13 @@ class SettingsWindow(QWidget):
         self.downSamplLineEdit.LineEdit.setText('1')
         layout.addWidget(self.downSamplLineEdit)
 
+        self.SignalTypeSwitcher=NamedHorizontalSwitcher('Дальность','Скорость')
+        self.SignalTypeSwitcher.Switcher.setFixedWidth(150)
+        self.SignalTypeSwitcher.LeftLabel.setFixedWidth(100)
+        self.SignalTypeSwitcher.RightLabel.setFixedWidth(100)
+        self.SignalTypeSwitcher.Switcher.stateChanged.connect(self.SignalSourceTypeSwitched)
+        layout.addWidget(self.SignalTypeSwitcher)
+
     def graphSettingsInit(self):
         self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
@@ -147,7 +155,21 @@ class SettingsWindow(QWidget):
         self.yMin.doubleSpinBox.valueChanged.connect(self.yRangeChanged)
         self.yMax.doubleSpinBox.valueChanged.connect(self.yRangeChanged)
 
-
+    def SignalSourceTypeSwitched(self,type): # 0 - первый источник, 2 - второй источник
+        boldFont = QFont('Times',10)
+        boldFont.setBold(True)
+        unboldFont = QFont('Times',10)
+        unboldFont.setBold(False)
+        if type == 0:
+            self.SignalTypeSwitcher.RightLabel.setFont(unboldFont)
+            self.SignalTypeSwitcher.LeftLabel.setFont(boldFont)
+            type = SignalSource.RANGE
+        if type == 2:
+            self.SignalTypeSwitcher.LeftLabel.setFont(unboldFont)
+            self.SignalTypeSwitcher.RightLabel.setFont(boldFont)
+            type = SignalSource.VELOCITY
+        self.SignalTypeClamp.Send(type)
+        # print(type)
     
     def convertToStr(self, value):
         if value=='':

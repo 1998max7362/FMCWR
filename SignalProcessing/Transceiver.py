@@ -96,7 +96,8 @@ class Transceiver():
         #     print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         # print(indata[:, self.mapping])
-        self.received_signal.put(indata[::self.downsample, self.mapping])
+        length = int(self.window * self.samplerate / (1000 * self.downsample))
+        self.received_signal.put(indata[:, self.mapping])
 
     def run_realtime(self):
         # testbench to save data in query
