@@ -25,44 +25,14 @@ class SettingsWindow(QWidget):
         self.SignalSourceSwitchClamp = Clamp()
         self.PeriodClamp = Clamp()
         self.StartStopClamp = Clamp()
-        self.xRangeClamp = Clamp()
-        self.yRangeClamp = Clamp()
+        self.PauseResumeClamp = Clamp()
         self.isMeasuring = False
+        self.Paused = False
         
         self.DefaultFont = QFont('Times',10)
 
         self.SignalTypeInit()
-        # layout.addWidget(self.signalTypesGroupBox)
-
-        # Настройка пределов отображения
-        self.xRangeMin = QSpinBox()
-        self.xRangeMin.setMinimum(0)
-        self.xRangeMin.setMaximum(20000)
-        self.xRangeMin.setValue(0)
-        self.xRangeMax = QSpinBox()
-        self.xRangeMax.setMinimum(0)
-        self.xRangeMax.setMaximum(20000)
-        self.xRangeMax.setValue(20000)
-        self.xRangeMax.setSingleStep(100)
-        self.xRangeMin.setSingleStep(100)
-        self.xRangeMin.valueChanged.connect(self.xRangeChanged)
-        self.xRangeMax.valueChanged.connect(self.xRangeChanged)
-        layout.addWidget(self.xRangeMin)
-        layout.addWidget(self.xRangeMax)
-        self.yRangeMin = QDoubleSpinBox()
-        self.yRangeMin.setValue(-1)
-        self.yRangeMin.setMinimum(-10)
-        self.yRangeMin.setMaximum(10)
-        self.yRangeMax = QDoubleSpinBox()
-        self.yRangeMax.setValue(1)
-        self.yRangeMax.setMinimum(-10)
-        self.yRangeMax.setMaximum(10)
-        self.yRangeMin.setSingleStep(0.1)
-        self.yRangeMax.setSingleStep(0.1)
-        layout.addWidget(self.yRangeMin)
-        layout.addWidget(self.yRangeMax)
-        self.yRangeMin.valueChanged.connect(self.yRangeChanged)
-        self.yRangeMax.valueChanged.connect(self.yRangeChanged)
+        layout.addWidget(self.signalTypesGroupBox)
 
         self.Period = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),"Период:", "мкс")
         self.Period.label.setFont(self.DefaultFont)
@@ -109,16 +79,29 @@ class SettingsWindow(QWidget):
         self.StartStopButton.clicked.connect(self.StartStop)
 
         layout.addWidget(self.StartStopButton)
+
+        
+        self.PauseResumeButton = ClampedToggleButton('Pause','100,0,0')
+        self.PauseResumeButton.Text_NOT_CLICKED = ('Pause')
+        self.PauseResumeButton.Text_LEFT_CLICKED = ('Resume')
+        self.PauseResumeButton.setFont(self.DefaultFont)
+        self.PauseResumeButton.Style_NOT_CLICKED = "background-color: white"
+        self.PauseResumeButton.Style_LEFT_CLICKED = "background-color: green"
+        self.PauseResumeButton.toState(ToggleButtonState.NOT_CLICKED)
+        self.PauseResumeButton.customContextMenuRequested.disconnect(self.PauseResumeButton.rightClickHandler)
+        self.PauseResumeButton.customContextMenuRequested.connect(self.NoneMethod)
+        self.PauseResumeButton.setToolTip('Запуск устройства')
+        self.PauseResumeButton.clicked.connect(self.PauseResume)
+
+        layout.addWidget(self.PauseResumeButton)
         layout.addStretch()
-    
-    def xRangeChanged(self,smth):
-        self.xRangeClamp.Send([self.xRangeMin.value(),self.xRangeMax.value()])
-    
-    def yRangeChanged(self,smth):
-        self.yRangeClamp.Send([self.yRangeMin.value(),self.yRangeMax.value()])
 
     def NoneMethod(self):
         pass 
+
+    def PauseResume(self):
+        self.Paused = not(self.Paused)
+        self.PauseResumeClamp.Send(self.Paused)
 
     def StartStop(self):
         self.isMeasuring = not(self.isMeasuring)

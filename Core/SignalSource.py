@@ -1,5 +1,5 @@
 import enum
 
 class SignalSource(enum.Enum):
-    TRANSMITTER = 0
-    RECIEVER = 1
+    RANGE = 0
+    VELOCITY = 1

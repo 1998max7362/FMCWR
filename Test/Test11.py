@@ -1,39 +1,51 @@
 import sys
-from mainWaterfall import WaterFallWindow
 sys.path.insert(0, "././Core/")
+sys.path.insert(0, "././SignalProcessing/")
+sys.path.insert(0, "././View/")
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 import numpy as np
 from PyQt5 import QtWidgets
-from SettingsFMCWRv2 import SettingsWindow
+from PyQt5.QtCore import *
+import time
+from multiprocessing import Process
 
+from SettingsFMCWRv3 import SettingsWindow
+from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
-from Transmitter import Transmitter
 from Clamp import Clamp
-from PyQt5.QtCore import QTimer
-
+from Worker import *
+from TestTransiver import TestTranciver
+from SignalSource import SignalSource
+from Transceiver import Transceiver
+from WrapedUiElements import *
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Главное меню')
-
+        self.y = np.array([])
 
         self._createActions()
         self._connectActions()
         self._createMenubar()
 
-        # вывод главного блока
-        self.input = Clamp()
-        self.output = Clamp()
+        self.Tranciver = Transceiver()
+        self.Tranciver.setDevice(0)             # choose device with hostapi = 0
+        self.Tranciver.setChannels(1)           # set number of input channels
+        self.Tranciver.setFs(45100.0) 
+
+        #  Add Clamps
+        self.StartSopClamp = Clamp()
+        self.PauseResumeClamp = Clamp()
 
         # разметка
         layout = QHBoxLayout(self)
         # добавление виджетов
         self.settings = SettingsWindow()
         self.dockSettings = QDockWidget()
-        self.transmitter = Transmitter()
+
         self.dockSettings.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
 
         self.dockSettings.setWidget(self.settings)
@@ -53,27 +65,18 @@ class MainWindow(QMainWindow):
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
-        # Подключение модулей
-        self.demo = Clamp()
-        #self.demo.ConnectTo(self.Chart1.demo)
-        self.demo.ConnectTo(self.transmitter.demo)
-        self.settings.StartStopClamp.ConnectTo(self.input)
-        self.transmitter.output.ConnectTo(self.Chart0.input)
-        self.transmitter.output.ConnectTo(self.Chart1.input)
+        
+        self.StartSopClamp.ConnectFrom(self.settings.StartStopClamp)
+        self.StartSopClamp.HandleWithReceive(self.StartStop)
+        self.PauseResumeClamp.ConnectFrom(self.settings.PauseResumeClamp)
+        self.PauseResumeClamp.HandleWithReceive(self.PauseResume)
 
-        # включение демоверсии
-        self.demo.Send(True)
-        if self.demo.SentValue:
-            self.i = 0
-            self.timer = QTimer()
-            self.output.ConnectTo(self.Chart0.input)
-            self.output.ConnectTo(self.Chart1.input)
-            self.input.HandleWithReceive(self.startReceived)
+        # self.outputClamp.ConnectTo(self.Chart1.input)
 
-        self.settings.Period.LineEdit.Text.HandleWithSend(self.SendPeriod)
 
-    def SendPeriod(self,smth):
-        print(smth)
+    def SendPeriod(self,Period):
+        # self.Tranciver.T = Period*1e-3
+        print(Period)
 
     def _createMenubar(self):
         menuBar = self.menuBar()
@@ -95,31 +98,39 @@ class MainWindow(QMainWindow):
     def loadFile(self):
         print('load')
 
-    # методы класса
-    def startReceived(self, data: bool):
-        self.input.ReceivedValue = data
-        if self.input.ReceivedValue:
-            fs = 192e3
-            dt = 1/fs
-            self.timer.setInterval(int(dt*1000))
-            self.timer.timeout.connect(self.demoTransmit)
-            self.timer.start()
-        elif not(self.input.ReceivedValue):
-            self.timer.stop()
-            pass
 
-    def demoTransmit(self):
-        fs = 192e3
-        dt = 1/fs
-        pi = np.pi
-        m = 0.3
-        f0 = 40000
-        f1 = 5000
-        Un = 100
-        # init timer
-        self.i += 1
-        testSig = Un*(1+m*np.cos(2*pi*f1*dt*self.i))*np.cos(2*pi*f0*dt*self.i)
-        self.output.Send([self.i*dt*1000, testSig])
+    def StartStop(self,start_stop):
+        print(start_stop)
+        null = [1,2]
+        if start_stop:
+            self.Tranciver.working = True
+            proc1 = Process(target = self.Tranciver.run_realtime)
+            proc1.start()
+            proc2 = Process(target = Process_2)
+            proc2.start()
+            proc1.join()
+            proc2.join()
+        else:
+            self.Tranciver.working = False
+    
+    def PauseResume(self, pause_resume):
+        print(pause_resume)
+    
+    # def Process_2(self):
+    #     while self.RealTranciver.working:
+    #         if(self.RealTranciver.received_signal.empty()): 
+    #             continue
+    #         currentData = self.RealTranciver.received_signal.get()
+    #         print(currentData)
+
+def Process_2():
+    i=0
+    while True:
+        i=i+1
+        print(i)
+        time.sleep(0.5)
+
+
 
 
 if __name__ == '__main__':
