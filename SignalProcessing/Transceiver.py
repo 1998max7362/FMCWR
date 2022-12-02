@@ -21,17 +21,17 @@ class Transceiver():
     """
     # class properties
     transmitted_signal = np.array([])
-    received_signal = queue.Queue(maxsize=10)
-
-    # prepare data for plot
-    plotdata_signal = queue.Queue()
-    plotdata = None
-    lines = None
-
     parser = argparse.ArgumentParser(add_help=False)
 
     # methods
     def __init__(self) -> None:
+        self.received_signal = queue.Queue(maxsize=10)
+
+        # prepare data for plot
+        self.plotdata_signal = queue.Queue()
+        self.plotdata = None
+        self.lines = None
+
         #instance properties
         self.working = False
         # input channels to plot (default: the first)

@@ -144,9 +144,21 @@ class MainWindow(QMainWindow):
             self.timer.stop()
             with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
             self.threadpool.clear()
+            # saving data from the queue
             while not self.save_signal.empty(): 
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
-            write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+
+            # todo : use checkbox to save current queue or all queue since program start (continues)
+            # now save only data pushed start|stop button
+            try:
+                write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                # clear data
+                self.wav_data = np.array([])
+            except:
+                print('Possible Data folder doesnt exist. Trying save it in current folder. \n')
+                write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                # clear data
+                self.wav_data = np.array([])
 
     def loadData(self):
         samplerate, data = wavfile.read('Data/example.wav')
