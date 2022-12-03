@@ -2,10 +2,13 @@ from select import select
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
+from PyQt5.QtGui import * 
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import * 
 sys.path.insert(0, "././Core/")
 from Clamp import Clamp
 import enum
-
+from qtwidgets import Toggle, AnimatedToggle
 class ToggleButtonState(enum.Enum):
     NOT_CLICKED = 0
     LEFT_CLICKED = 1
@@ -135,7 +138,6 @@ class ClampedToggleButton(QPushButton):
             self.setText(self.Text_RIGHT_CLICKED)
         self.state = state
 
-
 class ClampedLineEdit(QLineEdit):
     def __init__(self, convert, convertBack, defaultValue=None):
         super(ClampedLineEdit, self).__init__()
@@ -152,11 +154,11 @@ class ClampedLineEdit(QLineEdit):
             pass
             self.Text.Send(0)    
         else:
-            self.Text.Send(self.__convertFromForm(self.text()))
-
-
+            self.Text.Send(self.__convertFromForm(d))
+            self.setText(str(self.__convertFromForm(d)))
     def handleReceiveText(self, value):
-        self.setText(self.__convertToForm(value))
+        if value!=None:
+            self.setText(self.__convertToForm(value))
     def handleReceiveState(self, value:bool):
         self.setEnabled(value)
 
@@ -183,6 +185,7 @@ class NamedLineEditHorizontal(QWidget):
         self.LineEdit = lineEdit
         self.LineEdit.setFixedWidth(100)
         self.label.setFixedWidth(100)
+        layoutVert.addStretch()
         
 
 class ClampedAction(QAction):
@@ -218,4 +221,70 @@ class ClampedLabel(QLabel):
         self.TextClamp.HandleWithReceive(self.changeLabel)
     
     def changeLabel(self, message):
-        self.setText(message)
+        if message==None:
+            self.setHidden(True)
+        else:
+            self.setHidden(False)
+            self.setText(message)
+
+class NamedClampedSpinBox(QWidget):
+    def __init__(self,LabelText:str):
+        super(NamedClampedSpinBox, self).__init__()
+        layout=QHBoxLayout(self)
+        self.ValueClamp = Clamp()
+        self.label = QLabel(LabelText)
+        self.spinBox = QSpinBox()
+        self.warning =QLabel()
+        icon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
+        self.warning.setPixmap(icon.pixmap(QSize(20, 20)))
+        self.warning.setHidden(True)
+        layout.addWidget(self.label)
+        layout.addWidget(self.spinBox)
+        layout.addWidget(self.warning)
+        layout.addStretch()
+        self.spinBox.valueChanged.connect(self.ValueChanged)
+        self.ValueClamp.HandleWithReceive(self.ChangeValue)
+
+    def ChangeValue(self,value):
+        self.spinBox.setValue(value)
+    
+    def ValueChanged(self,value):
+        self.ValueClamp.Send(value)
+
+class NamedClampedDoubleSpinBox(QWidget):
+    def __init__(self,LabelText:str):
+        super(NamedClampedDoubleSpinBox, self).__init__()
+        layout=QHBoxLayout(self)
+        self.ValueClamp = Clamp()
+        self.label = QLabel(LabelText)
+        self.doubleSpinBox = QDoubleSpinBox()
+        self.warning =QLabel()
+        self.warning.setHidden(True)
+        layout.addWidget(self.label)
+        layout.addWidget(self.doubleSpinBox)
+        layout.addWidget(self.warning)
+        layout.addStretch()
+        self.doubleSpinBox.valueChanged.connect(self.ValueChanged)
+        self.ValueClamp.HandleWithReceive(self.ChangeValue)
+
+    def ChangeValue(self,value):
+        self.doubleSpinBox.setValue(value)
+    
+    def ValueChanged(self,value):
+        self.ValueClamp.Send(value)
+class NamedHorizontalSwitcher(QWidget):
+    def __init__(self,leftName:str=None,rightName:str=None):
+        super(NamedHorizontalSwitcher, self).__init__()
+        layout = QHBoxLayout(self)
+        self.LeftLabel = QLabel(leftName)
+        self.RightLabel = QLabel(rightName)
+        self.Switcher = AnimatedToggle(
+            bar_color=Qt.lightGray,
+            handle_color=Qt.darkGray,
+            checked_color="#808080",
+            pulse_checked_color="#00FF00",
+            pulse_unchecked_color ="#00FF00")
+        layout.addWidget(self.LeftLabel)
+        layout.addWidget(self.Switcher)
+        layout.addWidget(self.RightLabel)
+        layout.addStretch()

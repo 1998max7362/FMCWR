@@ -1,5 +1,7 @@
 # this file contains class as a driver to audiodevice
 # python-sounddevice module has to be installed first
+import sys
+sys.path.insert(0, "././Core/")
 from PyQt5 import QtCore, QtWidgets
 import argparse
 import queue
@@ -9,6 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sounddevice as sd
 from matplotlib.animation import FuncAnimation
+from Clamp import Clamp
+from PyQt5.QtWidgets import QMessageBox
 
 
 class Transceiver():
@@ -17,17 +21,17 @@ class Transceiver():
     """
     # class properties
     transmitted_signal = np.array([])
-    received_signal = queue.Queue(maxsize=10)
-
-    # prepare data for plot
-    plotdata_signal = queue.Queue()
-    plotdata = None
-    lines = None
-
     parser = argparse.ArgumentParser(add_help=False)
 
     # methods
     def __init__(self) -> None:
+        self.received_signal = queue.Queue(maxsize=10)
+
+        # prepare data for plot
+        self.plotdata_signal = queue.Queue()
+        self.plotdata = None
+        self.lines = None
+
         #instance properties
         self.working = False
         # input channels to plot (default: the first)
@@ -47,6 +51,13 @@ class Transceiver():
         # list of used channels
         self.mapping = None
 
+
+        self.FsClamp = Clamp()
+        self.FsClamp.HandleWithReceive(self.setFs)
+        self.downSampleClamp = Clamp()
+        self.downSampleClamp.HandleWithReceive(self.setDownSample)
+        self.ErrorClamp=Clamp()
+
     def setChannels(self,ch = 1):
         # manualy change number of channels
         # Channel numbers start with 1
@@ -59,11 +70,14 @@ class Transceiver():
         # set device hostapi
         self.device = hostapi
 
+    def setDownSample(self, downSample):
+        self.downsample = downSample
+
     def setFs(self,fs = 44100):
         # set device sample rate
         if self.samplerate == None:
-            device_info = sd.query_devices(self.device, kind='input')
-        show_defaults = device_info['default_samplerate']
+            self.device_info = sd.query_devices(self.device, kind='input')
+        show_defaults = self.device_info['default_samplerate']
         self.samplerate = float(fs)
         print('Default samplerate is ', show_defaults, ' set ',fs, '\n')
 
@@ -82,6 +96,7 @@ class Transceiver():
         #     print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         # print(indata[:, self.mapping])
+        length = int(self.window * self.samplerate / (1000 * self.downsample))
         self.received_signal.put(indata[:, self.mapping])
 
     def run_realtime(self):
@@ -92,11 +107,14 @@ class Transceiver():
             stream = sd.InputStream(
                 device=self.device, channels=max(self.channels),
                 samplerate=self.samplerate, callback=self.recplay_callback)
+            self.ErrorClamp.Send(None)
             with stream:
                 while self.working:
                     QtWidgets.QApplication.processEvents()
         except Exception as e:
+            self.ErrorClamp.Send(e.args[0])
             print(type(e).__name__ + ': ' + str(e))
+        
 
     def recplot_callback(self,indata, frames, time, status):
         # save downsampled data in quere to show
