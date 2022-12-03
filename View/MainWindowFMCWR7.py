@@ -34,6 +34,7 @@ from datetime import datetime
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.fname="test"
         self.save_signal = queue.Queue()
         self.wav_data=np.array([])
         self.setWindowTitle('Главное меню')
@@ -151,13 +152,13 @@ class MainWindow(QMainWindow):
             # todo : use checkbox to save current queue or all queue since program start (continues)
             # now save only data pushed start|stop button
             try:
-                write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                # clear data
+                # write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
                 self.wav_data = np.array([])
             except:
                 print('Possible Data folder doesnt exist. Trying save it in current folder. \n')
-                write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                # clear data
+                # write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
                 self.wav_data = np.array([])
 
     def loadData(self):

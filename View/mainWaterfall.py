@@ -145,6 +145,7 @@ class WaterFallWindow(QWidget):
             self.img.setTransform(tr)
         else:
             self.spectra = np.vstack((self.spectra, spectra))
+            pass
             if len(self.spectra[:,0]) >= self.lines:
                 self.spectra = self.spectra[1:,:]
             # print(np.shape(self.spectra))
@@ -172,7 +173,10 @@ class WaterFallWindow(QWidget):
             # вставить шкалу уровней 
             self.img.setTransform(tr)
         else:
-            self.spectra = np.vstack((self.spectra, np.abs(spectra-self.spectra[len(self.spectra[:,1])-1,:])))
+            self.spectra = np.vstack((self.spectra, spectra))
+            new=np.abs(self.spectra[-1,:]-self.spectra[-2,:])
+            pass
+            self.spectra[-1,:]=new
             if len(self.spectra[:,0]) >= self.lines:
                 self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
