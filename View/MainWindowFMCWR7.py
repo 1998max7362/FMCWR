@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
         self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
-        self.Chart1.nfft = 10*1136 # НЕПОНЯТНО TODO
+        self.Chart1.nfft = 2*1136 # НЕПОНЯТНО TODO
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -175,12 +175,16 @@ class MainWindow(QMainWindow):
 
     def Process_2(self):
         self.c = 0
+        specdata=np.array([])
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
             a=currentData[::10] #TODO убрать это
+            specdata=np.append(specdata,currentData)
+            if len(specdata)*3==1136*3:
+                self.Chart1.specImage(currentData)
+                specdata=np.array([])
             # a=currentData
-            self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
 
