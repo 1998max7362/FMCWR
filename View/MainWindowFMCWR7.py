@@ -161,6 +161,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self,'Таблица','Неподходящий файл',QMessageBox.Ok)
             else:
                 samplerate, data = wavfile.read(fileName)
+                print('Loaded')
 
     def getCurDateTime(self):
         now = datetime.now()
