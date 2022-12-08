@@ -34,6 +34,7 @@ from datetime import datetime
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.fname="test"
         self.save_signal = queue.Queue()
         self.wav_data=np.array([])
         self.setWindowTitle('Главное меню')
@@ -63,7 +64,7 @@ class MainWindow(QMainWindow):
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
         self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
-        self.Chart1.nfft = 10*1136 # НЕПОНЯТНО TODO
+        self.Chart1.nfft = 2*1136 # НЕПОНЯТНО TODO
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -151,13 +152,13 @@ class MainWindow(QMainWindow):
             # todo : use checkbox to save current queue or all queue since program start (continues)
             # now save only data pushed start|stop button
             try:
-                write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                # clear data
+                # write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
                 self.wav_data = np.array([])
             except:
                 print('Possible Data folder doesnt exist. Trying save it in current folder. \n')
-                write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                # clear data
+                # write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
                 self.wav_data = np.array([])
 
     def loadData(self):
@@ -174,12 +175,16 @@ class MainWindow(QMainWindow):
 
     def Process_2(self):
         self.c = 0
+        specdata=np.array([])
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
             a=currentData[::10] #TODO убрать это
+            specdata=np.append(specdata,currentData)
+            if len(specdata)*3==1136*3:
+                self.Chart1.specImage(currentData)
+                specdata=np.array([])
             # a=currentData
-            self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
 

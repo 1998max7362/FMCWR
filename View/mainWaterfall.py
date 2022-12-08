@@ -26,6 +26,10 @@ class WaterFallWindow(QWidget):
         self.demo.HandleWithReceive(self.receiveDemo)
         # Разметка окна
         wFallWindowLayout = QHBoxLayout(self)
+        ## элементы окна
+        # галка ЧПК
+        self.checkBox = QCheckBox()
+        self.checkBox.setText('ЧПК')
         # настройки plotWidget
         self.graphWidget = pg.PlotWidget()
         self.graphWidget.setBackground('k')
@@ -47,16 +51,17 @@ class WaterFallWindow(QWidget):
         self.fs = 192e3
         self.tSeg = 0.001
         self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = 100*self.nPerseg
+        self.nfft = self.nPerseg
+        self.lines = 100
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
         self.input.HandleWithReceive(self.thStart) 
         # Подключение виджета к разметке 
         wFallWindowLayout.addWidget(self.graphWidget)
+        wFallWindowLayout.addWidget(self.checkBox)
         # действие по клампам
         self.rangeClamp.HandleWithReceive(self.setRangeX)
         
-
     # методы класса
     def set_fs(self,fs):
         self.fs = fs
@@ -84,52 +89,18 @@ class WaterFallWindow(QWidget):
         hz = np.linspace(0, fs/2, int(np.floor(len(testSig)/2)+1))
         spectra = 2*np.abs(sp.fft.fft(testSig)/pnts)
         return testSig
+
     # построение спектрограммы
     def specImage(self, s):
         QtWidgets.QApplication.processEvents()
         if self.demo.ReceivedValue:
-            f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
-            logSpectra = 10*np.log10(spectra)
-            self.img.setImage(logSpectra.T)
-            tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft, np.max(t)/len(t))
-            # вставить шкалу уровней
-            minv, maxv = np.nanmin(np.nanmin(logSpectra[logSpectra != -np.inf])), np.nanmax(np.nanmax(logSpectra))
-            #bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
-            #bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)  
-            self.img.setTransform(tr)
-            self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
-            self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
-            self.graphWidget.addItem(self.img)
+            self.demoSpecgram(s)
         elif not(self.demo.ReceivedValue):
-            #self.y = self.y[1:]
-            f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
-            spectra = np.reshape(spectra, (len(spectra), ))
-            if (self.First):
-                self.spectra = spectra
-                self.First = False
-                # print(np.shape(spectra))
-                # print(np.shape(self.spectra))
-                logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
-                self.img.setImage(logSpectra)
-                tr = pg.QtGui.QTransform()
-                tr.scale(self.fs/self.nfft, 1)
-                # вставить шкалу уровней 
-                self.img.setTransform(tr)
-                self.y = np.array([])
-            else:
-                self.spectra = np.vstack((self.spectra, spectra))
-                if len(self.spectra[:,0]) >= 100:
-                    self.spectra = self.spectra[1:,:]
-                # print(np.shape(self.spectra))
-                logSpectra = 10*np.log10(self.spectra)
-                self.img.setImage(logSpectra)
-                tr = pg.QtGui.QTransform()
-                tr.scale(self.fs/self.nfft, 1)
-                # вставить шкалу уровней 
-                self.img.setTransform(tr)
-                self.y = np.array([])
-
+            # проверка на наличие галки ЧПК
+            if not self.checkBox.isChecked():
+                self.specgram(s)
+            elif self.checkBox.isChecked():
+                self.chpkSpecgram(s)
 
     # получить демо сигнал, если включен демо-режим
     def receiveDemo(self, data: bool):
@@ -156,7 +127,80 @@ class WaterFallWindow(QWidget):
     def setRangeX(self, rangeVal: list):
         self.graphWidget.setXRange(rangeVal[0], rangeVal[1])
 
+    # вычисление спектра
+    def specgram(self, s):
+        #self.y = self.y[1:]
+        f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
+        spectra = np.reshape(spectra, (len(spectra), ))
+        if (self.First):
+            self.spectra = spectra
+            self.First = False
+            # print(np.shape(spectra))
+            # print(np.shape(self.spectra))
+            logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
+            self.img.setImage(logSpectra)
+            tr = pg.QtGui.QTransform()
+            tr.scale(self.fs/self.nfft, 1)
+            # вставить шкалу уровней 
+            self.img.setTransform(tr)
+        else:
+            self.spectra = np.vstack((self.spectra, spectra))
+            pass
+            if len(self.spectra[:,0]) >= self.lines:
+                self.spectra = self.spectra[1:,:]
+            # print(np.shape(self.spectra))
+            logSpectra = 10*np.log10(self.spectra)
+            self.img.setImage(logSpectra)
+            tr = pg.QtGui.QTransform()
+            tr.scale(self.fs/self.nfft*0.125/2, 1)
+            # вставить шкалу уровней 
+            self.img.setTransform(tr)
+    
+    # спектрограмма с чпк
+    def chpkSpecgram(self, s):
+        #self.y = self.y[1:]
+        f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft)
+        spectra = np.reshape(spectra, (len(spectra), ))
+        if (self.First):
+            self.spectra = spectra
+            self.First = False
+            # print(np.shape(spectra))
+            # print(np.shape(self.spectra))
+            logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
+            self.img.setImage(logSpectra)
+            tr = pg.QtGui.QTransform()
+            tr.scale(self.fs/self.nfft*0.125/2, 1)
+            # вставить шкалу уровней 
+            self.img.setTransform(tr)
+        else:
+            self.spectra = np.vstack((self.spectra, spectra))
+            new=np.abs(self.spectra[-1,:]-self.spectra[-2,:])
+            new = new**2
+            self.spectra[-1,:]=new
+            if len(self.spectra[:,0]) >= self.lines:
+                self.spectra = self.spectra[1:,:]
+                # print(np.shape(self.spectra))
+            logSpectra = 10*np.log10(self.spectra)
+            self.img.setImage(logSpectra)
+            tr = pg.QtGui.QTransform()
+            tr.scale(self.fs/self.nfft*0.125/2, 1)
+            # вставить шкалу уровней 
+            self.img.setTransform(tr)
 
+    def demoSpecgram(self, s):
+        f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.1*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,scaling='density')
+        logSpectra = 10*np.log10(spectra)
+        self.img.setImage(logSpectra.T)
+        tr = pg.QtGui.QTransform()
+        tr.scale(self.fs/self.nfft, np.max(t)/len(t))
+        # вставить шкалу уровней
+        minv, maxv = np.nanmin(np.nanmin(logSpectra[logSpectra != -np.inf])), np.nanmax(np.nanmax(logSpectra))
+        #bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
+        #bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)  
+        self.img.setTransform(tr)
+        self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
+        self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
+        self.graphWidget.addItem(self.img)
 
 
 
