@@ -131,7 +131,6 @@ class MainWindow(QMainWindow):
 
     def Process_2(self):
         self.c = 0
-        specdata=np.array([])
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
