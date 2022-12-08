@@ -86,8 +86,6 @@ class SettingsWindow(QWidget):
         self.SampleRateLineEdit.LineEdit.setText('44100')
         layout.addWidget(self.SampleRateLineEdit)
 
-
-
         self.SignalTypeSwitcher=NamedHorizontalSwitcher('Дальность','Скорость')
         self.SignalTypeSwitcher.Switcher.setFixedWidth(150)
         self.SignalTypeSwitcher.LeftLabel.setFixedWidth(100)
@@ -177,6 +175,7 @@ class SettingsWindow(QWidget):
         if value=='':
             value=1
         return str(value)
+
     def convertBackToInt(self, value):
         if value=='':
             value=1

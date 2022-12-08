@@ -149,16 +149,19 @@ class ClampedLineEdit(QLineEdit):
         self.State.HandleWithReceive(self.handleReceiveState)
         self.__convertToForm = convert
         self.__convertFromForm = convertBack
+
     def send(self,d):
         if self.text() == None:
             pass
             self.Text.Send(0)    
         else:
             self.Text.Send(self.__convertFromForm(d))
-            self.setText(str(self.__convertFromForm(d)))
+            # self.setText(str(self.__convertFromForm(d)))
+
     def handleReceiveText(self, value):
         if value!=None:
             self.setText(self.__convertToForm(value))
+
     def handleReceiveState(self, value:bool):
         self.setEnabled(value)
 
