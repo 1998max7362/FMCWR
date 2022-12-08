@@ -59,8 +59,6 @@ class MainWindow(QMainWindow):
         self.Chart1 = WaterFallWindow()
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
-        self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
-        self.Chart1.nfft = 2*1136 # НЕПОНЯТНО TODO
         self.downSample = 10
 
         #  Add Clamps
@@ -142,7 +140,10 @@ class MainWindow(QMainWindow):
                 xMax = len(currentData)
                 self.settings.xMax.spinBox.setMaximum(xMax)
                 self.settings.xMax.spinBox.setValue(xMax)
+                self.settings.xMin.spinBox.setValue(0)
                 self.Chart1.setRangeX([0,xMax])
+                self.Chart1.nPerseg = xMax
+                self.Chart1.nfft = 2*xMax
                 self.fristQue = False
             self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
