@@ -29,16 +29,12 @@ from scipy.io import wavfile
 from datetime import datetime
 
 
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.fname="test"
         self.save_signal = queue.Queue()
         self.wav_data=np.array([])
         self.setWindowTitle('Главное меню')
-        self.y = np.array([])
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(1)
 
@@ -123,6 +119,7 @@ class MainWindow(QMainWindow):
             self.worker_1  = Worker(self.Tranciver.run_realtime)
             self.threadpool.start(self.worker_1) # получение данных с микрофона
             self.timer.start()
+            self.fristQue = True
         else:
             self.settings.DeviceSettingsGroupBox.setEnabled(True)
             self.Tranciver.working = False
@@ -130,7 +127,8 @@ class MainWindow(QMainWindow):
             with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
             self.threadpool.clear()
             # saving data from the queue
-            while not self.save_signal.empty(): 
+            while not self.save_signal.empty():
+                QtWidgets.QApplication.processEvents()
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
 
     def Process_2(self):
@@ -140,10 +138,13 @@ class MainWindow(QMainWindow):
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
             a=currentData[::self.downSample]
-            specdata=np.append(specdata,currentData)
-            if len(specdata)*3==1136*3: # TODO
-                self.Chart1.specImage(currentData)
-                specdata=np.array([])
+            if self.fristQue:
+                xMax = len(currentData)
+                self.settings.xMax.spinBox.setMaximum(xMax)
+                self.settings.xMax.spinBox.setValue(xMax)
+                self.Chart1.setRangeX([0,xMax])
+                self.fristQue = False
+            self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
 
@@ -151,6 +152,7 @@ class MainWindow(QMainWindow):
         filename = self._saveFileDialog('Сохранение сигнала')
         write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
         self.wav_data = np.array([])
+        QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
     def loadFile(self):
         fileName, filter = QFileDialog.getOpenFileName()

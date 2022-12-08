@@ -139,7 +139,7 @@ class SettingsWindow(QWidget):
         self.xMax.spinBox.setMinimum(0)
         self.xMax.spinBox.setMaximum(20000)
         self.xMax.spinBox.setValue(20000)
-        self.xMax.spinBox.setSingleStep(100)
+        self.xMax.spinBox.setSingleStep(1)
         self.yMin.doubleSpinBox.setMinimum(-100)
         self.yMin.doubleSpinBox.setMaximum(100)
         self.yMax.doubleSpinBox.setMinimum(-100)
