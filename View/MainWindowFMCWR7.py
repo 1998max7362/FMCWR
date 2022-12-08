@@ -113,23 +113,6 @@ class MainWindow(QMainWindow):
         self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
         self.settings.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
         self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
-    
-    def deviceUpdate(self,deviceName):
-        self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
-
-    def _createMenubar(self):
-        menuBar = self.menuBar()
-        MainWindowMenuBar = menuBar.addMenu("&Файл")
-        MainWindowMenuBar.addAction(self.saveAction)
-        MainWindowMenuBar.addAction(self.loadAction)
-
-    def _createActions(self):
-        self.saveAction = QAction("&Сохранить",self)
-        self.loadAction = QAction("&Загрузить",self)
-    
-    def _connectActions(self):
-        self.saveAction.triggered.connect(self.saveFile)
-        self.loadAction.triggered.connect(self.loadFile)
 
     def StartStop(self,start_stop):
         print(start_stop)
@@ -158,10 +141,9 @@ class MainWindow(QMainWindow):
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
             a=currentData[::self.downSample]
             specdata=np.append(specdata,currentData)
-            if len(specdata)*3==1136*3:
+            if len(specdata)*3==1136*3: # TODO
                 self.Chart1.specImage(currentData)
                 specdata=np.array([])
-            # a=currentData
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
 
@@ -195,7 +177,22 @@ class MainWindow(QMainWindow):
         fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
         return fileName
 
+    def deviceUpdate(self,deviceName):
+        self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
 
+    def _createMenubar(self):
+        menuBar = self.menuBar()
+        MainWindowMenuBar = menuBar.addMenu("&Файл")
+        MainWindowMenuBar.addAction(self.saveAction)
+        MainWindowMenuBar.addAction(self.loadAction)
+
+    def _createActions(self):
+        self.saveAction = QAction("&Сохранить",self)
+        self.loadAction = QAction("&Загрузить",self)
+    
+    def _connectActions(self):
+        self.saveAction.triggered.connect(self.saveFile)
+        self.loadAction.triggered.connect(self.loadFile)
 
 
 if __name__ == '__main__':
