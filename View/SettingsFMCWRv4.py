@@ -86,11 +86,7 @@ class SettingsWindow(QWidget):
         self.SampleRateLineEdit.LineEdit.setText('44100')
         layout.addWidget(self.SampleRateLineEdit)
 
-        self.downSamplLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'downsample',None) 
-        self.downSamplLineEdit.label.setFixedWidth(200)
-        self.downSamplLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,2}")))
-        self.downSamplLineEdit.LineEdit.setText('1')
-        layout.addWidget(self.downSamplLineEdit)
+
 
         self.SignalTypeSwitcher=NamedHorizontalSwitcher('Дальность','Скорость')
         self.SignalTypeSwitcher.Switcher.setFixedWidth(150)
@@ -104,6 +100,12 @@ class SettingsWindow(QWidget):
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
         layout=QVBoxLayout()
         self.GraphSettingsGroupBox.setLayout(layout)
+
+        self.downSamplLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'downsample',None) 
+        self.downSamplLineEdit.label.setFixedWidth(200)
+        self.downSamplLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,2}")))
+        self.downSamplLineEdit.LineEdit.setText('10')
+        layout.addWidget(self.downSamplLineEdit)
 
         self.IntervalLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Интервал обновления','мс') 
         self.IntervalLineEdit.label.setFixedWidth(200)

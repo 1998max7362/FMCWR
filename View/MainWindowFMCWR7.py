@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self.Chart1.set_tSeg(segment)
         self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
         self.Chart1.nfft = 2*1136 # НЕПОНЯТНО TODO
+        self.downSample = 10
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -110,7 +111,7 @@ class MainWindow(QMainWindow):
         self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
         self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
         self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
-        # self.settings.downSamplLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.downSampleClamp) # не нужно
+        self.settings.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
         self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
     
     def deviceUpdate(self,deviceName):
@@ -149,30 +150,13 @@ class MainWindow(QMainWindow):
             while not self.save_signal.empty(): 
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
 
-    def saveFile(self):
-        filename = self._saveFileDialog('Сохранение сигнала')
-        write(filename+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-        self.wav_data = np.array([])
-
-    def loadFile(self):
-        samplerate, data = wavfile.read('Data/example.wav')
-        print('load')
-
-    def getCurTime(self):
-        now = datetime.now()
-        current_time = now.strftime("%H_%M_%S")
-        return current_time
-
-    def getSignalType(self,SignalType):
-        self.signalType=SignalType
-
     def Process_2(self):
         self.c = 0
         specdata=np.array([])
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
-            a=currentData[::10] #TODO убрать это
+            a=currentData[::self.downSample]
             specdata=np.append(specdata,currentData)
             if len(specdata)*3==1136*3:
                 self.Chart1.specImage(currentData)
@@ -180,6 +164,30 @@ class MainWindow(QMainWindow):
             # a=currentData
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
+
+    def saveFile(self):
+        filename = self._saveFileDialog('Сохранение сигнала')
+        write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+        self.wav_data = np.array([])
+
+    def loadFile(self):
+        fileName, filter = QFileDialog.getOpenFileName()
+        if fileName!='':
+            if fileName[-4:]!='.wav':
+                QMessageBox.warning(self,'Таблица','Неподходящий файл',QMessageBox.Ok)
+            else:
+                samplerate, data = wavfile.read(fileName)
+
+    def getCurDateTime(self):
+        now = datetime.now()
+        current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
+        return current_date_time
+
+    def getSignalType(self,SignalType):
+        self.signalType=SignalType
+    
+    def setDownSample(self,value):
+        self.downSample = value
 
     def _saveFileDialog(self,text):
         options = QFileDialog.Options()
