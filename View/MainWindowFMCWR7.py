@@ -1,4 +1,4 @@
-import sys
+import sys, os
 sys.path.insert(0, "././Core/")
 sys.path.insert(0, "././SignalProcessing/")
 sys.path.insert(0, "././View/")
@@ -149,21 +149,14 @@ class MainWindow(QMainWindow):
             while not self.save_signal.empty(): 
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
 
-            # todo : use checkbox to save current queue or all queue since program start (continues)
-            # now save only data pushed start|stop button
-            try:
-                # write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                self.wav_data = np.array([])
-            except:
-                print('Possible Data folder doesnt exist. Trying save it in current folder. \n')
-                # write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                self.wav_data = np.array([])
+    def saveFile(self):
+        filename = self._saveFileDialog('Сохранение сигнала')
+        write(filename+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+        self.wav_data = np.array([])
 
-    def loadData(self):
+    def loadFile(self):
         samplerate, data = wavfile.read('Data/example.wav')
-        pass
+        print('load')
 
     def getCurTime(self):
         now = datetime.now()
@@ -188,11 +181,13 @@ class MainWindow(QMainWindow):
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
 
-    def saveFile(self):
-        print('save')
+    def _saveFileDialog(self,text):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
+        return fileName
 
-    def loadFile(self):
-        print('load')
+
 
 
 if __name__ == '__main__':
