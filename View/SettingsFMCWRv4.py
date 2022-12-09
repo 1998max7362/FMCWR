@@ -90,6 +90,10 @@ class SettingsWindow(QWidget):
         self.SignalTypeSwitcher.Switcher.setFixedWidth(150)
         self.SignalTypeSwitcher.LeftLabel.setFixedWidth(100)
         self.SignalTypeSwitcher.RightLabel.setFixedWidth(100)
+        if self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.RANGE.value:
+            self.SignalTypeClamp.Send(SignalSource.RANGE)
+        elif self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.VELOCITY.value:
+            self.SignalTypeClamp.Send(SignalSource.VELOCITY)
         self.SignalTypeSwitcher.Switcher.stateChanged.connect(self.SignalSourceTypeSwitched)
         layout.addWidget(self.SignalTypeSwitcher)
 

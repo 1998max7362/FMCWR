@@ -102,6 +102,7 @@ class MainWindow(QMainWindow):
         self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
         self.settings.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
         self.settings.SignalTypeClamp.ConnectTo(self.SignalTypeClamp)
+        self.settings.SignalTypeClamp.ConnectTo(self.Chart1.SignalTypeClamp)
 
         self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
         self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)

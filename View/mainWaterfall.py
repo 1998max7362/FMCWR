@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import *
 import matplotlib.pyplot as plt
 from Clamp import Clamp
 from threading import Thread
+from SignalSource import SignalSource
 
 
 class WaterFallWindow(QWidget):
@@ -20,6 +21,7 @@ class WaterFallWindow(QWidget):
         self.rangeClamp = Clamp()
         self.y = np.array([])
         self.First = True
+        self.SignalTypeClamp = Clamp()
         # Проверка демоверсии
         self.demo = Clamp()
         self.demo.ReceivedValue = False
@@ -53,6 +55,7 @@ class WaterFallWindow(QWidget):
         self.nPerseg = int(self.tSeg*self.fs)
         self.nfft = self.nPerseg
         self.lines = 100
+        self.coef = 1
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
         self.input.HandleWithReceive(self.thStart) 
@@ -61,6 +64,7 @@ class WaterFallWindow(QWidget):
         wFallWindowLayout.addWidget(self.checkBox)
         # действие по клампам
         self.rangeClamp.HandleWithReceive(self.setRangeX)
+        self.SignalTypeClamp.HandleWithReceive(self.setCoef)
         
     # методы класса
     def set_fs(self,fs):
@@ -123,9 +127,17 @@ class WaterFallWindow(QWidget):
     # очищение графиков
     def clearPlots(self, data: bool):
         self.graphWidget.clear()
-
+    
+    # Изменить пределы по X
     def setRangeX(self, rangeVal: list):
         self.graphWidget.setXRange(rangeVal[0], rangeVal[1])
+    
+    # масштаб данных
+    def setCoef(self, type: SignalSource):
+        if type.value == SignalSource.RANGE.value:
+            self.coef = 2/3e8/23.3e-3*221e6
+        elif type.value ==SignalSource.VELOCITY.value:
+            self.coef = 0.125/2
 
     # вычисление спектра
     def specgram(self, s):
@@ -140,7 +152,7 @@ class WaterFallWindow(QWidget):
             logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
             self.img.setImage(logSpectra)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft, 1)
+            tr.scale(self.fs/self.nfft * self.coef, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
         else:
@@ -152,7 +164,7 @@ class WaterFallWindow(QWidget):
             logSpectra = 10*np.log10(self.spectra)
             self.img.setImage(logSpectra)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft*0.125/2, 1)
+            tr.scale(self.fs/self.nfft*self.coef, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
     
