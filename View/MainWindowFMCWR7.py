@@ -1,4 +1,4 @@
-import sys
+import sys, os
 sys.path.insert(0, "././Core/")
 sys.path.insert(0, "././SignalProcessing/")
 sys.path.insert(0, "././View/")
@@ -29,16 +29,12 @@ from scipy.io import wavfile
 from datetime import datetime
 
 
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.fname="test"
         self.save_signal = queue.Queue()
         self.wav_data=np.array([])
         self.setWindowTitle('Главное меню')
-        self.y = np.array([])
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(1)
 
@@ -63,8 +59,7 @@ class MainWindow(QMainWindow):
         self.Chart1 = WaterFallWindow()
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
-        self.Chart1.nPerseg = 1136 # НЕПОНЯТНО TODO
-        self.Chart1.nfft = 2*1136 # НЕПОНЯТНО TODO
+        self.downSample = 10
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -110,25 +105,8 @@ class MainWindow(QMainWindow):
         self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
         self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
         self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
-        # self.settings.downSamplLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.downSampleClamp) # не нужно
+        self.settings.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
         self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
-    
-    def deviceUpdate(self,deviceName):
-        self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
-
-    def _createMenubar(self):
-        menuBar = self.menuBar()
-        MainWindowMenuBar = menuBar.addMenu("&Файл")
-        MainWindowMenuBar.addAction(self.saveAction)
-        MainWindowMenuBar.addAction(self.loadAction)
-
-    def _createActions(self):
-        self.saveAction = QAction("&Сохранить",self)
-        self.loadAction = QAction("&Загрузить",self)
-    
-    def _connectActions(self):
-        self.saveAction.triggered.connect(self.saveFile)
-        self.loadAction.triggered.connect(self.loadFile)
 
     def StartStop(self,start_stop):
         """ Обработчик нажатия на кнопку Старт/Стоп"""
@@ -141,6 +119,7 @@ class MainWindow(QMainWindow):
             self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
             self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
+            self.fristQue = True
         else:
             # нажали на кнопку, получили "0"
             self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
@@ -152,7 +131,8 @@ class MainWindow(QMainWindow):
             self.threadpool.clear()
 
             # saving data from the queue для записи в файл
-            while not self.save_signal.empty(): 
+            while not self.save_signal.empty():
+                QtWidgets.QApplication.processEvents()
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
 
             # todo : use checkbox to save current queue or all queue since program start (continues)
@@ -181,24 +161,71 @@ class MainWindow(QMainWindow):
 
     def Process_2(self):
         self.c = 0
-        specdata=np.array([])
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
-            a=currentData[::10] #TODO убрать это
-            specdata=np.append(specdata,currentData)
-            if len(specdata)*3==1136*3:
-                self.Chart1.specImage(currentData)
-                specdata=np.array([])
-            # a=currentData
+            a=currentData[::self.downSample]
+            if self.fristQue:
+                xMax = len(currentData)
+                self.settings.xMax.spinBox.setMaximum(xMax)
+                self.settings.xMax.spinBox.setValue(xMax)
+                self.settings.xMin.spinBox.setValue(0)
+                self.Chart1.setRangeX([0,xMax])
+                self.Chart1.nPerseg = xMax
+                self.Chart1.nfft = 2*xMax
+                self.fristQue = False
+            self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
 
     def saveFile(self):
-        print('save')
+        filename = self._saveFileDialog('Сохранение сигнала')
+        write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+        self.wav_data = np.array([])
+        QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
     def loadFile(self):
-        print('load')
+        fileName, filter = QFileDialog.getOpenFileName()
+        if fileName!='':
+            if fileName[-4:]!='.wav':
+                QMessageBox.warning(self,'Таблица','Неподходящий файл',QMessageBox.Ok)
+            else:
+                samplerate, data = wavfile.read(fileName)
+                print('Loaded')
+
+    def getCurDateTime(self):
+        now = datetime.now()
+        current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
+        return current_date_time
+
+    def getSignalType(self,SignalType):
+        self.signalType=SignalType
+    
+    def setDownSample(self,value):
+        self.downSample = value
+
+    def _saveFileDialog(self,text):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
+        return fileName
+
+    def deviceUpdate(self,deviceName):
+        self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
+
+    def _createMenubar(self):
+        menuBar = self.menuBar()
+        MainWindowMenuBar = menuBar.addMenu("&Файл")
+        MainWindowMenuBar.addAction(self.saveAction)
+        MainWindowMenuBar.addAction(self.loadAction)
+
+    def _createActions(self):
+        self.saveAction = QAction("&Сохранить",self)
+        self.loadAction = QAction("&Загрузить",self)
+    
+    def _connectActions(self):
+        self.saveAction.triggered.connect(self.saveFile)
+        self.loadAction.triggered.connect(self.loadFile)
 
 
 if __name__ == '__main__':

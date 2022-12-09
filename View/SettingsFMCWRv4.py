@@ -86,12 +86,6 @@ class SettingsWindow(QWidget):
         self.SampleRateLineEdit.LineEdit.setText('44100')
         layout.addWidget(self.SampleRateLineEdit)
 
-        self.downSamplLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'downsample',None) 
-        self.downSamplLineEdit.label.setFixedWidth(200)
-        self.downSamplLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,2}")))
-        self.downSamplLineEdit.LineEdit.setText('1')
-        layout.addWidget(self.downSamplLineEdit)
-
         self.SignalTypeSwitcher=NamedHorizontalSwitcher('Дальность','Скорость')
         self.SignalTypeSwitcher.Switcher.setFixedWidth(150)
         self.SignalTypeSwitcher.LeftLabel.setFixedWidth(100)
@@ -104,6 +98,12 @@ class SettingsWindow(QWidget):
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
         layout=QVBoxLayout()
         self.GraphSettingsGroupBox.setLayout(layout)
+
+        self.downSamplLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'downsample',None) 
+        self.downSamplLineEdit.label.setFixedWidth(200)
+        self.downSamplLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,2}")))
+        self.downSamplLineEdit.LineEdit.setText('10')
+        layout.addWidget(self.downSamplLineEdit)
 
         self.IntervalLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Интервал обновления','мс') 
         self.IntervalLineEdit.label.setFixedWidth(200)
@@ -137,7 +137,7 @@ class SettingsWindow(QWidget):
         self.xMax.spinBox.setMinimum(0)
         self.xMax.spinBox.setMaximum(20000)
         self.xMax.spinBox.setValue(20000)
-        self.xMax.spinBox.setSingleStep(100)
+        self.xMax.spinBox.setSingleStep(1)
         self.yMin.doubleSpinBox.setMinimum(-100)
         self.yMin.doubleSpinBox.setMaximum(100)
         self.yMax.doubleSpinBox.setMinimum(-100)
@@ -175,6 +175,7 @@ class SettingsWindow(QWidget):
         if value=='':
             value=1
         return str(value)
+
     def convertBackToInt(self, value):
         if value=='':
             value=1
