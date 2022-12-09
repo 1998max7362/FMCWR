@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Главное меню')
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(1)
+        self.threadpool.setMaxThreadCount(1)
 
         self._createActions()
         self._connectActions()
