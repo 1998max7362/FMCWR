@@ -50,8 +50,8 @@ class Transceiver():
         self.downsample = 10
         # list of used channels
         self.mapping = None
-        # default sampling time, 10 ms
-        self.blocksize = 441 
+        # default sampling time, 25.7 ms
+        self.blocksize = 1136 
 
         self.FsClamp = Clamp()
         self.FsClamp.HandleWithReceive(self.setFs)
@@ -59,7 +59,7 @@ class Transceiver():
         self.downSampleClamp.HandleWithReceive(self.setDownSample)
         self.ErrorClamp=Clamp()
 
-    def setBlkSz(self, blksz = 441):
+    def setBlkSz(self, blksz = 1136):
         # manualy change number of block size
         self.blocksize = blksz
 
@@ -136,8 +136,6 @@ class Transceiver():
         while True:
             try:
                 data = self.plotdata_signal.get_nowait()
-                tt = self.timedata.get_nowait()
-                pass
             except queue.Empty:
                 break
             shift = len(data)

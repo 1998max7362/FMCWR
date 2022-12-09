@@ -60,6 +60,8 @@ class MainWindow(QMainWindow):
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
         self.downSample = 10
+        self.bufCurrent = np.array([])  # буфер отображаемого фрейма в спектрограмме
+        self.bufNext = np.array([])     # буфер следующего фремйа в спектрограмме
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -164,7 +166,7 @@ class MainWindow(QMainWindow):
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
-            a=currentData[::self.downSample]
+            oscillogramma=currentData[::self.downSample]
             if self.firstQue:
                 xMax = len(currentData)
                 self.settings.xMax.spinBox.setMaximum(xMax)
@@ -174,8 +176,32 @@ class MainWindow(QMainWindow):
                 self.Chart1.nPerseg = xMax
                 self.Chart1.nfft = 2*xMax
                 self.firstQue = False
-            self.Chart1.specImage(currentData)
-            self.Chart0.plotData(a)
+            # одинаковое отображение осциллограм вне зависимости от режима работы
+            self.Chart0.plotData(oscillogramma)
+            # выбор варианта обработки currentData (скорость или дальность)
+            if self.signalType.value:
+                # "1" обработка скорости 
+                self.Chart1.specImage(currentData)
+            else:
+                # "0" обработка дальности
+                # 1) взять производную текущего фрейма
+                diffSignal = np.diff(currentData)
+                # 2) найти положение максимума
+                maxind = np.argmax(diffSignal)
+                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
+                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
+                self.bufNext = currentData[maxind:-1]
+                n = self.Tranciver.blocksize
+                # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
+                if len(self.bufCurrent) < n :
+                    self.bufCurrent = np.concatenate((self.bufCurrent,np.zeros(n-len(self.bufCurrent))))
+                else:
+                    self.bufCurrent = self.bufCurrent[:n]
+                # 4) обобразить спектрограмму
+                self.Chart1.specImage(self.bufCurrent)
+                # 5) текущий буфер заменить буфером следующего кадра
+                self.bufCurrent = self.bufNext
+                       
             self.save_signal.put(currentData)
 
     def saveFile(self):
