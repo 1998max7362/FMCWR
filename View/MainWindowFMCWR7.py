@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
             self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
             self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
-            self.fristQue = True
+            self.firstQue = True
         else:
             # нажали на кнопку, получили "0"
             self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
             a=currentData[::self.downSample]
-            if self.fristQue:
+            if self.firstQue:
                 xMax = len(currentData)
                 self.settings.xMax.spinBox.setMaximum(xMax)
                 self.settings.xMax.spinBox.setValue(xMax)
@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
                 self.Chart1.setRangeX([0,xMax])
                 self.Chart1.nPerseg = xMax
                 self.Chart1.nfft = 2*xMax
-                self.fristQue = False
+                self.firstQue = False
             self.Chart1.specImage(currentData)
             self.Chart0.plotData(a)
             self.save_signal.put(currentData)
