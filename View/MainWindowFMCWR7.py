@@ -131,34 +131,40 @@ class MainWindow(QMainWindow):
         self.loadAction.triggered.connect(self.loadFile)
 
     def StartStop(self,start_stop):
-        print(start_stop)
+        """ Обработчик нажатия на кнопку Старт/Стоп"""
+        print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
         if start_stop:
-            self.settings.DeviceSettingsGroupBox.setEnabled(False)
-            self.Chart0.clearPlots(True)
-            self.Tranciver.working = True
-            self.worker_1  = Worker(self.Tranciver.run_realtime)
-            self.threadpool.start(self.worker_1) # получение данных с микрофона
-            self.timer.start()
+            # нажали на кнопку, получили "1"
+            self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
+            self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
+            self.Tranciver.working = True                           # ставим признак работы Tranciver
+            self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
+            self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
+            self.timer.start()                                      # запускаем таймер для передергивания интерфейса
         else:
-            self.settings.DeviceSettingsGroupBox.setEnabled(True)
-            self.Tranciver.working = False
-            self.timer.stop()
-            with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
+            # нажали на кнопку, получили "0"
+            self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
+            self.Tranciver.working = False                          # ставим признак выключения Tranciver
+            self.timer.stop()                                       # отключаем таймер обновления
+            # ждем снятия блокировки с очереди для записи и очищаем массив с записанным сигналом
+            with self.Tranciver.received_signal.mutex: 
+                self.Tranciver.received_signal.queue.clear()
             self.threadpool.clear()
-            # saving data from the queue
+
+            # saving data from the queue для записи в файл
             while not self.save_signal.empty(): 
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
 
             # todo : use checkbox to save current queue or all queue since program start (continues)
             # now save only data pushed start|stop button
             try:
-                # write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                # write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
                 self.wav_data = np.array([])
             except:
                 print('Possible Data folder doesnt exist. Trying save it in current folder. \n')
-                # write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-                write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                # write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
                 self.wav_data = np.array([])
 
     def loadData(self):
