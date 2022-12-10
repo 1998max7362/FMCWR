@@ -9,6 +9,59 @@ sys.path.insert(0, "././Core/")
 from Clamp import Clamp
 import enum
 from qtwidgets import Toggle, AnimatedToggle
+from decimal import Decimal
+
+class DoubleSlider(QSlider):
+
+    # create our our signal that we can connect to if necessary
+    doubleValueChanged = pyqtSignal(float)
+
+    def __init__(self, decimals=3, *args, **kargs):
+        super(DoubleSlider, self).__init__( *args, **kargs)
+        self._multi = 10 ** decimals
+        self.valueChanged.connect(self.emitDoubleValueChanged)
+
+    def emitDoubleValueChanged(self):
+        value = float(super(DoubleSlider, self).value())/self._multi
+        self.doubleValueChanged.emit(value)
+
+    def value(self):
+        return float(super(DoubleSlider, self).value()) / self._multi
+
+    def setMinimum(self, value):
+        self.__minval = value
+        return super(DoubleSlider, self).setMinimum(value * self._multi)
+
+    def setMaximum(self, value):
+        self.__maxval = value
+        return super(DoubleSlider, self).setMaximum(value * self._multi)
+
+    def maximum(self):
+        return super(DoubleSlider, self).maximum()/self._multi
+
+    def minimum(self):
+        return super(DoubleSlider, self).minimum()/self._multi
+
+    def setSingleStep(self, value):
+        myDecimal = Decimal(str(value))
+        count_after_decimal = abs(myDecimal.as_tuple().exponent)
+        self._multi = 10**count_after_decimal
+        self.blockSignals(True)
+        super(DoubleSlider, self).setMinimum(self.__minval * self._multi)
+        super(DoubleSlider, self).setMaximum(self.__maxval * self._multi)
+        super(DoubleSlider, self).setValue(int(self.__curval * self._multi))
+        self.blockSignals(False)
+        return super(DoubleSlider, self).setSingleStep(int(value * self._multi))
+
+    def singleStep(self):
+        return float(super(DoubleSlider, self).singleStep()) / self._multi
+
+    def setValue(self, value):
+        self.blockSignals(True)
+        self.__curval = value
+        super(DoubleSlider, self).setValue(int(value * self._multi))
+        self.blockSignals(False)
+
 class ToggleButtonState(enum.Enum):
     NOT_CLICKED = 0
     LEFT_CLICKED = 1
@@ -153,10 +206,11 @@ class ClampedLineEdit(QLineEdit):
     def send(self,d):
         if self.text() == None:
             pass
-            self.Text.Send(0)    
+            # self.Text.Send(0)    
         else:
-            self.Text.Send(self.__convertFromForm(d))
-            # self.setText(str(self.__convertFromForm(d)))
+            try: self.Text.Send(self.__convertFromForm(d))
+            except: pass
+            
 
     def handleReceiveText(self, value):
         if value!=None:
@@ -190,6 +244,85 @@ class NamedLineEditHorizontal(QWidget):
         self.label.setFixedWidth(100)
         layoutVert.addStretch()
         
+
+class ClampedSlider(QSlider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ValueClamp = Clamp()
+        self.ValueClamp.HandleWithReceive(self.setValue)
+        self.valueChanged.connect(self.ValueClamp.Send)
+
+class NamedSliderHorizontal(QWidget):
+    def __init__(self, lineEdit:ClampedLineEdit, name:str, units = None):
+        super().__init__()
+        self.ValueClamp = Clamp()
+        layout = QHBoxLayout(self)
+        self.label = QLabel(name)
+        self.lineEdit = lineEdit
+        self.slider = ClampedSlider()
+        self.slider.setOrientation(Qt.Horizontal)
+        layout.addWidget(self.label)
+        layout.addWidget(self.slider)
+        layout.addWidget(self.lineEdit)
+        self.labelUnits = QLabel(units)
+        layout.addWidget(self.labelUnits)
+        layout.addStretch()
+
+        self.lineEdit.Text.ConnectTo(self.slider.ValueClamp)
+        self.slider.ValueClamp.ConnectTo(self.lineEdit.Text)
+
+        self.lineEdit.Text.ConnectTo(self.ValueClamp)
+        self.slider.ValueClamp.ConnectTo(self.ValueClamp)
+        self.ValueClamp.HandleWithReceive(self.Send)
+    
+    def Send(self,value):
+        if value>self.slider.maximum():
+            value = self.slider.maximum()
+            self.slider.ValueClamp.Send(value)
+        if value<self.slider.minimum():
+            value = self.slider.minimum()
+            self.slider.ValueClamp.Send(value)
+        self.ValueClamp.Send(value)
+
+
+class ClampedDoubleSlider(DoubleSlider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ValueClamp = Clamp()
+        self.ValueClamp.HandleWithReceive(self.setValue)
+        self.doubleValueChanged.connect(self.ValueClamp.Send)
+
+class NamedDoubleSliderHorizontal(QWidget):
+    def __init__(self, lineEdit:ClampedLineEdit, name:str, units = None):
+        super().__init__()
+        self.ValueClamp = Clamp()
+        layout = QHBoxLayout(self)
+        self.label = QLabel(name)
+        self.lineEdit = lineEdit
+        self.slider = ClampedDoubleSlider()
+        self.slider.setOrientation(Qt.Horizontal)
+        layout.addWidget(self.label)
+        layout.addWidget(self.slider)
+        layout.addWidget(self.lineEdit)
+        self.labelUnits = QLabel(units)
+        layout.addWidget(self.labelUnits)
+        layout.addStretch()
+
+        self.lineEdit.Text.ConnectTo(self.slider.ValueClamp)
+        self.slider.ValueClamp.ConnectTo(self.lineEdit.Text)
+
+        self.lineEdit.Text.ConnectTo(self.ValueClamp)
+        self.slider.ValueClamp.ConnectTo(self.ValueClamp)
+        self.ValueClamp.HandleWithReceive(self.Send)
+    
+    def Send(self,value):
+        if value>self.slider.maximum():
+            value = self.slider.maximum()
+            self.slider.ValueClamp.Send(value)
+        if value<self.slider.minimum():
+            value = self.slider.minimum()
+            self.slider.ValueClamp.Send(value)
+        self.ValueClamp.Send(value)
 
 class ClampedAction(QAction):
     def __init__(self, action, parent = None):

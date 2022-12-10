@@ -13,7 +13,7 @@ import time
 from threading import Thread
 import concurrent.futures as cf
 
-from SettingsFMCWRv4 import SettingsWindow
+from SettingsFMCWRv6 import SettingsWindow
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
 from Clamp import Clamp
@@ -138,9 +138,10 @@ class MainWindow(QMainWindow):
             a=currentData[::self.downSample]
             if self.fristQue:
                 xMax = len(currentData)
-                self.settings.xMax.spinBox.setMaximum(xMax)
-                self.settings.xMax.spinBox.setValue(xMax)
-                self.settings.xMin.spinBox.setValue(0)
+                self.settings.xMin.slider.setMaximum(xMax)
+                self.settings.xMax.slider.setMaximum(xMax)
+                self.settings.xMax.slider.setValue(xMax)
+                self.settings.xMin.slider.setValue(0)
                 self.Chart1.setRangeX([0,xMax])
                 self.Chart1.nPerseg = xMax
                 self.Chart1.nfft = 2*xMax
