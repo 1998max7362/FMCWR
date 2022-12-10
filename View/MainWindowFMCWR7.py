@@ -203,6 +203,7 @@ class MainWindow(QMainWindow):
                 self.Chart1.specImage(self.bufCurrent)
                 # 5) текущий буфер заменить буфером следующего кадра
                 self.bufCurrent = self.bufNext
+                       
             self.save_signal.put(currentData)
 
     def saveFile(self):
