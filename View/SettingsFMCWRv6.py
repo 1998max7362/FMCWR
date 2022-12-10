@@ -93,6 +93,11 @@ class SettingsWindow(QWidget):
         self.SignalTypeSwitcher.Switcher.stateChanged.connect(self.SignalSourceTypeSwitched)
         layout.addWidget(self.SignalTypeSwitcher)
 
+        if self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.RANGE.value:
+            self.SignalTypeClamp.Send(SignalSource.RANGE)
+        elif self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.VELOCITY.value:
+            self.SignalTypeClamp.Send(SignalSource.VELOCITY)
+
     def graphSettingsInit(self):
         self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')
         self.GraphSettingsGroupBox.setFont(QFont('Times',10))
