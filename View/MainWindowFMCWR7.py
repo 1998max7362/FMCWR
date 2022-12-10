@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
         if start_stop:
             # нажали на кнопку, получили "1"
             self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
+            self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
             self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
             self.Tranciver.working = True                           # ставим признак работы Tranciver
             self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
@@ -126,6 +127,7 @@ class MainWindow(QMainWindow):
         else:
             # нажали на кнопку, получили "0"
             self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
+            self.MainWindowMenuBar.setEnabled(True)                # включаем часть интерфейса
             self.Tranciver.working = False                          # ставим признак выключения Tranciver
             self.timer.stop()                                       # отключаем таймер обновления
             # ждем снятия блокировки с очереди для записи и очищаем массив с записанным сигналом
@@ -243,9 +245,9 @@ class MainWindow(QMainWindow):
 
     def _createMenubar(self):
         menuBar = self.menuBar()
-        MainWindowMenuBar = menuBar.addMenu("&Файл")
-        MainWindowMenuBar.addAction(self.saveAction)
-        MainWindowMenuBar.addAction(self.loadAction)
+        self.MainWindowMenuBar = menuBar.addMenu("&Файл")
+        self.MainWindowMenuBar.addAction(self.saveAction)
+        self.MainWindowMenuBar.addAction(self.loadAction)
 
     def _createActions(self):
         self.saveAction = QAction("&Сохранить",self)
