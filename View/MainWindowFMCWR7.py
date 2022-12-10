@@ -203,14 +203,14 @@ class MainWindow(QMainWindow):
                 self.Chart1.specImage(self.bufCurrent)
                 # 5) текущий буфер заменить буфером следующего кадра
                 self.bufCurrent = self.bufNext
-                       
             self.save_signal.put(currentData)
 
     def saveFile(self):
         filename = self._saveFileDialog('Сохранение сигнала')
-        write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
-        self.wav_data = np.array([])
-        QMessageBox.information(self,'Сохранение данных', 'Сохранено')
+        if filename!='':
+            write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+            self.wav_data = np.array([])
+            QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
     def loadFile(self):
         fileName, filter = QFileDialog.getOpenFileName()
