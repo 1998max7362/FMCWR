@@ -50,13 +50,18 @@ class Transceiver():
         self.downsample = 10
         # list of used channels
         self.mapping = None
-
+        # default sampling time, 25.7 ms
+        self.blocksize = 1136 
 
         self.FsClamp = Clamp()
         self.FsClamp.HandleWithReceive(self.setFs)
         self.downSampleClamp = Clamp()
         self.downSampleClamp.HandleWithReceive(self.setDownSample)
         self.ErrorClamp=Clamp()
+
+    def setBlkSz(self, blksz = 1136):
+        # manualy change number of block size
+        self.blocksize = blksz
 
     def setChannels(self,ch = 1):
         # manualy change number of channels
@@ -92,11 +97,9 @@ class Transceiver():
     def recplay_callback(self,indata, frames, time, status):
         # save data in query for saving
         """This is called (from a separate thread) for each audio block."""
-        # if status:
-        #     print(status, file=sys.stderr)
+        if status:
+            print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
-        # print(indata[:, self.mapping])
-        length = int(self.window * self.samplerate / (1000 * self.downsample))
         self.received_signal.put(indata[:, self.mapping])
 
     def run_realtime(self):
@@ -105,6 +108,7 @@ class Transceiver():
         try:
             QtWidgets.QApplication.processEvents()
             stream = sd.InputStream(
+                blocksize=self.blocksize,
                 device=self.device, channels=max(self.channels),
                 samplerate=self.samplerate, callback=self.recplay_callback)
             self.ErrorClamp.Send(None)
@@ -115,7 +119,6 @@ class Transceiver():
             self.ErrorClamp.Send(e.args[0])
             print(type(e).__name__ + ': ' + str(e))
         
-
     def recplot_callback(self,indata, frames, time, status):
         # save downsampled data in quere to show
         """This is called (from a separate thread) for each audio block."""
@@ -123,7 +126,6 @@ class Transceiver():
             print(status, file=sys.stderr)
         # Fancy indexing with mapping creates a (necessary!) copy:
         self.plotdata_signal.put(indata[::self.downsample, self.mapping])
-        pass
 
     def update_plot(self,frame):
         # plt callback update frame
@@ -162,6 +164,7 @@ class Transceiver():
             fig.tight_layout(pad=0)
 
             stream = sd.InputStream(
+                blocksize = self.blocksize,
                 device=self.device, channels=max(self.channels),
                 samplerate=self.samplerate, callback=self.recplot_callback)
             ani = FuncAnimation(fig, self.update_plot, interval=self.interval, blit=True)

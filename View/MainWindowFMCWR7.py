@@ -61,6 +61,8 @@ class MainWindow(QMainWindow):
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
         self.downSample = 10
+        self.bufCurrent = np.array([])  # буфер отображаемого фрейма в спектрограмме
+        self.bufNext = np.array([])     # буфер следующего фремйа в спектрограмме
 
         #  Add Clamps
         self.StartSopClamp = Clamp()
@@ -110,33 +112,63 @@ class MainWindow(QMainWindow):
         self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
 
     def StartStop(self,start_stop):
-        print(start_stop)
+        """ Обработчик нажатия на кнопку Старт/Стоп"""
+        print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
         if start_stop:
-            self.settings.DeviceSettingsGroupBox.setEnabled(False)
-            self.Chart0.clearPlots(True)
-            self.Tranciver.working = True
-            self.worker_1  = Worker(self.Tranciver.run_realtime)
-            self.threadpool.start(self.worker_1) # получение данных с микрофона
-            self.timer.start()
-            self.fristQue = True
+            # нажали на кнопку, получили "1"
+            self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
+            self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
+            self.Tranciver.working = True                           # ставим признак работы Tranciver
+            self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
+            self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
+            self.timer.start()                                      # запускаем таймер для передергивания интерфейса
+            self.firstQue = True
         else:
-            self.settings.DeviceSettingsGroupBox.setEnabled(True)
-            self.Tranciver.working = False
-            self.timer.stop()
-            with self.Tranciver.received_signal.mutex: self.Tranciver.received_signal.queue.clear()
+            # нажали на кнопку, получили "0"
+            self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
+            self.Tranciver.working = False                          # ставим признак выключения Tranciver
+            self.timer.stop()                                       # отключаем таймер обновления
+            # ждем снятия блокировки с очереди для записи и очищаем массив с записанным сигналом
+            with self.Tranciver.received_signal.mutex: 
+                self.Tranciver.received_signal.queue.clear()
             self.threadpool.clear()
-            # saving data from the queue
+
+            # saving data from the queue для записи в файл
             while not self.save_signal.empty():
                 QtWidgets.QApplication.processEvents()
                 self.wav_data=np.append(self.wav_data, self.save_signal.get())
+
+            # todo : use checkbox to save current queue or all queue since program start (continues)
+            # now save only data pushed start|stop button
+            try:
+                write("Data/"+self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                # write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                self.wav_data = np.array([])
+            except:
+                print('Possible Data folder doesnt exist. Trying save it in current folder. \n')
+                write(self.getCurTime()+"_"+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                # write("lab0312/"+self.fname+self.signalType.name+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+                self.wav_data = np.array([])
+
+    def loadData(self):
+        samplerate, data = wavfile.read('Data/example.wav')
+        pass
+
+    def getCurTime(self):
+        now = datetime.now()
+        current_time = now.strftime("%H_%M_%S")
+        return current_time
+
+    def getSignalType(self,SignalType):
+        self.signalType=SignalType
 
     def Process_2(self):
         self.c = 0
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
-            a=currentData[::self.downSample]
-            if self.fristQue:
+            oscillogramma=currentData[::self.downSample]
+            if self.firstQue:
                 xMax = len(currentData)
                 self.settings.xMin.slider.setMaximum(xMax)
                 self.settings.xMax.slider.setMaximum(xMax)
@@ -145,9 +177,33 @@ class MainWindow(QMainWindow):
                 self.Chart1.setRangeX([0,xMax])
                 self.Chart1.nPerseg = xMax
                 self.Chart1.nfft = 2*xMax
-                self.fristQue = False
-            self.Chart1.specImage(currentData)
-            self.Chart0.plotData(a)
+                self.firstQue = False
+            # одинаковое отображение осциллограм вне зависимости от режима работы
+            self.Chart0.plotData(oscillogramma)
+            # выбор варианта обработки currentData (скорость или дальность)
+            if self.signalType.value:
+                # "1" обработка скорости 
+                self.Chart1.specImage(currentData)
+            else:
+                # "0" обработка дальности
+                # 1) взять производную текущего фрейма
+                diffSignal = np.diff(currentData)
+                # 2) найти положение максимума
+                maxind = np.argmax(diffSignal)
+                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
+                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
+                self.bufNext = currentData[maxind:-1]
+                n = self.Tranciver.blocksize
+                # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
+                if len(self.bufCurrent) < n :
+                    self.bufCurrent = np.concatenate((self.bufCurrent,np.zeros(n-len(self.bufCurrent))))
+                else:
+                    self.bufCurrent = self.bufCurrent[:n]
+                # 4) обобразить спектрограмму
+                self.Chart1.specImage(self.bufCurrent)
+                # 5) текущий буфер заменить буфером следующего кадра
+                self.bufCurrent = self.bufNext
+                       
             self.save_signal.put(currentData)
 
     def saveFile(self):
