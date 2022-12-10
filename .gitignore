@@ -4,3 +4,4 @@ __pycache__/
 *.wav
 View/__pycache__/
 View/__pycache__/mainWaterfall.cpython-39.pyc
+View/test.ipynb
