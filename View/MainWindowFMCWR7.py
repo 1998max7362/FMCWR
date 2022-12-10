@@ -182,7 +182,8 @@ class MainWindow(QMainWindow):
                 self.Chart1.nfft = 2*xMax
                 self.firstQue = False
             # одинаковое отображение осциллограм вне зависимости от режима работы
-            self.Chart0.plotData(oscillogramma)
+            self.Chart0.plotData(np.diff(oscillogramma))
+            # self.Chart0.plotData(oscillogramma)
             # выбор варианта обработки currentData (скорость или дальность)
             if self.signalType.value:
                 # "1" обработка скорости 
@@ -194,8 +195,10 @@ class MainWindow(QMainWindow):
                 # 2) найти положение максимума
                 maxind = np.argmax(diffSignal)
                 # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
-                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
-                self.bufNext = currentData[maxind:-1]
+                # self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
+                # self.bufNext = currentData[maxind:-1]
+                self.bufCurrent = np.concatenate((self.bufCurrent,diffSignal[:maxind]))
+                self.bufNext = diffSignal[maxind:-1]
                 n = self.Tranciver.blocksize
                 # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
                 if len(self.bufCurrent) < n :
