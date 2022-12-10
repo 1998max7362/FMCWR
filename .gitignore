@@ -2,3 +2,5 @@ __pycache__/
 /Core/__pycache__/
 /View/__pycache__/
 *.wav
+View/__pycache__/mainGraph.cpython-39.pyc
+View/__pycache__/mainWaterfall.cpython-39.pyc
