@@ -65,7 +65,7 @@ class MainWindow(QMainWindow):
         self.bufNext = np.array([])     # буфер следующего фремйа в спектрограмме
 
         #  Add Clamps
-        self.StartSopClamp = Clamp()
+        self.StartStopClamp = Clamp()
         self.SignalTypeClamp = Clamp()
 
         # разметка
@@ -93,8 +93,8 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
         
-        self.StartSopClamp.ConnectFrom(self.settings.StartStopClamp)
-        self.StartSopClamp.HandleWithReceive(self.StartStop)
+        self.StartStopClamp.ConnectFrom(self.settings.StartStopClamp)
+        self.StartStopClamp.HandleWithReceive(self.StartStop)
         self.SignalTypeClamp.HandleWithReceive(self.getSignalType)
 
         self.timer = QtCore.QTimer()
@@ -117,12 +117,20 @@ class MainWindow(QMainWindow):
         print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
         if start_stop:
             # нажали на кнопку, получили "1"
-
+            """ проверим для начала пустая ли очередь?
+             если она пуста, то идем дальше, а если нет, тогда смотрим
+             изменился ли режим работы.
+             Режим не менялся - идем дальше
+             спектрограмму не сбрасываем
+             Режим поменялся - предлагаем сохранить очередь прежде чем писать новую
+             сбрасываем спектрограмму для того, чтобы она не поломалась
+             """
             # корректируем размер блока обработки
             if self.signalType.value == 0 :
-                self.Tranciver.setBlkSz(int(30e-3*self.fs)) # на 30 мс для дальности
+                self.Tranciver.setBlkSz(int(30e-3*self.Tranciver.samplerate)) # на 30 мс для дальности
+                
             else:
-                self.Tranciver.setBlkSz(int(100e-3*self.fs))# на 100 мс для скорости
+                self.Tranciver.setBlkSz(int(100e-3*self.Tranciver.samplerate))# на 100 мс для скорости
 
             self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
@@ -175,14 +183,11 @@ class MainWindow(QMainWindow):
                 # "0" обработка дальности
                 # 1) взять производную текущего фрейма
                 diffSignal = abs(np.diff(currentData))**2
-                # diffSignal = np.diff(currentData)
                 # 2) найти положение максимума
                 maxind = np.argmax(diffSignal)
                 # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
                 self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
                 self.bufNext = currentData[maxind:-1]
-                # self.bufCurrent = np.concatenate((self.bufCurrent,diffSignal[:maxind]))
-                # self.bufNext = diffSignal[maxind:-1]
                 n = self.Tranciver.blocksize
                 # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
                 if len(self.bufCurrent) < n :
@@ -199,6 +204,7 @@ class MainWindow(QMainWindow):
             # now save only data pushed start|stop button
 
     def saveFile(self):
+        """ создаем диалоговое окно сохранения файла """
         filename = self._saveFileDialog('Сохранение сигнала')
         if filename!='':
             write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
@@ -206,6 +212,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
     def loadFile(self):
+        """ загрузка файла """
         fileName, filter = QFileDialog.getOpenFileName()
         if fileName!='':
             if fileName[-4:]!='.wav':
@@ -213,8 +220,20 @@ class MainWindow(QMainWindow):
             else:
                 samplerate, data = wavfile.read(fileName)
                 print('Loaded')
+                """ тут логика должна быть следующей: открываем файл, у нас есть кнопка Плей, 
+                она должна активироваться (тут вообще хороший вопрос, а должна ли она активироваться, 
+                если мы просто записали файл и сразу хотим его воспроизвести).
+                2) нажимаем плей, в зависимости от типа файла (вот тут тоже косяк, пользователь как бы должен
+                наперед знать тип данных) нарезаем его на блоки (и тут снова косяк, размеры блоков мы могли менять,
+                например меняя частоту дискретизации, т.е. надо определить базовую например 44100 и относительно
+                нее делать все изменения по размерам блоков) и выводим на спектрограмму и осциллограмму пока 
+                файл не закончится. 
+                
+                Вероятно нам захочется воспроизводить файл с заданной скоростью, тогда должны быть предусмотрены кнопки
+                x0.5, x2 и т.д. рядом с кнопкой плей"""
 
     def getCurDateTime(self):
+        """ возвращает метку фремени ггггммдд_ччммсс"""
         now = datetime.now()
         current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
         return current_date_time
@@ -228,6 +247,7 @@ class MainWindow(QMainWindow):
         self.downSample = value
 
     def _saveFileDialog(self,text):
+        """ настройка диалогового окна сохраанения файла """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
@@ -237,16 +257,19 @@ class MainWindow(QMainWindow):
         self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
 
     def _createMenubar(self):
+        """ делаем пользовательское меню """
         menuBar = self.menuBar()
         self.MainWindowMenuBar = menuBar.addMenu("&Файл")
         self.MainWindowMenuBar.addAction(self.saveAction)
         self.MainWindowMenuBar.addAction(self.loadAction)
 
     def _createActions(self):
+        """ делаем кнопки пользовательского меню """
         self.saveAction = QAction("&Сохранить",self)
         self.loadAction = QAction("&Загрузить",self)
     
     def _connectActions(self):
+        """ соединяем кнопки пользовательского меню с обработчиками событий """
         self.saveAction.triggered.connect(self.saveFile)
         self.loadAction.triggered.connect(self.loadFile)
 
