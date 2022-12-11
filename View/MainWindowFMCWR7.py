@@ -37,7 +37,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Главное меню')
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(1)
-        # self.threadpool.setMaxThreadCount(1)
 
         self._createActions()
         self._connectActions()
@@ -45,7 +44,7 @@ class MainWindow(QMainWindow):
 
         #  Signal Settings
         fs = 44100
-        segment = 200 # ms
+        segment = 100 # 100 ms 
         self.signalType=SignalSource.RANGE
 
         # Tranciever
@@ -115,6 +114,8 @@ class MainWindow(QMainWindow):
     def StartStop(self,start_stop):
         """ Обработчик нажатия на кнопку Старт/Стоп"""
         print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
+        # считываем все настройки для переинициализии микрофона
+        # self.Tranciver.samplerate = ...
         if start_stop:
             # нажали на кнопку, получили "1"
             """ проверим для начала пустая ли очередь?
@@ -128,9 +129,12 @@ class MainWindow(QMainWindow):
             # корректируем размер блока обработки
             if self.signalType.value == 0 :
                 self.Tranciver.setBlkSz(int(30e-3*self.Tranciver.samplerate)) # на 30 мс для дальности
-                
+                self.Chart1.set_tSeg(30e-3)
+                self.Chart1.set_fs(self.Tranciver.samplerate)
             else:
                 self.Tranciver.setBlkSz(int(100e-3*self.Tranciver.samplerate))# на 100 мс для скорости
+                self.Chart1.set_tSeg(100e-3)
+                self.Chart1.set_fs(self.Tranciver.samplerate)
 
             self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
@@ -143,7 +147,7 @@ class MainWindow(QMainWindow):
         else:
             # нажали на кнопку, получили "0"
             self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
-            self.MainWindowMenuBar.setEnabled(True)                # включаем часть интерфейса
+            self.MainWindowMenuBar.setEnabled(True)                 # включаем часть интерфейса
             self.Tranciver.working = False                          # ставим признак выключения Tranciver
             self.timer.stop()                                       # отключаем таймер обновления
             # ждем снятия блокировки с очереди для записи и очищаем массив с записанным сигналом

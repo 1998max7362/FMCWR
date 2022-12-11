@@ -64,12 +64,12 @@ class WaterFallWindow(QWidget):
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)
         self.graphWidget.setXRange(0, 20000) 
         # настройки спектрограммы
-        self.fs = 44100
-        self.tSeg = 0.001
-        self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = self.nPerseg
-        self.lines = 100
-        self.coef = 1
+        self.fs = 44100         # через метод гет надо получать, чтобы не было дублирования
+        self.tSeg = 0.001       # время       
+        self.nPerseg = int(self.tSeg*self.fs) # число отсчетов
+        self.nfft = self.nPerseg    # размер бпф
+        self.lines = 100            # число строк
+        self.coef = 1               # масштабный коэффициент
         # рассчитать тестовый сигнал
         # расчет и построение спектрограммы
         self.input.HandleWithReceive(self.thStart) 
@@ -82,14 +82,18 @@ class WaterFallWindow(QWidget):
         
     # методы класса
     def set_fs(self,fs):
+        """ изменяем частоту, а следовательно размер число отсчетов  в выборке и размер бпф"""
         self.fs = fs
         self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = 100*self.nPerseg
+        self.nfft = 16*(np.round(np.log2(self.nPerseg))+1)  # правильно его делать 2^n
+        self.First = True
         
     def set_tSeg(self,set_tSeg):
-        self.set_tSeg = set_tSeg
+        """ изменяем время анализа, а следовательно размер выборки и размер бпф"""
+        self.tSeg = set_tSeg
         self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = 100*self.nPerseg
+        self.nfft = 16*(np.round(np.log2(self.nPerseg))+1)  # правильно его делать 2^n
+        self.First = True
 
     def createTestSignal(self):
         # Тестовый сигнал для водопада
@@ -150,15 +154,17 @@ class WaterFallWindow(QWidget):
     def setCoef(self, type: SignalSource):
         if type.value == SignalSource.RANGE.value:
             self.coef = 2/3e8/23.3e-3*221e6
+            self.First = True
         elif type.value ==SignalSource.VELOCITY.value:
             self.coef = 0.125/2
+            self.First = True
 
     # вычисление спектра
     def specgram(self, s):
         #self.y = self.y[1:]
         # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,window='hann')
         # win = np.hanning(len(s))
-        f, spectra = signal.welch(s, self.fs, window='hann', nperseg=self.nPerseg,nfft=self.nfft,noverlap=0.25*self.nPerseg,scaling='spectrum')
+        f, spectra = signal.welch(s, self.fs, window='hann', nperseg=self.nPerseg,nfft=self.nfft,scaling='spectrum')
         # spectra = spectra / len(spectra)
         spectra = np.reshape(spectra, (len(spectra), ))
         if (self.First):
@@ -172,6 +178,7 @@ class WaterFallWindow(QWidget):
             self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft * self.coef, 1)
+            print(tr.scale)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
         else:
@@ -242,8 +249,6 @@ class WaterFallWindow(QWidget):
         self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
         self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
         self.graphWidget.addItem(self.img)
-
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
