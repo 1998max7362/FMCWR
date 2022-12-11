@@ -40,7 +40,7 @@ class WaterFallWindow(QWidget):
         self.graphWidget.getViewBox().invertY(True)
         pg.setConfigOptions(antialias=True, leftButtonPan=True, imageAxisOrder='row-major')
         self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
-        self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
+        self.graphWidget.plotItem.setLabel(axis='top', text='Дальность, м')
         self.img = pg.ImageItem()
         self.img.setLevels([-30,0])
         # cm = pg.colormap.get('viridis')
@@ -85,14 +85,14 @@ class WaterFallWindow(QWidget):
         """ изменяем частоту, а следовательно размер число отсчетов  в выборке и размер бпф"""
         self.fs = fs
         self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = 16*(np.round(np.log2(self.nPerseg))+1)  # правильно его делать 2^n
+        self.nfft = 2**(np.round(np.log2(self.nPerseg))+2)  # правильно его делать 2^n
         self.First = True
         
     def set_tSeg(self,set_tSeg):
         """ изменяем время анализа, а следовательно размер выборки и размер бпф"""
         self.tSeg = set_tSeg
         self.nPerseg = int(self.tSeg*self.fs)
-        self.nfft = 16*(np.round(np.log2(self.nPerseg))+1)  # правильно его делать 2^n
+        self.nfft = 2**(np.round(np.log2(self.nPerseg))+2)  # правильно его делать 2^n
         self.First = True
 
     def createTestSignal(self):
@@ -153,18 +153,20 @@ class WaterFallWindow(QWidget):
     # масштаб данных
     def setCoef(self, type: SignalSource):
         if type.value == SignalSource.RANGE.value:
-            self.coef = 2/3e8/23.3e-3*221e6
+            self.coef = 3e8*23.3e-3/2/221e6/2
             self.First = True
-        elif type.value ==SignalSource.VELOCITY.value:
+            self.graphWidget.plotItem.setLabel(axis='top', text='Дальность, м')
+        elif type.value == SignalSource.VELOCITY.value:
             self.coef = 0.125/2
             self.First = True
+            self.graphWidget.plotItem.setLabel(axis='top', text='Скорость, м/с')
 
     # вычисление спектра
     def specgram(self, s):
         #self.y = self.y[1:]
         # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,window='hann')
         # win = np.hanning(len(s))
-        f, spectra = signal.welch(s, self.fs, window='hann', nperseg=self.nPerseg,nfft=self.nfft,scaling='spectrum')
+        f, spectra = signal.welch(s, self.fs, window='hann', nfft=self.nfft, scaling='spectrum')
         # spectra = spectra / len(spectra)
         spectra = np.reshape(spectra, (len(spectra), ))
         if (self.First):
@@ -177,8 +179,7 @@ class WaterFallWindow(QWidget):
             logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft * self.coef, 1)
-            print(tr.scale)
+            # tr.scale(self.fs/self.nfft, 1)           
             # вставить шкалу уровней 
             self.img.setTransform(tr)
         else:
@@ -192,7 +193,7 @@ class WaterFallWindow(QWidget):
             logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra, autolevels=False)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft*self.coef, 1)
+            # tr.scale(self.fs/self.nfft, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
     
@@ -202,7 +203,7 @@ class WaterFallWindow(QWidget):
         # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft)
         # win = np.hanning(len(s))
         # spectra = np.fft.rfft(s*win) / len(s)
-        f, spectra = signal.welch(s, self.fs, window='hann', nperseg=self.nPerseg,nfft=self.nfft,noverlap=0.25*self.nPerseg,scaling='spectrum')
+        f, spectra = signal.welch(s, self.fs, window='hann',nfft=self.nfft,scaling='spectrum')
         # spectra = spectra / len(spectra)
         spectra = np.reshape(spectra, (len(spectra), ))
         if (self.First):

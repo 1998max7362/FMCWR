@@ -126,15 +126,27 @@ class MainWindow(QMainWindow):
              Режим поменялся - предлагаем сохранить очередь прежде чем писать новую
              сбрасываем спектрограмму для того, чтобы она не поломалась
              """
-            # корректируем размер блока обработки
+            # корректируем размер блока обработки И другие параметры зависящие от режима
+            self.settings.xMin.slider.setValue(0)                # текущее значение xMin
+            fs = self.Tranciver.samplerate
             if self.signalType.value == 0 :
-                self.Tranciver.setBlkSz(int(30e-3*self.Tranciver.samplerate)) # на 30 мс для дальности
+                self.Tranciver.setBlkSz(int(30e-3*fs)) # на 30 мс для дальности
                 self.Chart1.set_tSeg(30e-3)
-                self.Chart1.set_fs(self.Tranciver.samplerate)
+                self.Chart1.set_fs(fs)
+                coef = 3e8*23.3e-3/2/221e6/2
+                self.Chart1.setRangeX([0,fs/2*coef]) # выставляем правильно шкалу на спектрограмме по режиму
+                self.settings.xMin.slider.setMaximum(int(fs/2*coef)) # предельное значение xMin
+                self.settings.xMax.slider.setMaximum(int(fs/2*coef)) # предельное значение xMax
+                self.settings.xMax.slider.setValue(30)               # текущее значение xMax, m
             else:
                 self.Tranciver.setBlkSz(int(100e-3*self.Tranciver.samplerate))# на 100 мс для скорости
                 self.Chart1.set_tSeg(100e-3)
                 self.Chart1.set_fs(self.Tranciver.samplerate)
+                coef = 0.125/2
+                self.Chart1.setRangeX([0,fs/2*coef]) # выставляем правильно шкалу на спектрограмме по режиму
+                self.settings.xMin.slider.setMaximum(int(fs/2*coef)) # предельное значение xMin
+                self.settings.xMax.slider.setMaximum(int(fs/2*coef)) # предельное значение xMax
+                self.settings.xMax.slider.setValue(40)               # текущее значение xMax, m/s
 
             self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
@@ -166,16 +178,6 @@ class MainWindow(QMainWindow):
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
             oscillogramma=currentData[::self.downSample]
-            if self.firstQue:
-                xMax = len(currentData)
-                self.settings.xMin.slider.setMaximum(xMax)
-                self.settings.xMax.slider.setMaximum(xMax)
-                self.settings.xMax.slider.setValue(xMax)
-                self.settings.xMin.slider.setValue(0)
-                self.Chart1.setRangeX([0,xMax])
-                self.Chart1.nPerseg = xMax
-                self.Chart1.nfft = 2*xMax
-                self.firstQue = False
             # одинаковое отображение осциллограм вне зависимости от режима работы
             # self.Chart0.plotData(abs(np.diff(currentData))**2)
             self.Chart0.plotData(oscillogramma)
@@ -237,7 +239,7 @@ class MainWindow(QMainWindow):
                 x0.5, x2 и т.д. рядом с кнопкой плей"""
 
     def getCurDateTime(self):
-        """ возвращает метку фремени ггггммдд_ччммсс"""
+        """ возвращает метку времени ггггммдд_ччммсс"""
         now = datetime.now()
         current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
         return current_date_time
