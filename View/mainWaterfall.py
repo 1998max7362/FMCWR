@@ -41,16 +41,29 @@ class WaterFallWindow(QWidget):
         pg.setConfigOptions(antialias=True, leftButtonPan=True, imageAxisOrder='row-major')
         self.graphWidget.plotItem.setLabel(axis='left', text='Время, с')
         self.graphWidget.plotItem.setLabel(axis='top', text='Частота, Гц')
-        self.img = pg.ImageItem(levels=[0,255])
+        self.img = pg.ImageItem()
+        self.img.setLevels([-30,0])
         # cm = pg.colormap.get('viridis')
-        colors = []
-        for i in range(255):
-            t = (i,i,i)
-            colors.append(t)
-        cm = pg.ColorMap(pos=np.linspace(0,1,len(colors)), color=colors)
+        # colors = []
+        # for i in range(255):
+            # t = np.array([i,i,i,255],dtype=np.ubyte)
+            # colors.append(t)
+        # cm = pg.ColorMap(pos=np.linspace(0,1,len(colors)), color=colors)
+        # lut = cm.getLookupTable(0.0, 1.0, 256)
+        # bipolar colormap
+        pos = np.array([0., 1., 0.5, 0.25, 0.75])
+        color = np.array([[0,0,0,255], [255,255,255,255], [127,127,127,255], (63, 63, 63, 255), (190, 190, 190, 255)], dtype=np.ubyte)
+        cm = pg.ColorMap(pos, color)
+        lut = cm.getLookupTable(0.0, 1.0, 256)
+
+        # set colormap
+        self.img.setLookupTable(lut)
+        self.img.setLevels([-50,0])
+
         self.img.setColorMap(cm)
         self.graphWidget.addItem(self.img)
-        minv, maxv = (-60, 0)
+        self.img.setLookupTable(lut)
+        minv, maxv = (-40, 0)
         bar = pg.ColorBarItem(interactive=False, values=(minv, maxv), colorMap=cm, label='Мощность [дБ]')
         bar.setImageItem(self.img, insert_in=self.graphWidget.plotItem)
         self.graphWidget.setXRange(0, 20000) 
@@ -147,7 +160,10 @@ class WaterFallWindow(QWidget):
     # вычисление спектра
     def specgram(self, s):
         #self.y = self.y[1:]
-        f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft)
+        # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,window='hann')
+        # win = np.hanning(len(s))
+        f, spectra = signal.welch(s, self.fs, window='hann', nperseg=self.nPerseg,nfft=self.nfft,noverlap=0.25*self.nPerseg,scaling='spectrum')
+        # spectra = spectra / len(spectra)
         spectra = np.reshape(spectra, (len(spectra), ))
         if (self.First):
             self.spectra = spectra
@@ -155,7 +171,8 @@ class WaterFallWindow(QWidget):
             # print(np.shape(spectra))
             # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
-            self.img.setImage(logSpectra,autolevels=False,autoRange=False)
+            logSpectra[logSpectra < -100] = -150
+            self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft * self.coef, 1)
             # вставить шкалу уровней 
@@ -167,7 +184,8 @@ class WaterFallWindow(QWidget):
                 self.spectra = self.spectra[1:,:]
             # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(self.spectra)
-            self.img.setImage(logSpectra, autolevels=False,autoRange=False)
+            logSpectra[logSpectra < -100] = -150
+            self.img.setImage(logSpectra, autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft*self.coef, 1)
             # вставить шкалу уровней 
@@ -176,7 +194,11 @@ class WaterFallWindow(QWidget):
     # спектрограмма с чпк
     def chpkSpecgram(self, s):
         #self.y = self.y[1:]
-        f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft)
+        # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft)
+        # win = np.hanning(len(s))
+        # spectra = np.fft.rfft(s*win) / len(s)
+        f, spectra = signal.welch(s, self.fs, window='hann', nperseg=self.nPerseg,nfft=self.nfft,noverlap=0.25*self.nPerseg,scaling='spectrum')
+        # spectra = spectra / len(spectra)
         spectra = np.reshape(spectra, (len(spectra), ))
         if (self.First):
             self.spectra = spectra
@@ -184,9 +206,10 @@ class WaterFallWindow(QWidget):
             # print(np.shape(spectra))
             # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
-            self.img.setImage(logSpectra,autolevels=False,autoRange=False)
+            logSpectra[logSpectra < -100] = -150
+            self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft*0.125/2, 1)
+            tr.scale(self.fs/self.nfft * self.coef, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
         else:
@@ -198,9 +221,10 @@ class WaterFallWindow(QWidget):
                 self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(self.spectra)
-            self.img.setImage(logSpectra, autolevels=False,autoRange=False)
+            logSpectra[logSpectra < -100] = -150
+            self.img.setImage(logSpectra, autolevels=False)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft*0.125/2, 1)
+            tr.scale(self.fs/self.nfft * self.coef, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
 
