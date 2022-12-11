@@ -44,14 +44,10 @@ class WaterFallWindow(QWidget):
         self.img = pg.ImageItem()
         self.img.setLevels([-30,0])
         # cm = pg.colormap.get('viridis')
-        # colors = []
-        # for i in range(255):
-            # t = np.array([i,i,i,255],dtype=np.ubyte)
-            # colors.append(t)
-        # cm = pg.ColorMap(pos=np.linspace(0,1,len(colors)), color=colors)
-        # lut = cm.getLookupTable(0.0, 1.0, 256)
+        
         # bipolar colormap
         pos = np.array([0., 1., 0.5, 0.25, 0.75])
+        # color = np.array([[0,255,255,255], [255,255,0,255], [0,0,0,255], (0, 0, 255, 255), (255, 0, 0, 255)], dtype=np.ubyte)
         color = np.array([[0,0,0,255], [255,255,255,255], [127,127,127,255], (63, 63, 63, 255), (190, 190, 190, 255)], dtype=np.ubyte)
         cm = pg.ColorMap(pos, color)
         lut = cm.getLookupTable(0.0, 1.0, 256)
@@ -171,7 +167,8 @@ class WaterFallWindow(QWidget):
             # print(np.shape(spectra))
             # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
-            logSpectra[logSpectra < -100] = -150
+            logSpectra[logSpectra < -100] = -120
+            logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft * self.coef, 1)
@@ -184,7 +181,8 @@ class WaterFallWindow(QWidget):
                 self.spectra = self.spectra[1:,:]
             # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(self.spectra)
-            logSpectra[logSpectra < -100] = -150
+            logSpectra[logSpectra < -100] = -120
+            logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra, autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft*self.coef, 1)
@@ -206,7 +204,8 @@ class WaterFallWindow(QWidget):
             # print(np.shape(spectra))
             # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(np.reshape(self.spectra, (1, len(self.spectra))))
-            logSpectra[logSpectra < -100] = -150
+            logSpectra[logSpectra < -100] = -120
+            logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft * self.coef, 1)
@@ -221,7 +220,8 @@ class WaterFallWindow(QWidget):
                 self.spectra = self.spectra[1:,:]
                 # print(np.shape(self.spectra))
             logSpectra = 10*np.log10(self.spectra)
-            logSpectra[logSpectra < -100] = -150
+            logSpectra[logSpectra < -100] = -120
+            logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra, autolevels=False)
             tr = pg.QtGui.QTransform()
             tr.scale(self.fs/self.nfft * self.coef, 1)
