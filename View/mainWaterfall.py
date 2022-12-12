@@ -216,7 +216,7 @@ class WaterFallWindow(QWidget):
             logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra,autolevels=False)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft * self.coef, 1)
+            # tr.scale(self.fs/self.nfft * self.coef, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
         else:
@@ -232,7 +232,7 @@ class WaterFallWindow(QWidget):
             logSpectra[logSpectra > 0] = 0
             self.img.setImage(logSpectra, autolevels=False)
             tr = pg.QtGui.QTransform()
-            tr.scale(self.fs/self.nfft * self.coef, 1)
+            # tr.scale(self.fs/self.nfft * self.coef, 1)
             # вставить шкалу уровней 
             self.img.setTransform(tr)
 
