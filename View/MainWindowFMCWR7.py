@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
 
         #  Signal Settings
         fs = 44100
-        segment = 100 # 100 ms 
+        segment = 100e-3 # 100 ms 
         self.signalType=SignalSource.RANGE
 
         # Tranciever
@@ -59,7 +59,8 @@ class MainWindow(QMainWindow):
         self.Chart1 = WaterFallWindow()
         self.Chart1.set_fs(fs)
         self.Chart1.set_tSeg(segment)
-        self.downSample = 10
+        self.downSample = 10            # задаваемое пользователем начальное прореживание (надо убрать)
+        self.downSampleUsed = 10        # скорректированное значение прореживания с учетом частоты дискретизации
         self.bufCurrent = np.array([])  # буфер отображаемого фрейма в спектрограмме
         self.bufNext = np.array([])     # буфер следующего фремйа в спектрограмме
 
@@ -129,33 +130,40 @@ class MainWindow(QMainWindow):
             # корректируем размер блока обработки И другие параметры зависящие от режима
             self.settings.xMin.slider.setValue(0)                # текущее значение xMin
             fs = self.Tranciver.samplerate
+            # корректировка децимирующего коэффициента
+            self.downSampleUsed = int(self.downSample*(np.round(fs/44100)))
+            if self.downSampleUsed == 0:
+                self.downSampleUsed = 1
+
             if self.signalType.value == 0 :
-                self.Tranciver.setBlkSz(int(30e-3*fs)) # на 30 мс для дальности
-                self.Chart1.set_tSeg(30e-3)
+                self.Tranciver.setBlkSz(int(30e-3*fs))  # на 30 мс размер буфера для дальности
+                self.Chart1.set_tSeg(23.3e-3)           # параметры стенда на 23.3 мс
                 self.Chart1.set_fs(fs)
-                coef = 3e8*23.3e-3/2/221e6/2
-                self.Chart1.setRangeX([0,fs/2*coef]) # выставляем правильно шкалу на спектрограмме по режиму
-                self.settings.xMin.slider.setMaximum(int(fs/2*coef)) # предельное значение xMin
-                self.settings.xMax.slider.setMaximum(int(fs/2*coef)) # предельное значение xMax
-                self.settings.xMax.slider.setValue(30)               # текущее значение xMax, m
+                coef = 3e8*23.3e-3/2/(221e6*(2.4/5))
+                self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
+                self.settings.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
+                self.settings.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
+                pos = int(30/(coef*fs/2)*self.Chart1.nfft/2) # отсчет соотвествующий 30 метрам
+                self.settings.xMax.slider.setValue(pos) # текущее значение xMax
             else:
-                self.Tranciver.setBlkSz(int(100e-3*self.Tranciver.samplerate))# на 100 мс для скорости
-                self.Chart1.set_tSeg(100e-3)
+                self.Tranciver.setBlkSz(int(50e-3*self.Tranciver.samplerate))# на 100 мс для скорости
+                self.Chart1.set_tSeg(50e-3)
                 self.Chart1.set_fs(self.Tranciver.samplerate)
                 coef = 0.125/2
-                self.Chart1.setRangeX([0,fs/2*coef]) # выставляем правильно шкалу на спектрограмме по режиму
-                self.settings.xMin.slider.setMaximum(int(fs/2*coef)) # предельное значение xMin
-                self.settings.xMax.slider.setMaximum(int(fs/2*coef)) # предельное значение xMax
-                self.settings.xMax.slider.setValue(40)               # текущее значение xMax, m/s
+                self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
+                self.settings.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
+                self.settings.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
+                vel = int(40/(coef*fs/2)*self.Chart1.nfft/2) #  отсчет соответствующий 40 м/с
+                self.settings.xMax.slider.setValue(vel)               # текущее значение xMax, m/s
 
             self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
             self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
             self.Tranciver.working = True                           # ставим признак работы Tranciver
             self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
+            self.firstQue = 1                                       # номер записи в очереди
             self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
-            self.firstQue = True
         else:
             # нажали на кнопку, получили "0"
             self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
@@ -177,33 +185,68 @@ class MainWindow(QMainWindow):
         QtWidgets.QApplication.processEvents()
         if not self.Tranciver.received_signal.empty(): 
             currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
-            oscillogramma=currentData[::self.downSample]
-            # одинаковое отображение осциллограм вне зависимости от режима работы
-            # self.Chart0.plotData(abs(np.diff(currentData))**2)
-            self.Chart0.plotData(oscillogramma)
+            n = int(self.Tranciver.samplerate*23.3e-3) # длина модулирующего импульса для режима дальность
             # выбор варианта обработки currentData (скорость или дальность)
             if self.signalType.value:
-                # "1" обработка скорости 
+                # "1" обработка скорости
+                self.Chart0.plotData(currentData[::self.downSampleUsed])
                 self.Chart1.specImage(currentData)
-            else:
+            elif self.firstQue == 1:
                 # "0" обработка дальности
                 # 1) взять производную текущего фрейма
-                diffSignal = abs(np.diff(currentData))**2
+                diffSignal = abs(np.diff(currentData))**8
                 # 2) найти положение максимума
+                maxind = np.argmax(diffSignal)
+                # этот максимум соотвествует началу записи, но  не началу сигнала, поэтому ищем следующий
+                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
+                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
+                self.bufNext = currentData[maxind:-1]
+                # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
+                if len(self.bufCurrent) < n :
+                    self.bufCurrent = np.concatenate((np.zeros(n-len(self.bufCurrent)),self.bufCurrent))
+                else:
+                    self.bufCurrent = self.bufCurrent[-n-1:-1]
+                # 4) обобразить спектрограмму (здесь нули, т.к. есть задержка включения устройства)
+                self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
+                self.Chart1.specImage(self.bufCurrent)
+                # 5) текущий буфер заменить буфером следующего кадра
+                self.bufCurrent = self.bufNext
+                self.firstQue = 2
+            elif self.firstQue == 2:
+                # 1) взять производную текущего фрейма
+                diffSignal = abs(np.diff(currentData))**3
+                # 2) найти положение истинного максимума - это начало второго импульса
                 maxind = np.argmax(diffSignal)
                 # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
                 self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
                 self.bufNext = currentData[maxind:-1]
-                n = self.Tranciver.blocksize
                 # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
                 if len(self.bufCurrent) < n :
-                    self.bufCurrent = np.concatenate((self.bufCurrent,np.zeros(n-len(self.bufCurrent))))
+                    self.bufCurrent = np.concatenate((np.zeros(n-len(self.bufCurrent)),self.bufCurrent))
                 else:
-                    self.bufCurrent = self.bufCurrent[:n]
-                # 4) обобразить спектрограмму
+                    self.bufCurrent = self.bufCurrent[-n-1:-1]
+                # 4) обобразить спектрограмму (здесь случайный остаток сигнала)
+                self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
                 self.Chart1.specImage(self.bufCurrent)
                 # 5) текущий буфер заменить буфером следующего кадра
-                self.bufCurrent = self.bufNext
+                self.bufCurrent = self.bufNext # (здесь неполный второй сигнал)
+                self.firstQue = 0               
+            else:
+                m = n - len(self.bufCurrent)  # эту часть надо забрать из новых данных
+                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
+                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:m])) # определили конце сигнала
+                self.bufNext = currentData[m:-1]# здесь начало следующего импульса сигнала
+                self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
+                self.Chart1.specImage(self.bufCurrent)
+                # 6) проверить на наличие еще одного импульса
+                if len(self.bufNext) > n:
+                    k = len(self.bufNext)-n
+                    self.bufCurrent = self.bufNext[-k-1:-1]
+                    self.Chart0.plotData(self.bufNext[:n:self.downSampleUsed])
+                    self.Chart1.specImage(self.bufNext[:n])
+                else:
+                    # 5) текущий буфер заменить буфером следующего кадра
+                    self.bufCurrent = self.bufNext
 
             self.save_signal.put(currentData)   
             # todo : use checkbox to save current queue or all queue since program start (continues)
