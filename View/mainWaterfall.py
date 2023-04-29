@@ -157,8 +157,8 @@ class WaterFallWindow(QWidget):
     # масштаб данных
     def setCoef(self, type: SignalSource):
         # f = np.linspace(1,self.nfft,int(self.nfft))*(self.fs/self.nfft)# подготовка шкалы частот
-        # f = f[:int(self.nfft/2)]                        # уполовинивание шкалы частот
-        self.First = True        # сброс данных на плоте для пересчета новых размеров
+        # f = f[:int(self.nfft/2)]  # уполовинивание шкалы частот
+        self.First = True           # сброс данных на плоте для пересчета новых размеров
         
         if type.value == SignalSource.RANGE.value:
             self.coef = 3e8*23.3e-3/2/(221e6*(2.4/5))

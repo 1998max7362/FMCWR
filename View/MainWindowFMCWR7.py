@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         self.downSampleUsed = 10        # скорректированное значение прореживания с учетом частоты дискретизации
         self.bufCurrent = np.array([])  # буфер отображаемого фрейма в спектрограмме
         self.bufNext = np.array([])     # буфер следующего фремйа в спектрограмме
+        self.polycoef = np.array([])
 
         #  Add Clamps
         self.StartStopClamp = Clamp()
@@ -153,7 +154,7 @@ class MainWindow(QMainWindow):
                 self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
                 self.settings.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
                 self.settings.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
-                vel = int(40/(coef*fs/2)*self.Chart1.nfft/2) #  отсчет соответствующий 40 м/с
+                vel = int(30/(coef*fs/2)*self.Chart1.nfft/2) #  отсчет соответствующий 30 м/с
                 self.settings.xMax.slider.setValue(vel)               # текущее значение xMax, m/s
 
             self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
@@ -237,12 +238,16 @@ class MainWindow(QMainWindow):
                 self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:m])) # определили конце сигнала
                 self.bufNext = currentData[m:-1]# здесь начало следующего импульса сигнала
                 self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
+                # обработка для лучшей видимости сигнала
+                # self.polycoeff = np.polyfit(np.array(range(n)),self.bufCurrent,2)
+                # self.Chart1.specImage(self.bufCurrent-np.polyval(self.polycoef,np.array(range(n))))
                 self.Chart1.specImage(self.bufCurrent)
                 # 6) проверить на наличие еще одного импульса
                 if len(self.bufNext) > n:
                     k = len(self.bufNext)-n
                     self.bufCurrent = self.bufNext[-k-1:-1]
                     self.Chart0.plotData(self.bufNext[:n:self.downSampleUsed])
+                    # self.Chart1.specImage(self.bufNext[:n]-np.polyval(self.polycoef,np.array(range(n))))
                     self.Chart1.specImage(self.bufNext[:n])
                 else:
                     # 5) текущий буфер заменить буфером следующего кадра
