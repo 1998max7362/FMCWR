@@ -5,3 +5,5 @@ __pycache__/
 View/__pycache__/
 View/__pycache__/mainWaterfall.cpython-39.pyc
 View/test.ipynb
+build/
+dist/
