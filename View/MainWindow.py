@@ -110,20 +110,19 @@ class MainWindow(QMainWindow):
         self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
 
     def StartStop(self,start_stop):
-        """ Обработчик нажатия на кнопку Старт/Стоп"""
+        # Обработчик нажатия на кнопку Старт/Стоп
         print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
         # считываем все настройки для переинициализии микрофона
         # self.Tranciver.samplerate = ...
         if start_stop:
             # нажали на кнопку, получили "1"
-            """ проверим для начала пустая ли очередь?
-             если она пуста, то идем дальше, а если нет, тогда смотрим
-             изменился ли режим работы.
-             Режим не менялся - идем дальше
-             спектрограмму не сбрасываем
-             Режим поменялся - предлагаем сохранить очередь прежде чем писать новую
-             сбрасываем спектрограмму для того, чтобы она не поломалась
-             """
+            #  проверим для начала пустая ли очередь?
+            #  если она пуста, то идем дальше, а если нет, тогда смотрим
+            #  изменился ли режим работы.
+            #  Режим не менялся - идем дальше
+            #  спектрограмму не сбрасываем
+            #  Режим поменялся - предлагаем сохранить очередь прежде чем писать новую
+            #  сбрасываем спектрограмму для того, чтобы она не поломалась
             # корректируем размер блока обработки И другие параметры зависящие от режима
             self.settings.xMin.slider.setValue(0)                # текущее значение xMin
             fs = self.Tranciver.samplerate
@@ -250,7 +249,7 @@ class MainWindow(QMainWindow):
             # now save only data pushed start|stop button
 
     def saveFile(self):
-        """ создаем диалоговое окно сохранения файла """
+        #  создаем диалоговое окно сохранения файла 
         filename = self._saveFileDialog('Сохранение сигнала')
         if filename!='':
             write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
@@ -258,7 +257,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
     def loadFile(self):
-        """ загрузка файла """
+        #  загрузка файла 
         fileName, filter = QFileDialog.getOpenFileName()
         if fileName!='':
             if fileName[-4:]!='.wav':
@@ -266,34 +265,34 @@ class MainWindow(QMainWindow):
             else:
                 samplerate, data = wavfile.read(fileName)
                 print('Loaded')
-                """ тут логика должна быть следующей: открываем файл, у нас есть кнопка Плей, 
-                она должна активироваться (тут вообще хороший вопрос, а должна ли она активироваться, 
-                если мы просто записали файл и сразу хотим его воспроизвести).
-                2) нажимаем плей, в зависимости от типа файла (вот тут тоже косяк, пользователь как бы должен
-                наперед знать тип данных) нарезаем его на блоки (и тут снова косяк, размеры блоков мы могли менять,
-                например меняя частоту дискретизации, т.е. надо определить базовую например 44100 и относительно
-                нее делать все изменения по размерам блоков) и выводим на спектрограмму и осциллограмму пока 
-                файл не закончится. 
+                # тут логика должна быть следующей: открываем файл, у нас есть кнопка Плей, 
+                # она должна активироваться (тут вообще хороший вопрос, а должна ли она активироваться, 
+                # если мы просто записали файл и сразу хотим его воспроизвести).
+                # 2) нажимаем плей, в зависимости от типа файла (вот тут тоже косяк, пользователь как бы должен
+                # наперед знать тип данных) нарезаем его на блоки (и тут снова косяк, размеры блоков мы могли менять,
+                # например меняя частоту дискретизации, т.е. надо определить базовую например 44100 и относительно
+                # нее делать все изменения по размерам блоков) и выводим на спектрограмму и осциллограмму пока 
+                # файл не закончится. 
                 
-                Вероятно нам захочется воспроизводить файл с заданной скоростью, тогда должны быть предусмотрены кнопки
-                x0.5, x2 и т.д. рядом с кнопкой плей"""
+                # Вероятно нам захочется воспроизводить файл с заданной скоростью, тогда должны быть предусмотрены кнопки
+                # x0.5, x2 и т.д. рядом с кнопкой плей
 
     def getCurDateTime(self):
-        """ возвращает метку времени ггггммдд_ччммсс"""
+        # возвращает метку времени ггггммдд_ччммсс
         now = datetime.now()
         current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
         return current_date_time
 
     def getSignalType(self,SignalType):
-        """ установка типа записываемого сигнала """
+        # установка типа записываемого сигнала 
         self.signalType=SignalType
     
     def setDownSample(self,value):
-        """ установка прореживания для вывода осциллограммы """
+        # установка прореживания для вывода осциллограммы
         self.downSample = value
 
     def _saveFileDialog(self,text):
-        """ настройка диалогового окна сохраанения файла """
+        # настройка диалогового окна сохраанения файла 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
@@ -303,19 +302,19 @@ class MainWindow(QMainWindow):
         self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
 
     def _createMenubar(self):
-        """ делаем пользовательское меню """
+        # делаем пользовательское меню
         menuBar = self.menuBar()
         self.MainWindowMenuBar = menuBar.addMenu("&Файл")
         self.MainWindowMenuBar.addAction(self.saveAction)
         self.MainWindowMenuBar.addAction(self.loadAction)
 
     def _createActions(self):
-        """ делаем кнопки пользовательского меню """
+        # делаем кнопки пользовательского меню
         self.saveAction = QAction("&Сохранить",self)
         self.loadAction = QAction("&Загрузить",self)
     
     def _connectActions(self):
-        """ соединяем кнопки пользовательского меню с обработчиками событий """
+        # соединяем кнопки пользовательского меню с обработчиками событий
         self.saveAction.triggered.connect(self.saveFile)
         self.loadAction.triggered.connect(self.loadFile)
 
