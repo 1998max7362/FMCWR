@@ -1,10 +1,9 @@
 {
     "python.analysis.extraPaths": [
         "./View",
-        "./Core",
-        "./SignalGenerator",
+        "./utils/components",
+        "./utils/constants",
+        "./Model",
         "./Test",
-        "./SignalProcessing",
-        
     ]
 }
