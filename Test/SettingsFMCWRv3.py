@@ -1,13 +1,11 @@
 import sys
 sys.path.insert(0, "././utils/constants/")
 sys.path.insert(0, "././utils/components/")
+sys.path.insert(0, "././ExtraFiles/Icons/")
 from PyQt5.QtWidgets import *
-from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
-import numpy as np
-from PyQt5 import QtWidgets
 from PyQt5.QtGui import * 
-from qtwidgets import Toggle, AnimatedToggle
+from qtwidgets import AnimatedToggle
 from PyQt5.QtCore import QSize
 from SignalSource import SignalSource
 from SignalType import SignalType
@@ -123,9 +121,9 @@ class SettingsWindow(QWidget):
             layout.addWidget(Signal)
         self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.LINE,0))
         self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,1))
-        self.SignalsType[0].setIcon(QIcon('Icons/Triangle2.png'))
+        self.SignalsType[0].setIcon(QIcon('ExtraFiles/Icons/Triangle2.png'))
         self.SignalsType[0].setIconSize(QSize(400,255)) 
-        self.SignalsType[1].setIcon(QIcon('Icons/Triangle2.png'))
+        self.SignalsType[1].setIcon(QIcon('ExtraFiles/Icons/Triangle2.png'))
         self.SignalsType[1].setIconSize(QSize(400,255))
 
     
