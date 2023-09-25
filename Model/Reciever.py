@@ -1,7 +1,7 @@
 # this file contains class as a driver to audiodevice
 # python-sounddevice module has to be installed first
 import sys
-sys.path.insert(0, "././Core/")
+sys.path.insert(0, "././utils/components")
 from PyQt5 import QtCore, QtWidgets
 import argparse
 import queue

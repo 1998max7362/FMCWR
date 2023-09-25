@@ -47,11 +47,11 @@ class MainWindow(QMainWindow):
         self.signalType=SignalSource.RANGE
 
         # Tranciever
-        self.Tranciver = Reciever()
-        self.Tranciver.setDevice(0)             # choose device with hostapi = 0
-        self.Tranciver.setChannels(1)           # set number of input channels
-        self.Tranciver.setFs(fs) 
-        self.Tranciver.downsample = 1
+        self.Reciever = Reciever()
+        self.Reciever.setDevice(0)             # choose device with hostapi = 0
+        self.Reciever.setChannels(1)           # set number of input channels
+        self.Reciever.setFs(fs) 
+        self.Reciever.downsample = 1
 
         # Graph window settings
         self.Chart0 = GraphWindow()
@@ -114,8 +114,8 @@ class MainWindow(QMainWindow):
         self.settingsReciever.SignalTypeClamp.ConnectTo(self.Chart1.SignalTypeClamp)
 
         self.settingsReciever.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
-        self.settingsReciever.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
-        self.settingsReciever.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
+        self.settingsReciever.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Reciever.FsClamp)
+        self.settingsReciever.infoLabel.TextClamp.ConnectFrom(self.Reciever.ErrorClamp)
         self.settingsReciever.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
         self.settingsReciever.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
 
@@ -135,14 +135,14 @@ class MainWindow(QMainWindow):
             #  сбрасываем спектрограмму для того, чтобы она не поломалась
             # корректируем размер блока обработки И другие параметры зависящие от режима
             self.settingsReciever.xMin.slider.setValue(0)                # текущее значение xMin
-            fs = self.Tranciver.samplerate
+            fs = self.Reciever.samplerate
             # корректировка децимирующего коэффициента
             self.downSampleUsed = int(self.downSample*(np.round(fs/44100)))
             if self.downSampleUsed == 0:
                 self.downSampleUsed = 1
 
             if self.signalType.value == 0 :
-                self.Tranciver.setBlkSz(int(30e-3*fs))  # на 30 мс размер буфера для дальности
+                self.Reciever.setBlkSz(int(30e-3*fs))  # на 30 мс размер буфера для дальности
                 self.Chart1.set_tSeg(23.3e-3)           # параметры стенда на 23.3 мс
                 self.Chart1.set_fs(fs)
                 coef = 3e8*23.3e-3/2/(221e6*(2.4/5))
@@ -152,9 +152,9 @@ class MainWindow(QMainWindow):
                 pos = int(30/(coef*fs/2)*self.Chart1.nfft/2) # отсчет соотвествующий 30 метрам
                 self.settingsReciever.xMax.slider.setValue(pos) # текущее значение xMax
             else:
-                self.Tranciver.setBlkSz(int(50e-3*self.Tranciver.samplerate))# на 100 мс для скорости
+                self.Reciever.setBlkSz(int(50e-3*self.Reciever.samplerate))# на 100 мс для скорости
                 self.Chart1.set_tSeg(50e-3)
-                self.Chart1.set_fs(self.Tranciver.samplerate)
+                self.Chart1.set_fs(self.Reciever.samplerate)
                 coef = 0.125/2
                 self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
                 self.settingsReciever.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
@@ -165,8 +165,8 @@ class MainWindow(QMainWindow):
             self.settingsReciever.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
             self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
-            self.Tranciver.working = True                           # ставим признак работы Tranciver
-            self.worker_1  = Worker(self.Tranciver.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
+            self.Reciever.working = True                           # ставим признак работы Tranciver
+            self.worker_1  = Worker(self.Reciever.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
             self.firstQue = 1                                       # номер записи в очереди
             self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
@@ -174,11 +174,11 @@ class MainWindow(QMainWindow):
             # нажали на кнопку, получили "0"
             self.settingsReciever.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(True)                 # включаем часть интерфейса
-            self.Tranciver.working = False                          # ставим признак выключения Tranciver
+            self.Reciever.working = False                          # ставим признак выключения Tranciver
             self.timer.stop()                                       # отключаем таймер обновления
             # ждем снятия блокировки с очереди для записи и очищаем массив с записанным сигналом
-            with self.Tranciver.received_signal.mutex: 
-                self.Tranciver.received_signal.queue.clear()
+            with self.Reciever.received_signal.mutex: 
+                self.Reciever.received_signal.queue.clear()
             self.threadpool.clear()
 
             # saving data from the queue для записи в файл
@@ -189,9 +189,9 @@ class MainWindow(QMainWindow):
     def Process_2(self):
         self.c = 0
         QtWidgets.QApplication.processEvents()
-        if not self.Tranciver.received_signal.empty(): 
-            currentData = np.concatenate(self.Tranciver.received_signal.get_nowait())
-            n = int(self.Tranciver.samplerate*23.3e-3) # длина модулирующего импульса для режима дальность
+        if not self.Reciever.received_signal.empty(): 
+            currentData = np.concatenate(self.Reciever.received_signal.get_nowait())
+            n = int(self.Reciever.samplerate*23.3e-3) # длина модулирующего импульса для режима дальность
             # выбор варианта обработки currentData (скорость или дальность)
             if self.signalType.value:
                 # "1" обработка скорости
@@ -262,7 +262,7 @@ class MainWindow(QMainWindow):
         #  создаем диалоговое окно сохранения файла 
         filename = self._saveFileDialog('Сохранение сигнала')
         if filename!='':
-            write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Tranciver.samplerate), self.wav_data.astype(np.float32))
+            write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Reciever.samplerate), self.wav_data.astype(np.float32))
             self.wav_data = np.array([])
             QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
@@ -309,7 +309,7 @@ class MainWindow(QMainWindow):
         return fileName
 
     def deviceUpdate(self,deviceName):
-        self.Tranciver.device=self.settingsReciever.deviceComboBox.currentIndex()+1
+        self.Reciever.device=self.settingsReciever.deviceComboBox.currentIndex()+1
 
     def _createMenubar(self):
         # делаем пользовательское меню

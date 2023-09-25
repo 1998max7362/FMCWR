@@ -11,11 +11,12 @@ from WrapedUiElements import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import pyqtSignal 
 from PyQt5.QtCore import *
-
+from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio
 
 class SettingsWindowTransmitter(QWidget):
     signalTypeChanged = pyqtSignal(object)
     signalPeriodChanged = pyqtSignal(object)
+    audioDeviceChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки")
@@ -23,6 +24,9 @@ class SettingsWindowTransmitter(QWidget):
         layout = QVBoxLayout(self)
         
         self.DefaultFont = QFont('Times',10)
+
+        self.deviceSettingsInit()
+        layout.addWidget(self.DeviceSettingsGroupBox)
 
         self.SignalTypeInit()
         layout.addWidget(self.signalTypesGroupBox)
@@ -39,9 +43,31 @@ class SettingsWindowTransmitter(QWidget):
 
         self.Period.textEdited.connect(self.changePeriod)
 
+    def deviceSettingsInit(self):
+        self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
+        self.DeviceSettingsGroupBox.setFont(QFont('Times',10))
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        self.DeviceSettingsGroupBox.setLayout(layout)
+
+        self.outputDevices = QAudioDeviceInfo.availableDevices(QAudio.AudioOutput)
+        self.devices_list = []
+        for device in self.outputDevices:
+            self.devices_list.append(device.deviceName())
+        
+        self.deviceComboBox = QComboBox()
+        self.deviceComboBox.addItems(self.devices_list)
+
+        self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
+        layout.addWidget(self.deviceComboBox)
+
+    def changeAudioDevice(self, device):
+        self.audioDeviceChanged.emit(device)
+        print(device)
+
     def SignalTypeInit(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
-        self.signalTypesGroupBox.setFont(QFont('Times',15))
+        self.signalTypesGroupBox.setFont(self.DefaultFont)
         layout = QVBoxLayout()
         layout.setSpacing(0)
         self.signalTypesGroupBox.setLayout(layout)
