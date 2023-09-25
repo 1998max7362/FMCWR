@@ -13,7 +13,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import *
 
 
-class SettingsWindow(QWidget):
+class SettingsWindowTransmitter(QWidget):
     signalTypeChanged = pyqtSignal(object)
     signalPeriodChanged = pyqtSignal(object)
     def __init__(self):
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
-    main = SettingsWindow()
+    main = SettingsTransmitter()
     main.show()
 
     sys.exit(app.exec_())

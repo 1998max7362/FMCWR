@@ -18,7 +18,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio
 from Clamp import Clamp
 
-class SettingsWindow(QWidget):
+class SettingsWindowReciever(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки")
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
-    main = SettingsWindow()
+    main = SettingsWindowReciever()
     main.show()
 
     sys.exit(app.exec_())

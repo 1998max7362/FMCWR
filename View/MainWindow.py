@@ -14,7 +14,8 @@ from scipy.io.wavfile import write
 from scipy.io import wavfile
 from datetime import datetime
 
-from SettingsWindow import SettingsWindow
+from SettingsWindowReciever import SettingsWindowReciever
+from SettingsWindowTransmitter import SettingsWindowTransmitter
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
 from Clamp import Clamp
@@ -22,6 +23,7 @@ from Worker import *
 from SignalSource import SignalSource
 from Transceiver import Transceiver
 from WrapedUiElements import *
+
 
 
 
@@ -68,16 +70,24 @@ class MainWindow(QMainWindow):
         # разметка
         layout = QHBoxLayout(self)
         # добавление виджетов
-        self.settings = SettingsWindow()
-        self.dockSettings = QDockWidget()
+        self.settingsReciever = SettingsWindowReciever()
+        self.dockSettingsReciever = QDockWidget()
+        self.dockSettingsReciever.setWindowTitle('Приёмник')
+        self.dockSettingsReciever.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockSettingsReciever.setWidget(self.settingsReciever)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsReciever)
 
-        self.dockSettings.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.settingsTransmitter = SettingsWindowTransmitter()
+        self.dockSettingsTransmitter = QDockWidget()
+        self.dockSettingsTransmitter.setWindowTitle('Передатчик')
+        self.dockSettingsTransmitter.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockSettingsTransmitter.setWidget(self.settingsTransmitter)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsTransmitter)
 
-        self.dockSettings.setWidget(self.settings)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettings)
+        self.tabifyDockWidget(self.dockSettingsTransmitter, self.dockSettingsReciever)
 
-        self.dockGraph0 = QDockWidget("График 0")
-        self.dockGraph1 = QDockWidget("График 1")
+        self.dockGraph0 = QDockWidget("Осциллограмма ")
+        self.dockGraph1 = QDockWidget("Спектрограмма")
         self.dockGraph0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
         self.dockGraph1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
 
@@ -90,7 +100,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
         
-        self.StartStopClamp.ConnectFrom(self.settings.StartStopClamp)
+        self.StartStopClamp.ConnectFrom(self.settingsReciever.StartStopClamp)
         self.StartStopClamp.HandleWithReceive(self.StartStop)
         self.SignalTypeClamp.HandleWithReceive(self.getSignalType)
 
@@ -98,16 +108,16 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(10)
         self.timer.timeout.connect(self.Process_2)
 
-        self.settings.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
-        self.settings.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
-        self.settings.SignalTypeClamp.ConnectTo(self.SignalTypeClamp)
-        self.settings.SignalTypeClamp.ConnectTo(self.Chart1.SignalTypeClamp)
+        self.settingsReciever.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
+        self.settingsReciever.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
+        self.settingsReciever.SignalTypeClamp.ConnectTo(self.SignalTypeClamp)
+        self.settingsReciever.SignalTypeClamp.ConnectTo(self.Chart1.SignalTypeClamp)
 
-        self.settings.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
-        self.settings.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
-        self.settings.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
-        self.settings.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
-        self.settings.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
+        self.settingsReciever.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
+        self.settingsReciever.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Tranciver.FsClamp)
+        self.settingsReciever.infoLabel.TextClamp.ConnectFrom(self.Tranciver.ErrorClamp)
+        self.settingsReciever.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
+        self.settingsReciever.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
 
     def StartStop(self,start_stop):
         # Обработчик нажатия на кнопку Старт/Стоп
@@ -124,7 +134,7 @@ class MainWindow(QMainWindow):
             #  Режим поменялся - предлагаем сохранить очередь прежде чем писать новую
             #  сбрасываем спектрограмму для того, чтобы она не поломалась
             # корректируем размер блока обработки И другие параметры зависящие от режима
-            self.settings.xMin.slider.setValue(0)                # текущее значение xMin
+            self.settingsReciever.xMin.slider.setValue(0)                # текущее значение xMin
             fs = self.Tranciver.samplerate
             # корректировка децимирующего коэффициента
             self.downSampleUsed = int(self.downSample*(np.round(fs/44100)))
@@ -137,22 +147,22 @@ class MainWindow(QMainWindow):
                 self.Chart1.set_fs(fs)
                 coef = 3e8*23.3e-3/2/(221e6*(2.4/5))
                 self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
-                self.settings.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
-                self.settings.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
+                self.settingsReciever.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
+                self.settingsReciever.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
                 pos = int(30/(coef*fs/2)*self.Chart1.nfft/2) # отсчет соотвествующий 30 метрам
-                self.settings.xMax.slider.setValue(pos) # текущее значение xMax
+                self.settingsReciever.xMax.slider.setValue(pos) # текущее значение xMax
             else:
                 self.Tranciver.setBlkSz(int(50e-3*self.Tranciver.samplerate))# на 100 мс для скорости
                 self.Chart1.set_tSeg(50e-3)
                 self.Chart1.set_fs(self.Tranciver.samplerate)
                 coef = 0.125/2
                 self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
-                self.settings.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
-                self.settings.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
+                self.settingsReciever.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
+                self.settingsReciever.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
                 vel = int(40/(coef*fs/2)*self.Chart1.nfft/2) #  отсчет соответствующий 40 м/с
-                self.settings.xMax.slider.setValue(vel)               # текущее значение xMax, m/s
+                self.settingsReciever.xMax.slider.setValue(vel)               # текущее значение xMax, m/s
 
-            self.settings.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
+            self.settingsReciever.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
             self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
             self.Tranciver.working = True                           # ставим признак работы Tranciver
@@ -162,7 +172,7 @@ class MainWindow(QMainWindow):
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
         else:
             # нажали на кнопку, получили "0"
-            self.settings.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
+            self.settingsReciever.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
             self.MainWindowMenuBar.setEnabled(True)                 # включаем часть интерфейса
             self.Tranciver.working = False                          # ставим признак выключения Tranciver
             self.timer.stop()                                       # отключаем таймер обновления
@@ -299,7 +309,7 @@ class MainWindow(QMainWindow):
         return fileName
 
     def deviceUpdate(self,deviceName):
-        self.Tranciver.device=self.settings.deviceComboBox.currentIndex()+1
+        self.Tranciver.device=self.settingsReciever.deviceComboBox.currentIndex()+1
 
     def _createMenubar(self):
         # делаем пользовательское меню
