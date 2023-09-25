@@ -15,7 +15,7 @@ from Clamp import Clamp
 from PyQt5.QtWidgets import QMessageBox
 
 
-class Transceiver():
+class Reciever():
     """ This class is a wrapper to sounddevice object 
     providing control over input and output
     """
@@ -175,7 +175,7 @@ class Transceiver():
             self.parser.exit(type(e).__name__ + ': wow ' + str(e))
 
 if __name__ == "__main__":
-    tr = Transceiver()          # create object
+    tr = Reciever()          # create object
     a = tr.getAudioDevices()
     print(tr.getAudioDevices()) # show all mic devices
     tr.setDevice(0)             # choose device with hostapi = 0

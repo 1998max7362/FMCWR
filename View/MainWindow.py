@@ -21,7 +21,7 @@ from mainGraph import GraphWindow
 from Clamp import Clamp
 from Worker import *
 from SignalSource import SignalSource
-from Transceiver import Transceiver
+from Reciever import Reciever
 from WrapedUiElements import *
 
 
@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         self.signalType=SignalSource.RANGE
 
         # Tranciever
-        self.Tranciver = Transceiver()
+        self.Tranciver = Reciever()
         self.Tranciver.setDevice(0)             # choose device with hostapi = 0
         self.Tranciver.setChannels(1)           # set number of input channels
         self.Tranciver.setFs(fs) 
