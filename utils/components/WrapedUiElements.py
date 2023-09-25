@@ -243,7 +243,27 @@ class NamedLineEditHorizontal(QWidget):
         self.LineEdit.setFixedWidth(100)
         self.label.setFixedWidth(100)
         layoutVert.addStretch()
-        
+
+class NewNamedLineEditHorizontal(QWidget):
+    textEdited = pyqtSignal(object)
+    def __init__(self,  name:str, units = None, lineEdit=QLineEdit):
+        super().__init__()
+        layout = QHBoxLayout(self)
+        self.label = QLabel(name)
+        self.LineEdit = lineEdit()
+        self.LineEdit.textEdited
+        self.LineEdit.textEdited.connect(self.editText)
+        layout.addWidget(self.label)
+        layout.addWidget(self.LineEdit)
+        if units:
+            self.labelUnits = QLabel(units)
+            layout.addWidget(self.labelUnits)
+            self.labelUnits.setFixedWidth(30)
+    
+    def editText(self, value):
+        self.textEdited.emit(value)
+
+
 
 class ClampedSlider(QSlider):
     def __init__(self) -> None:

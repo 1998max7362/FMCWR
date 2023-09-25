@@ -12,6 +12,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import pyqtSignal 
 from PyQt5.QtCore import *
 
+
 class SettingsWindow(QWidget):
     signalTypeChanged = pyqtSignal(object)
     signalPeriodChanged = pyqtSignal(object)
@@ -26,15 +27,17 @@ class SettingsWindow(QWidget):
         self.SignalTypeInit()
         layout.addWidget(self.signalTypesGroupBox)
 
-        self.Period = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),"Период:", "мкс")
+        self.Period = NewNamedLineEditHorizontal("Период:", "мкс")
         self.Period.label.setFont(self.DefaultFont)
         self.Period.labelUnits.setFont(self.DefaultFont)
-        self.Period.LineEdit.setText('0')
         self.Period.LineEdit.setFont(self.DefaultFont)
         self.Period.LineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1,2}")))
+        self.Period.LineEdit.setText('0')
         layout.addWidget(self.Period, alignment=Qt.AlignTop)
         
         layout.addStretch()
+
+        self.Period.textEdited.connect(self.changePeriod)
 
     def SignalTypeInit(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
@@ -60,6 +63,7 @@ class SettingsWindow(QWidget):
         for RadioButton in self.SignalsType:
             RadioButton.blockSignals(False)
         self.SignalsType[buttonNum].blockSignals(True)
+        self.signalTypeChanged.emit(signalType)
         print(signalType)
 
     def convertBackToFloat(self, value):
@@ -69,6 +73,10 @@ class SettingsWindow(QWidget):
             pass
     def convertToStr(self, value):
         return str(value)
+    
+    def changePeriod(self, value):
+        self.signalPeriodChanged.emit(value)
+        print(value)
 
 
 
