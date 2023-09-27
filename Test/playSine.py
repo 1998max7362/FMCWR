@@ -57,7 +57,7 @@ try:
     channels = 1
     callback = callback
     samplerate = samplerate
-    with sd.OutputStream(device=3, channels=1, callback=callback,
+    with sd.OutputStream(device=14, channels=1, callback=callback,
                          samplerate=samplerate):
         print(device)
         print('#' * 80)

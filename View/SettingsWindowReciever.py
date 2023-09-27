@@ -15,10 +15,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import * 
 from PyQt5.QtCore import Qt
-from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio
 from Clamp import Clamp
+from getAudioDevice import getAudioDevice
+from PyQt5.QtCore import pyqtSignal 
 
 class SettingsWindowReciever(QWidget):
+    inputDeviceChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки")
@@ -34,7 +36,7 @@ class SettingsWindowReciever(QWidget):
         
         self.DefaultFont = QFont('Times',10)
 
-        self.input_audio_deviceInfos = QAudioDeviceInfo.availableDevices(QAudio.AudioInput)
+        self.input_audio_deviceInfos = getAudioDevice("input")
         #  Настройка параметров устройства
         self.deviceSettings()
         layout.addWidget(self.DeviceSettingsGroupBox)
@@ -75,10 +77,11 @@ class SettingsWindowReciever(QWidget):
 
         self.devices_list = []
         for device in self.input_audio_deviceInfos:
-            self.devices_list.append(device.deviceName())
+            self.devices_list.append(device["name"])
         
         self.deviceComboBox = ClampedComboBox()
         self.deviceComboBox.addItems(self.devices_list)
+        self.deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
         layout.addWidget(self.deviceComboBox)
 
         self.SampleRateLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Частота дискретизации','Гц') 
@@ -98,6 +101,10 @@ class SettingsWindowReciever(QWidget):
             self.SignalTypeClamp.Send(SignalSource.RANGE)
         elif self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.VELOCITY.value:
             self.SignalTypeClamp.Send(SignalSource.VELOCITY)
+
+    def changeInputDevice(self, index):
+        deviceId = self.input_audio_deviceInfos[index]["index"]
+        self.inputDeviceChanged.emit(deviceId)
 
     def graphSettingsInit(self):
         self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')

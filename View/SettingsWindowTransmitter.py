@@ -11,12 +11,12 @@ from WrapedUiElements import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import pyqtSignal 
 from PyQt5.QtCore import *
-from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio
+from getAudioDevice import getAudioDevice
 
 class SettingsWindowTransmitter(QWidget):
     signalTypeChanged = pyqtSignal(object)
     signalPeriodChanged = pyqtSignal(object)
-    audioDeviceChanged = pyqtSignal(object)
+    inputDeviceChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки")
@@ -50,7 +50,7 @@ class SettingsWindowTransmitter(QWidget):
         layout.setSpacing(0)
         self.DeviceSettingsGroupBox.setLayout(layout)
 
-        self.outputDevices = QAudioDeviceInfo.availableDevices(QAudio.AudioOutput)
+        self.outputDevices = getAudioDevice("output")
         self.devices_list = []
         for device in self.outputDevices:
             self.devices_list.append(device.deviceName())
@@ -61,9 +61,8 @@ class SettingsWindowTransmitter(QWidget):
         self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
         layout.addWidget(self.deviceComboBox)
 
-    def changeAudioDevice(self, device):
-        self.audioDeviceChanged.emit(device)
-        print(device)
+    def changeAudioDevice(self, index):
+        self.inputDeviceChanged.emit(self.outputDevices["index"])
 
     def SignalTypeInit(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')

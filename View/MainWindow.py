@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
         self.settingsReciever.SignalTypeClamp.ConnectTo(self.SignalTypeClamp)
         self.settingsReciever.SignalTypeClamp.ConnectTo(self.Chart1.SignalTypeClamp)
 
-        self.settingsReciever.deviceComboBox.currentTextChanged.connect(self.deviceUpdate)
+        self.settingsReciever.inputDeviceChanged.connect(self.deviceUpdate)
         self.settingsReciever.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Reciever.FsClamp)
         self.settingsReciever.infoLabel.TextClamp.ConnectFrom(self.Reciever.ErrorClamp)
         self.settingsReciever.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
@@ -308,8 +308,8 @@ class MainWindow(QMainWindow):
         fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
         return fileName
 
-    def deviceUpdate(self,deviceName):
-        self.Reciever.device=self.settingsReciever.deviceComboBox.currentIndex()+1
+    def deviceUpdate(self,deviceId):
+        self.Reciever.device=deviceId
 
     def _createMenubar(self):
         # делаем пользовательское меню
