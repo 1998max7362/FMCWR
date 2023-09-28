@@ -6,6 +6,7 @@ import soundfile as sf
 from PyQt5.QtCore import QObject, pyqtSignal
 import queue
 from SignalType import SignalType
+from PyQt5 import QtWidgets
 
 
 class Transmitter(QObject):
@@ -73,7 +74,7 @@ class Transmitter(QObject):
             
             with stream:
                 while self.isPlaying:
-                    pass
+                    QtWidgets.QApplication.processEvents()
         except Exception as e:
             print(e)
             self.errorAppeared.emit(e)

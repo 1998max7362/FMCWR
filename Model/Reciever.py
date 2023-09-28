@@ -114,6 +114,7 @@ class Reciever():
             self.ErrorClamp.Send(None)
             with stream:
                 while self.working:
+                    pass
                     QtWidgets.QApplication.processEvents()
         except Exception as e:
             self.ErrorClamp.Send(e.args[0])
