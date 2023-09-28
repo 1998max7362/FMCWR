@@ -177,8 +177,8 @@ class MainWindow(QMainWindow):
             self.firstQue = 1                                       # номер записи в очереди
             self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
-            self.worker_4  = Worker(self.Transmitter.runRealtime)
-            self.threadpool.start(self.worker_4)
+            # self.worker_4  = Worker(self.Transmitter.runRealtime)
+            # self.threadpool.start(self.worker_4)
         else:
             # нажали на кнопку, получили "0"
             self.settingsReciever.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
