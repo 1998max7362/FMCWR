@@ -46,7 +46,7 @@ try:
 
     def callback(outdata, frames, time, status):
         if status:
-            print(status, file=sys.stderr)
+            print(status)
         global start_idx
         t = (start_idx + np.arange(frames)) / samplerate
         t = t.reshape(-1, 1)

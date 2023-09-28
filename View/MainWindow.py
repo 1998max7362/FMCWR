@@ -23,7 +23,7 @@ from Worker import *
 from SignalSource import SignalSource
 from Reciever import Reciever
 from WrapedUiElements import *
-
+from Transmitter import Transmitter
 
 
 
@@ -46,12 +46,15 @@ class MainWindow(QMainWindow):
         segment = 100e-3 # 100 ms 
         self.signalType=SignalSource.RANGE
 
-        # Tranciever
+        # Reciever
         self.Reciever = Reciever()
         self.Reciever.setDevice(0)             # choose device with hostapi = 0
         self.Reciever.setChannels(1)           # set number of input channels
         self.Reciever.setFs(fs) 
         self.Reciever.downsample = 1
+
+        #Transmitter
+        self.Transmitter = Transmitter()
 
         # Graph window settings
         self.Chart0 = GraphWindow()
@@ -119,6 +122,10 @@ class MainWindow(QMainWindow):
         self.settingsReciever.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
         self.settingsReciever.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
 
+        self.settingsTransmitter.signalTypeChanged.connect(self.Transmitter.setSignalType)
+        self.settingsTransmitter.signalPeriodChanged.connect(self.Transmitter.setSignalPeriod)
+        self.settingsTransmitter.outputDeviceChanged.connect(self.Transmitter.setOutputDevice)
+
     def StartStop(self,start_stop):
         # Обработчик нажатия на кнопку Старт/Стоп
         print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
@@ -170,6 +177,8 @@ class MainWindow(QMainWindow):
             self.firstQue = 1                                       # номер записи в очереди
             self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
             self.timer.start()                                      # запускаем таймер для передергивания интерфейса
+            # self.worker_4  = Worker(self.Transmitter.runRealtime)
+            # self.threadpool.start(self.worker_4)
         else:
             # нажали на кнопку, получили "0"
             self.settingsReciever.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса

@@ -16,7 +16,7 @@ from getAudioDevice import getAudioDevice
 class SettingsWindowTransmitter(QWidget):
     signalTypeChanged = pyqtSignal(object)
     signalPeriodChanged = pyqtSignal(object)
-    inputDeviceChanged = pyqtSignal(object)
+    outputDeviceChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки")
@@ -53,7 +53,7 @@ class SettingsWindowTransmitter(QWidget):
         self.outputDevices = getAudioDevice("output")
         self.devices_list = []
         for device in self.outputDevices:
-            self.devices_list.append(device.deviceName())
+            self.devices_list.append(device["name"])
         
         self.deviceComboBox = QComboBox()
         self.deviceComboBox.addItems(self.devices_list)
@@ -62,7 +62,7 @@ class SettingsWindowTransmitter(QWidget):
         layout.addWidget(self.deviceComboBox)
 
     def changeAudioDevice(self, index):
-        self.inputDeviceChanged.emit(self.outputDevices["index"])
+        self.outputDeviceChanged.emit(self.outputDevices[index]["index"])
 
     def SignalTypeInit(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
@@ -77,8 +77,8 @@ class SettingsWindowTransmitter(QWidget):
         for Signal in self.SignalsType:
             SignalTypeSelecter.addButton(Signal)
             layout.addWidget(Signal)
-        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.LINE,0))
-        self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,1))
+        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,0))
+        self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SAWTOOTH_FRONT,1))
         self.SignalsType[0].setIcon(QIcon('ExtraFiles/Icons/Triangle2.png'))
         self.SignalsType[0].setIconSize(QSize(400,255)) 
         self.SignalsType[1].setIcon(QIcon('ExtraFiles/Icons/Triangle2.png'))
