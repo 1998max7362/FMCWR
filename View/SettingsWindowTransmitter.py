@@ -74,15 +74,19 @@ class SettingsWindowTransmitter(QWidget):
         SignalTypeSelecter = QButtonGroup(self)
         self.SignalsType.append(QRadioButton())
         self.SignalsType.append(QRadioButton())
+        self.SignalsType.append(QRadioButton())
         for Signal in self.SignalsType:
             SignalTypeSelecter.addButton(Signal)
             layout.addWidget(Signal)
         self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,0))
         self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SAWTOOTH_FRONT,1))
-        self.SignalsType[0].setIcon(QIcon('ExtraFiles/Icons/Triangle2.png'))
+        self.SignalsType[2].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SAWTOOTH_REVERSE,2))
+        self.SignalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
         self.SignalsType[0].setIconSize(QSize(400,255)) 
-        self.SignalsType[1].setIcon(QIcon('ExtraFiles/Icons/Triangle2.png'))
+        self.SignalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
         self.SignalsType[1].setIconSize(QSize(400,255))
+        self.SignalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
+        self.SignalsType[2].setIconSize(QSize(400,255))
 
     def SignalTypeSwitched(self,signalType, buttonNum:int):
         for RadioButton in self.SignalsType:
