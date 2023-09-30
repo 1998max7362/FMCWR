@@ -20,9 +20,9 @@ class SettingsWindowTransmitter(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.current.signalType
-        self.current.period
-        self.current.outputDevice
+        # self.currentSignalType
+        # self.currentPeriod
+        # self.currentOutputDevice
 
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)
@@ -36,18 +36,18 @@ class SettingsWindowTransmitter(QWidget):
         self.initSignalType()
         layout.addWidget(self.signalTypesGroupBox)
 
-        self.Period = NewNamedLineEditHorizontal("Период:", "мкс")
-        self.Period.label.setFont(self.DefaultFont)
-        self.Period.labelUnits.setFont(self.DefaultFont)
-        self.Period.LineEdit.setFont(self.DefaultFont)
-        self.Period.LineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1,2}")))
-        self.Period.LineEdit.setText('0')
-        layout.addWidget(self.Period, alignment=Qt.AlignTop)
-        
+        self.period = NewNamedLineEditHorizontal("Период:", "мкс")
+        self.period.label.setFont(self.DefaultFont)
+        self.period.labelUnits.setFont(self.DefaultFont)
+        self.period.LineEdit.setFont(self.DefaultFont)
+        self.period.LineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1,2}")))
+        self.period.LineEdit.setText('20')
+        layout.addWidget(self.period, alignment=Qt.AlignTop)
         layout.addStretch()
 
-        self.Period.textEdited.connect(self.changePeriod)
-        self.current.period = self.Period.LineEdit.text()
+        self.period.textEdited.connect(self.changePeriod)
+        self.currentPeriod = self.period.LineEdit.text()
+        print()
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -65,12 +65,12 @@ class SettingsWindowTransmitter(QWidget):
         self.deviceComboBox.addItems(self.devices_list)
 
         self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
-        self.current.outputDevice = self.outputDevices[self.deviceComboBox.currentIndex()]["index"]
+        self.currentOutputDevice = self.outputDevices[self.deviceComboBox.currentIndex()]["index"]
         layout.addWidget(self.deviceComboBox)
 
     def changeAudioDevice(self, index):
-        self.current.outputDevice = self.outputDevices[index]["index"]
-        self.outputDeviceChanged.emit(self.current.outputDevice)
+        self.currentOutputDevice = self.outputDevices[index]["index"]
+        self.outputDeviceChanged.emit(self.currentOutputDevice)
 
     def initSignalType(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
@@ -89,7 +89,7 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[0].clicked.connect(lambda: self.switchSignalType(SignalType.TRIANGLE,0))
         self.signalsType[1].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_FRONT,1))
         self.signalsType[2].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2))
-        self.current.signalType = SignalType.TRIANGLE
+        self.currentSignalType = SignalType.TRIANGLE
         self.signalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
         self.signalsType[0].setIconSize(QSize(400,255)) 
         self.signalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
@@ -109,11 +109,11 @@ class SettingsWindowTransmitter(QWidget):
 
 
     def switchSignalType(self,signalType, buttonNum:int):
-        self.current.signalType = signalType
+        self.currentSignalType = signalType
         for RadioButton in self.signalsType:
             RadioButton.blockSignals(False)
         self.signalsType[buttonNum].blockSignals(True)
-        self.signalTypeChanged.emit(self.current.signalType)
+        self.signalTypeChanged.emit(self.currentSignalType)
 
     def convertBackToFloat(self, value):
         try:
@@ -124,8 +124,8 @@ class SettingsWindowTransmitter(QWidget):
         return str(value)
     
     def changePeriod(self, value):
-        self.current.period = value
-        self.signalPeriodChanged.emit(self.current.period)
+        self.currentPeriod = value
+        self.signalPeriodChanged.emit(self.currentPeriod)
         print(value)
 
 
