@@ -77,12 +77,11 @@ class Tranciever(QObject):
                     device=(self.inputDeviceId, self.outputDeviceId),
                     samplerate=self.samplerate,
                     blocksize=self.blockSize,
-                    channels=(1,1),
+                    # channels=(1,1),
                     callback=self.callback)
                 self.errorAppeared.emit('')
                 with stream:
                     while self.isWorking:
-                        pass
                         QtWidgets.QApplication.processEvents()
             except Exception as e:
                 self.errorAppeared.emit(e.args[0])
@@ -92,9 +91,11 @@ class Tranciever(QObject):
             if status:
                 print(status)
             outdata[:] = self.signal
+            # self.transmittedSignal.put(self.signal) # записываем в очеред излученный сигнал
+            # self.recievedSignal.put(indata) # записываем в очеред принятый сигнал
 
-            self.recievedSignal.put(indata) # записываем в очеред принятый сигнал
-            self.transmittedSignal.put(outdata) # записываем в очеред излученный сигнал
+            
+            
         
         def setSignalType(self, type):
             self.signalType = type
