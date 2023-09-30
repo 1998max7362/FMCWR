@@ -21,6 +21,14 @@ class SettingsWindowReciever(QWidget):
     def __init__(self):
         super().__init__()
 
+        # self.currentInputDevice
+        # self.currentSampleRate
+        # self.currentUpdateInterval 
+        # self.currentSignalSource
+        # self.currentDownSampling 
+        # self.currentYRange
+        # self.currentXRange
+
         DefaultFont = QFont('Times', 10)
         self.inputAudioDeviceList = getAudioDevice("input")
 
@@ -47,7 +55,6 @@ class SettingsWindowReciever(QWidget):
         self.errorLabel = QLabel('')
         self.errorLabel.setFixedHeight(20)
         layout.addWidget(self.errorLabel)
-        print()
     
     def setErrorText(self, text:str):
         errorIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)

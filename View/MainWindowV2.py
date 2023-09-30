@@ -14,7 +14,7 @@ from scipy.io.wavfile import write
 from scipy.io import wavfile
 from datetime import datetime
 
-from SettingsWindowReciever import SettingsWindowReciever
+from SettingsWindowRecieverV2 import SettingsWindowReciever
 from SettingsWindowTransmitter import SettingsWindowTransmitter
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
@@ -40,10 +40,9 @@ class MainWindow(QMainWindow):
         self.settingsWindowReciever = SettingsWindowReciever()
         self.settingsWindowTransmitter = SettingsWindowTransmitter()
         
-        self.graphUpdateInterval
-        self.signalSource
-        self.downSampling
-        self.
+        self.graphUpdateInterval = self.settingsWindowReciever.currentUpdateInterval
+        self.signalSource = self.settingsWindowReciever.currentSignalSource
+        self.downSampling = self.settingsWindowReciever.currentDownSampling 
 
 
     def initConnections(self):
@@ -53,8 +52,8 @@ class MainWindow(QMainWindow):
         # settingsWindowReciever.updateIntervalChanged.connect(self.Tranciever.)
         # settingsWindowReciever.signalSourceChanged.connect(self.Tranciever.set)
         # self.settingsWindowReciever.downSamplingChanged.connect(self.Tranciever.)
-        self.settingsWindowReciever.yRangeChanged.connect(self.Tranciever.)
-        self.settingsWindowReciever.xRangeChanged.connect(self.Tranciever.)
+        # self.settingsWindowReciever.yRangeChanged.connect(self.Tranciever.)
+        # self.settingsWindowReciever.xRangeChanged.connect(self.Tranciever.)
 
 if __name__ == '__main__':
 

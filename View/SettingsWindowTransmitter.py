@@ -47,7 +47,6 @@ class SettingsWindowTransmitter(QWidget):
 
         self.period.textEdited.connect(self.changePeriod)
         self.currentPeriod = self.period.LineEdit.text()
-        print()
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
