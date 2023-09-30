@@ -7,6 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 import queue
 from SignalType import SignalType
 from PyQt5 import QtWidgets
+import math
 
 class Tranciever(QObject):
         errorAppeared = pyqtSignal(object)
@@ -35,9 +36,14 @@ class Tranciever(QObject):
         def generateSignal(self):
             match self.signalType:
                 case SignalType.TRIANGLE:
-                    halfScale, _ = np.split(self.scale, 2)
-                    signalOne = -1 + 4 * halfScale
-                    signalTwo = 1 - 4 * halfScale
+                    if self.scale.size%2==0:
+                        firstHalfScale, secondHalfScale = np.split(self.scale, 2)
+                    else:
+                        print(math.ceil(self.scale.size/2))
+                        firstHalfScale = self.scale[0:math.ceil(self.scale.size/2)]
+                        secondHalfScale = self.scale[0:math.floor(self.scale.size/2)]
+                    signalOne = -1 + 4 * firstHalfScale
+                    signalTwo = 1 - 4 * secondHalfScale
                     signal = np.concatenate((signalOne, signalTwo), axis=0)
                     return signal.reshape(-1, 1)
                 case SignalType.SAWTOOTH_FRONT:

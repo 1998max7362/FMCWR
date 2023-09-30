@@ -29,6 +29,7 @@ class SettingsWindowTransmitter(QWidget):
         layout = QVBoxLayout(self)
         
         self.DefaultFont = QFont('Times',10)
+        self.setFont(self.DefaultFont)
 
         self.deviceSettingsInit()
         layout.addWidget(self.DeviceSettingsGroupBox)
@@ -36,17 +37,20 @@ class SettingsWindowTransmitter(QWidget):
         self.initSignalType()
         layout.addWidget(self.signalTypesGroupBox)
 
-        self.period = NewNamedLineEditHorizontal("Период:", "мкс")
-        self.period.label.setFont(self.DefaultFont)
-        self.period.labelUnits.setFont(self.DefaultFont)
-        self.period.LineEdit.setFont(self.DefaultFont)
-        self.period.LineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1,2}")))
-        self.period.LineEdit.setText('20')
-        layout.addWidget(self.period, alignment=Qt.AlignTop)
+        preiodSpinBox = NamedHorizontalSpinBox('Период', 'мкс')
+        preiodSpinBox.setFixedWidth(400)
+        preiodSpinBox.label.setFixedWidth(210)
+        preiodSpinBox.spinBox.setFixedWidth(100)
+        preiodSpinBox.spinBox.setMaximum(100)
+        preiodSpinBox.spinBox.setValue(10)
+        preiodSpinBox.valueChanged.connect(self.changePeriod)
+        self.currentPeriod = preiodSpinBox.spinBox.value()
+        layout.addWidget(preiodSpinBox)
+
         layout.addStretch()
 
-        self.period.textEdited.connect(self.changePeriod)
-        self.currentPeriod = self.period.LineEdit.text()
+        
+
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -135,6 +139,5 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     main = SettingsWindowTransmitter()
     main.show()
-    main.updateState()
 
     sys.exit(app.exec_())

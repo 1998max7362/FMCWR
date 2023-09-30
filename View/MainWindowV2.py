@@ -40,9 +40,20 @@ class MainWindow(QMainWindow):
         self.settingsWindowReciever = SettingsWindowReciever()
         self.settingsWindowTransmitter = SettingsWindowTransmitter()
         
+        
+        self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
+        self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
         self.graphUpdateInterval = self.settingsWindowReciever.currentUpdateInterval
         self.signalSource = self.settingsWindowReciever.currentSignalSource
         self.downSampling = self.settingsWindowReciever.currentDownSampling 
+        # = self.settingsWindowReciever.currentYRange
+        # = self.settingsWindowReciever.currentXRange
+
+        self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
+        self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
+        self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
+
+        self.tranciever.run()
 
 
     def initConnections(self):
