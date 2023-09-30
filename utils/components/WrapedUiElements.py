@@ -1,15 +1,16 @@
+from decimal import Decimal
+from qtwidgets import Toggle, AnimatedToggle
+import enum
+from Clamp import Clamp
 from select import select
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
-from PyQt5.QtGui import * 
+from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import * 
+from PyQt5.QtWidgets import *
 sys.path.insert(0, "././utils/components")
-from Clamp import Clamp
-import enum
-from qtwidgets import Toggle, AnimatedToggle
-from decimal import Decimal
+
 
 class DoubleSlider(QSlider):
 
@@ -17,7 +18,7 @@ class DoubleSlider(QSlider):
     doubleValueChanged = pyqtSignal(float)
 
     def __init__(self, decimals=3, *args, **kargs):
-        super(DoubleSlider, self).__init__( *args, **kargs)
+        super(DoubleSlider, self).__init__(*args, **kargs)
         self._multi = 10 ** decimals
         self.valueChanged.connect(self.emitDoubleValueChanged)
 
@@ -62,6 +63,7 @@ class DoubleSlider(QSlider):
         super(DoubleSlider, self).setValue(int(value * self._multi))
         self.blockSignals(False)
 
+
 class ToggleButtonState(enum.Enum):
     NOT_CLICKED = 0
     LEFT_CLICKED = 1
@@ -69,38 +71,40 @@ class ToggleButtonState(enum.Enum):
 
 
 class ClampedPushButton(QPushButton):
-    def __init__(self, button, parent = None):
+    def __init__(self, button, parent=None):
         super(ClampedPushButton, self).__init__()
         self.setText(button)
         self.SelfClamp = Clamp()
         self.clicked.connect(self.send)
         self.SelfClamp.HandleWithReceive(self.setEnabled)
-        if(parent != None):
+        if (parent != None):
             self.setParent = parent
-        
+
     def send(self):
         self.SelfClamp.Send(False)
 
+
 class ClampedPushButtonFocus(QPushButton):
-    def __init__(self, button, parent = None):
+    def __init__(self, button, parent=None):
         super(ClampedPushButtonFocus, self).__init__()
         self.setText(button)
         self.SelfClamp = Clamp()
         self.clicked.connect(self.send)
         self.SelfClamp.HandleWithReceive(self.recHandle)
-        if(parent != None):
+        if (parent != None):
             self.setParent = parent
-        
+
     def send(self):
         self.SelfClamp.Send(False)
 
     def recHandle(self, state):
         self.setEnabled(state)
-        if(state):
+        if (state):
             self.setFocus()
 
+
 class ClampedComboBox(QComboBox):
-    def __init__(self, convert=None, convertBack=None, parent = None):
+    def __init__(self, convert=None, convertBack=None, parent=None):
         super(ClampedComboBox, self).__init__()
         self.SelectedClamp = Clamp()
         self.StateClamp = Clamp()
@@ -110,7 +114,7 @@ class ClampedComboBox(QComboBox):
         self.toFormConverter = convert
         if parent:
             self.setParent = parent
-        
+
     def send(self, value):
         if self.fromFormConverter:
             self.SelectedClamp.Send(self.fromFormConverter(value))
@@ -129,67 +133,72 @@ class ClampedToggleButton(QPushButton):
         self.setText(button)
         # self.setStyleSheet("background-color: "+str(color))
 
-        self.Color = (int(color[0]*255),int(color[1]*255),int(color[2]*255),0.4)
-        self.Style_NOT_CLICKED = "border-width: 5px; border-style: hidden; background-color: rgba"+str(self.Color)
-        self.Style_LEFT_CLICKED = "border-width: 5px; border-style: outset; background-color: rgba"+str(self.Color)
-        self.Style_RIGHT_CLICKED = "border-width: 5px; border-style: inset; background-color: rgba"+str(self.Color)
-        
+        self.Color = (int(color[0]*255), int(color[1]
+                      * 255), int(color[2]*255), 0.4)
+        self.Style_NOT_CLICKED = "border-width: 5px; border-style: hidden; background-color: rgba" + \
+            str(self.Color)
+        self.Style_LEFT_CLICKED = "border-width: 5px; border-style: outset; background-color: rgba" + \
+            str(self.Color)
+        self.Style_RIGHT_CLICKED = "border-width: 5px; border-style: inset; background-color: rgba" + \
+            str(self.Color)
+
         self.Style_NOT_CLICKED = "background-color: rgba"+str(self.Color)
         self.Style_LEFT_CLICKED = "background-color: rgba"+str(self.Color)
         self.Style_RIGHT_CLICKED = "background-color: rgba"+str(self.Color)
-        
+
         self.Text_NOT_CLICKED = self.text()
         self.Text_LEFT_CLICKED = self.text()
         self.Text_RIGHT_CLICKED = self.text()
         # self.setStyleSheet(self.Style_NOT_CLICKED)
-        
-        self.InitColor=color
+
+        self.InitColor = color
 
         self.LeftButtonClamp = Clamp()
         self.RightButtonClamp = Clamp()
         self.clicked.connect(self.leftClickHandler)
         # self.LeftButtonClamp.HandleWithReceive(self.setEnabled)
-        self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.rightClickHandler)
-        
-    def leftClickHandler(self,a):
+
+    def leftClickHandler(self, a):
         # self.LeftButtonClamp.Send(self.nextCheckState())
-        if(self.state == ToggleButtonState.LEFT_CLICKED):
+        if (self.state == ToggleButtonState.LEFT_CLICKED):
             self.toState(ToggleButtonState.NOT_CLICKED)
         else:
             self.toState(ToggleButtonState.LEFT_CLICKED)
         self.LeftButtonClamp.Send(self.isChecked())
 
     def rightClickHandler(self):
-        if(self.state == ToggleButtonState.RIGHT_CLICKED):
+        if (self.state == ToggleButtonState.RIGHT_CLICKED):
             self.toState(ToggleButtonState.NOT_CLICKED)
         else:
             self.toState(ToggleButtonState.RIGHT_CLICKED)
         self.RightButtonClamp.Send(self.isChecked())
 
-    def toState(self, state:ToggleButtonState):
-        if(state == ToggleButtonState.NOT_CLICKED):
-            a=list(self.Color)
+    def toState(self, state: ToggleButtonState):
+        if (state == ToggleButtonState.NOT_CLICKED):
+            a = list(self.Color)
             a[3] = 0.4
-            self.Color=tuple(a)
+            self.Color = tuple(a)
             self.setStyleSheet(self.Style_NOT_CLICKED)
             self.setText(self.Text_NOT_CLICKED)
             # self.setStyleSheet("border-style: hidden")
-        if(state == ToggleButtonState.LEFT_CLICKED):
-            a=list(self.Color)
+        if (state == ToggleButtonState.LEFT_CLICKED):
+            a = list(self.Color)
             a[3] = 0.2
-            self.Color=tuple(a)
+            self.Color = tuple(a)
             self.setStyleSheet(self.Style_LEFT_CLICKED)
             self.setText(self.Text_LEFT_CLICKED)
             # self.setStyleSheet("border-style: outset")
-        if(state == ToggleButtonState.RIGHT_CLICKED):
-            a=list(self.Color)
+        if (state == ToggleButtonState.RIGHT_CLICKED):
+            a = list(self.Color)
             a[3] = 1
-            self.Color=tuple(a)
+            self.Color = tuple(a)
             self.setStyleSheet(self.Style_RIGHT_CLICKED)
             self.setText(self.Text_RIGHT_CLICKED)
         self.state = state
+
 
 class ClampedLineEdit(QLineEdit):
     def __init__(self, convert, convertBack, defaultValue=None):
@@ -203,24 +212,26 @@ class ClampedLineEdit(QLineEdit):
         self.__convertToForm = convert
         self.__convertFromForm = convertBack
 
-    def send(self,d):
+    def send(self, d):
         if self.text() == None:
             pass
-            # self.Text.Send(0)    
+            # self.Text.Send(0)
         else:
-            try: self.Text.Send(self.__convertFromForm(d))
-            except: pass
-            
+            try:
+                self.Text.Send(self.__convertFromForm(d))
+            except:
+                pass
 
     def handleReceiveText(self, value):
-        if value!=None:
+        if value != None:
             self.setText(self.__convertToForm(value))
 
-    def handleReceiveState(self, value:bool):
+    def handleReceiveState(self, value: bool):
         self.setEnabled(value)
 
+
 class NamedLineEditVertical(QWidget):
-    def __init__(self, lineEdit:ClampedLineEdit, name:str):
+    def __init__(self, lineEdit: ClampedLineEdit, name: str):
         super().__init__()
         layoutVert = QVBoxLayout(self)
         label = QLabel(name)
@@ -228,8 +239,9 @@ class NamedLineEditVertical(QWidget):
         layoutVert.addWidget(lineEdit)
         self.LineEdit = lineEdit
 
+
 class NamedLineEditHorizontal(QWidget):
-    def __init__(self, lineEdit:ClampedLineEdit, name:str, units = None):
+    def __init__(self, lineEdit: ClampedLineEdit, name: str, units=None):
         super().__init__()
         layoutVert = QHBoxLayout(self)
         self.label = QLabel(name)
@@ -244,9 +256,11 @@ class NamedLineEditHorizontal(QWidget):
         self.label.setFixedWidth(100)
         layoutVert.addStretch()
 
+
 class NewNamedLineEditHorizontal(QWidget):
     textEdited = pyqtSignal(object)
-    def __init__(self,  name:str, units = None, lineEdit=QLineEdit):
+
+    def __init__(self,  name: str, units=None, lineEdit=QLineEdit):
         super().__init__()
         layout = QHBoxLayout(self)
         self.label = QLabel(name)
@@ -259,10 +273,9 @@ class NewNamedLineEditHorizontal(QWidget):
             self.labelUnits = QLabel(units)
             layout.addWidget(self.labelUnits)
             self.labelUnits.setFixedWidth(30)
-    
+
     def editText(self, value):
         self.textEdited.emit(value)
-
 
 
 class ClampedSlider(QSlider):
@@ -272,8 +285,9 @@ class ClampedSlider(QSlider):
         self.ValueClamp.HandleWithReceive(self.setValue)
         self.valueChanged.connect(self.ValueClamp.Send)
 
+
 class NamedSliderHorizontal(QWidget):
-    def __init__(self, lineEdit:ClampedLineEdit, name:str, units = None):
+    def __init__(self, lineEdit: ClampedLineEdit, name: str, units=None):
         super().__init__()
         self.ValueClamp = Clamp()
         layout = QHBoxLayout(self)
@@ -294,12 +308,12 @@ class NamedSliderHorizontal(QWidget):
         self.lineEdit.Text.ConnectTo(self.ValueClamp)
         self.slider.ValueClamp.ConnectTo(self.ValueClamp)
         self.ValueClamp.HandleWithReceive(self.Send)
-    
-    def Send(self,value):
-        if value>self.slider.maximum():
+
+    def Send(self, value):
+        if value > self.slider.maximum():
             value = self.slider.maximum()
             self.slider.ValueClamp.Send(value)
-        if value<self.slider.minimum():
+        if value < self.slider.minimum():
             value = self.slider.minimum()
             self.slider.ValueClamp.Send(value)
         self.ValueClamp.Send(value)
@@ -312,8 +326,9 @@ class ClampedDoubleSlider(DoubleSlider):
         self.ValueClamp.HandleWithReceive(self.setValue)
         self.doubleValueChanged.connect(self.ValueClamp.Send)
 
-class NamedDoubleSliderHorizontal(QWidget):
-    def __init__(self, lineEdit:ClampedLineEdit, name:str, units = None):
+
+class ClampedNamedDoubleSliderHorizontal(QWidget):
+    def __init__(self, lineEdit: ClampedLineEdit, name: str, units=None):
         super().__init__()
         self.ValueClamp = Clamp()
         layout = QHBoxLayout(self)
@@ -334,64 +349,95 @@ class NamedDoubleSliderHorizontal(QWidget):
         self.lineEdit.Text.ConnectTo(self.ValueClamp)
         self.slider.ValueClamp.ConnectTo(self.ValueClamp)
         self.ValueClamp.HandleWithReceive(self.Send)
-    
-    def Send(self,value):
-        if value>self.slider.maximum():
+
+    def Send(self, value):
+        if value > self.slider.maximum():
             value = self.slider.maximum()
             self.slider.ValueClamp.Send(value)
-        if value<self.slider.minimum():
+        if value < self.slider.minimum():
             value = self.slider.minimum()
             self.slider.ValueClamp.Send(value)
         self.ValueClamp.Send(value)
 
+class NamedDoubleSliderHorizontal(QWidget):
+    valueChanged = pyqtSignal(object)
+    def __init__(self, name: str, units=None):
+        super().__init__()
+        layout = QHBoxLayout(self)
+        self.label = QLabel(name)
+        self.slider = ClampedDoubleSlider()
+        self.slider.setOrientation(Qt.Horizontal)
+        self.spinBox = QDoubleSpinBox()
+        self.labelUnits = QLabel(units)
+        layout.addWidget(self.label)
+        layout.addWidget(self.slider)
+        layout.addWidget(self.spinBox)
+        layout.addWidget(self.labelUnits)
+        layout.addStretch()
+
+        self.spinBox.valueChanged.connect(self.changeSpinBoxValue)
+        self.slider.doubleValueChanged.connect(self.changeSliderValue)
+
+    def changeSpinBoxValue(self, value):
+        self.slider.setValue(value)
+        self.valueChanged.emit(value)
+    
+    def changeSliderValue(self, value):
+        self.spinBox.setValue(value)
+        self.valueChanged.emit(value)
+
+
 class ClampedAction(QAction):
-    def __init__(self, action, parent = None):
+    def __init__(self, action, parent=None):
         super(ClampedAction, self).__init__()
         self.setText(action)
         self.TriggeredClamp = Clamp()
         self.triggered.connect(self.send)
         self.TriggeredClamp.HandleWithReceive(self.setEnabled)
-        if(parent != None):
+        if (parent != None):
             self.setParent = parent
-        
+
     def send(self):
         self.TriggeredClamp.Send(False)
 
+
 class ClampedCheckBox(QCheckBox):
-    def __init__(self, text, parent = None):
+    def __init__(self, text, parent=None):
         super(ClampedCheckBox, self).__init__()
         self.setText(text)
         self.SelfClamp = Clamp()
         self.stateChanged.connect(self.send)
         self.SelfClamp.HandleWithReceive(self.setEnabled)
-        if(parent != None):
+        if (parent != None):
             self.setParent = parent
-        
+
     def send(self, state):
         self.SelfClamp.Send(state)
+
 
 class ClampedLabel(QLabel):
     def __init__(self):
         super(ClampedLabel, self).__init__()
         self.TextClamp = Clamp()
         self.TextClamp.HandleWithReceive(self.changeLabel)
-    
+
     def changeLabel(self, message):
-        if message==None:
+        if message == None:
             self.setHidden(True)
         else:
             self.setHidden(False)
             self.setText(message)
 
+
 class NamedClampedSpinBox(QWidget):
-    def __init__(self,LabelText:str):
+    def __init__(self, LabelText: str):
         super(NamedClampedSpinBox, self).__init__()
-        layout=QHBoxLayout(self)
+        layout = QHBoxLayout(self)
         self.ValueClamp = Clamp()
         self.label = QLabel(LabelText)
         self.spinBox = QSpinBox()
-        self.warning =QLabel()
-        icon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
+        self.warning = QLabel()
+        icon = QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
         self.warning.setPixmap(icon.pixmap(QSize(20, 20)))
         self.warning.setHidden(True)
         layout.addWidget(self.label)
@@ -401,20 +447,21 @@ class NamedClampedSpinBox(QWidget):
         self.spinBox.valueChanged.connect(self.ValueChanged)
         self.ValueClamp.HandleWithReceive(self.ChangeValue)
 
-    def ChangeValue(self,value):
+    def ChangeValue(self, value):
         self.spinBox.setValue(value)
-    
-    def ValueChanged(self,value):
+
+    def ValueChanged(self, value):
         self.ValueClamp.Send(value)
 
+
 class NamedClampedDoubleSpinBox(QWidget):
-    def __init__(self,LabelText:str):
+    def __init__(self, LabelText: str):
         super(NamedClampedDoubleSpinBox, self).__init__()
-        layout=QHBoxLayout(self)
+        layout = QHBoxLayout(self)
         self.ValueClamp = Clamp()
         self.label = QLabel(LabelText)
         self.doubleSpinBox = QDoubleSpinBox()
-        self.warning =QLabel()
+        self.warning = QLabel()
         self.warning.setHidden(True)
         layout.addWidget(self.label)
         layout.addWidget(self.doubleSpinBox)
@@ -423,13 +470,16 @@ class NamedClampedDoubleSpinBox(QWidget):
         self.doubleSpinBox.valueChanged.connect(self.ValueChanged)
         self.ValueClamp.HandleWithReceive(self.ChangeValue)
 
-    def ChangeValue(self,value):
+    def ChangeValue(self, value):
         self.doubleSpinBox.setValue(value)
-    
-    def ValueChanged(self,value):
+
+    def ValueChanged(self, value):
         self.ValueClamp.Send(value)
+
+
 class NamedHorizontalSwitcher(QWidget):
-    def __init__(self,leftName:str=None,rightName:str=None):
+    stateChanged = pyqtSignal(object)
+    def __init__(self, leftName: str = None, rightName: str = None):
         super(NamedHorizontalSwitcher, self).__init__()
         layout = QHBoxLayout(self)
         self.LeftLabel = QLabel(leftName)
@@ -439,8 +489,57 @@ class NamedHorizontalSwitcher(QWidget):
             handle_color=Qt.darkGray,
             checked_color="#808080",
             pulse_checked_color="#00FF00",
-            pulse_unchecked_color ="#00FF00")
+            pulse_unchecked_color="#00FF00")
         layout.addWidget(self.LeftLabel)
         layout.addWidget(self.Switcher)
         layout.addWidget(self.RightLabel)
         layout.addStretch()
+        self.Switcher.stateChanged.connect(self.changeState)
+    
+    def changeState(self,state):
+        self.stateChanged.emit(state)
+        
+
+
+class ToggleButton(QPushButton):
+    def __init__(self, textNotClicked, textClicked, styleSheetNotClicked, styleSheetClicked):
+        super().__init__()
+        self.setCheckable(True)
+
+        self.Text_NOT_CLICKED = textNotClicked
+        self.Text_CLICKED = textClicked
+        self.styleSheet_NOT_CLICKED = styleSheetNotClicked
+        self.styleSheet_CLICKED = styleSheetClicked
+
+        self.setText(self.Text_NOT_CLICKED)
+        self.setStyleSheet(self.styleSheet_NOT_CLICKED)
+
+        self.toggled.connect(self.changeState)
+
+    def changeState(self, state):
+        if state:
+            self.setText(self.Text_CLICKED)
+            self.setStyleSheet(self.styleSheet_CLICKED)
+        else:
+            self.setText(self.Text_NOT_CLICKED)
+            self.setStyleSheet(self.styleSheet_NOT_CLICKED)
+
+class NamedHorizontalSpinBox(QWidget):
+        valueChanged = pyqtSignal(object)
+        def __init__(self, labelText, unitLabelText):
+            super().__init__()
+
+            layout = QHBoxLayout(self)
+
+            self.label = QLabel(labelText)
+            self.spinBox = QSpinBox()
+            self.unitLabel = QLabel(unitLabelText)
+
+            layout.addWidget(self.label)
+            layout.addWidget(self.spinBox)
+            layout.addWidget(self.unitLabel)
+
+            self.spinBox.valueChanged.connect(self.changeValue)
+        
+        def changeValue(self, value):
+            self.valueChanged.emit(value)
