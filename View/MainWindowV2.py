@@ -37,6 +37,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Главное меню')
 
         self.Tranciever = Tranciever()
+        settingsWindowReciever = SettingsWindowReciever()
+        settingsWindowTransmitter = SettingsWindowTransmitter()
+
+        
 
 
 if __name__ == '__main__':

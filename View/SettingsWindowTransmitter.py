@@ -44,7 +44,7 @@ class SettingsWindowTransmitter(QWidget):
         self.Period.textEdited.connect(self.changePeriod)
 
     def updateState(self):
-        self.switchSignalType(SignalType.TRIANGLE,0)
+        self.checkSignalTypesSelected()
         self.changePeriod(self.Period.LineEdit.text())
         self.changeAudioDevice(self.deviceComboBox.currentIndex())
 
@@ -86,13 +86,22 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[0].clicked.connect(lambda: self.switchSignalType(SignalType.TRIANGLE,0))
         self.signalsType[1].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_FRONT,1))
         self.signalsType[2].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2))
-        self.switchSignalType(SignalType.TRIANGLE,0)
         self.signalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
         self.signalsType[0].setIconSize(QSize(400,255)) 
         self.signalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
         self.signalsType[1].setIconSize(QSize(400,255))
         self.signalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
         self.signalsType[2].setIconSize(QSize(400,255))
+
+
+    def checkSignalTypesSelected(self):
+        if self.signalsType[0].isChecked():
+            self.switchSignalType(SignalType.TRIANGLE,0)
+        if self.signalsType[1].isChecked():
+            self.switchSignalType(SignalType.SAWTOOTH_FRONT,1)
+        if self.signalsType[2].isChecked():
+            self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2)
+
 
 
     def switchSignalType(self,signalType, buttonNum:int):
