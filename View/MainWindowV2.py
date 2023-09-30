@@ -36,8 +36,25 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Главное меню')
 
-        self.Tranciever
+        self.tranciever = Tranciever()
+        self.settingsWindowReciever = SettingsWindowReciever()
+        self.settingsWindowTransmitter = SettingsWindowTransmitter()
+        
+        self.graphUpdateInterval
+        self.signalSource
+        self.downSampling
+        self.
 
+
+    def initConnections(self):
+        self.settingsWindowReciever.inputDeviceChanged.connect(self.Tranciever.setInputDevice)
+        # settingsWindowReciever.startToggled.connect(self.Tranciever.)
+        self.settingsWindowReciever.sampleRateChanged.connect(self.Tranciever.setSamplerate)
+        # settingsWindowReciever.updateIntervalChanged.connect(self.Tranciever.)
+        # settingsWindowReciever.signalSourceChanged.connect(self.Tranciever.set)
+        # self.settingsWindowReciever.downSamplingChanged.connect(self.Tranciever.)
+        self.settingsWindowReciever.yRangeChanged.connect(self.Tranciever.)
+        self.settingsWindowReciever.xRangeChanged.connect(self.Tranciever.)
 
 if __name__ == '__main__':
 
