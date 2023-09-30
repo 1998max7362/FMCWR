@@ -55,6 +55,15 @@ class SettingsWindowReciever(QWidget):
         self.errorLabel = QLabel('')
         self.errorLabel.setFixedHeight(20)
         layout.addWidget(self.errorLabel)
+
+    def updateState(self):
+        self.changeYRange()
+        self.changeXRange()
+        self.changeDownSampling(self.downSamplingSpinBox.spinBox.value())
+        self.changeUpdateInterval(self.updateIntervalSpinBox.spinBox.value())
+        self.changeInputDevice(self.deviceComboBox.currentIndex())
+        self.changeSampleRate(self.sampleRateSpinBox.spinBox.value())
+        self.switchSignalSource(self.signalSourceSwitcher.Switcher.checkState())
     
     def setErrorText(self, text:str):
         errorIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)
@@ -218,7 +227,7 @@ class SettingsWindowReciever(QWidget):
         layout.setSpacing(0)
         deviceSettingsGroupBox.setLayout(layout)
 
-        deviceComboBox = QComboBox()
+        self.deviceComboBox = QComboBox()
         for inputDevice in self.inputAudioDeviceList:
             deviceComboBox.addItem(inputDevice["name"])
         deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
@@ -282,5 +291,6 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     main = SettingsWindowReciever()
     main.show()
+    main.updateState()
 
     sys.exit(app.exec_())

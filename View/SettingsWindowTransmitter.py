@@ -97,6 +97,17 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
         self.signalsType[2].setIconSize(QSize(400,255))
 
+
+    def checkSignalTypesSelected(self):
+        if self.signalsType[0].isChecked():
+            self.switchSignalType(SignalType.TRIANGLE,0)
+        if self.signalsType[1].isChecked():
+            self.switchSignalType(SignalType.SAWTOOTH_FRONT,1)
+        if self.signalsType[2].isChecked():
+            self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2)
+
+
+
     def switchSignalType(self,signalType, buttonNum:int):
         self.current.signalType = signalType
         for RadioButton in self.signalsType:
@@ -125,5 +136,6 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     main = SettingsWindowTransmitter()
     main.show()
+    main.updateState()
 
     sys.exit(app.exec_())
