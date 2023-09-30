@@ -47,6 +47,15 @@ class SettingsWindowReciever(QWidget):
         self.errorLabel = QLabel('')
         self.errorLabel.setFixedHeight(20)
         layout.addWidget(self.errorLabel)
+
+    def updateState(self):
+        self.changeYRange()
+        self.changeXRange()
+        self.changeDownSampling(self.downSamplingSpinBox.spinBox.value())
+        self.changeUpdateInterval(self.updateIntervalSpinBox.spinBox.value())
+        self.changeInputDevice(self.deviceComboBox.currentIndex())
+        self.changeSampleRate(self.sampleRateSpinBox.spinBox.value())
+        self.switchSignalSource(self.signalSourceSwitcher.Switcher.checkState())
     
     def setErrorText(self, text:str):
         errorIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)
@@ -65,25 +74,23 @@ class SettingsWindowReciever(QWidget):
         layout = QVBoxLayout()
         plotSettingsGroupBox.setLayout(layout)
 
-        downSamplingSpinBox = NamedHorizontalSpinBox('downsample', '')
-        downSamplingSpinBox.setFixedWidth(400)
-        downSamplingSpinBox.label.setFixedWidth(210)
-        downSamplingSpinBox.spinBox.setFixedWidth(100)
-        downSamplingSpinBox.spinBox.setMaximum(100)
-        downSamplingSpinBox.spinBox.setValue(10)
-        downSamplingSpinBox.valueChanged.connect(self.changeDownSampling)
-        self.changeDownSampling(downSamplingSpinBox.spinBox.value())
-        layout.addWidget(downSamplingSpinBox)
+        self.downSamplingSpinBox = NamedHorizontalSpinBox('downsample', '')
+        self.downSamplingSpinBox.setFixedWidth(400)
+        self.downSamplingSpinBox.label.setFixedWidth(210)
+        self.downSamplingSpinBox.spinBox.setFixedWidth(100)
+        self.downSamplingSpinBox.spinBox.setMaximum(100)
+        self.downSamplingSpinBox.spinBox.setValue(10)
+        self.downSamplingSpinBox.valueChanged.connect(self.changeDownSampling)
+        layout.addWidget(self.downSamplingSpinBox)
 
-        updateIntervalSpinBox = NamedHorizontalSpinBox('Интервал обновления', 'мс')
-        updateIntervalSpinBox.setFixedWidth(400)
-        updateIntervalSpinBox.label.setFixedWidth(210)
-        updateIntervalSpinBox.spinBox.setFixedWidth(100)
-        updateIntervalSpinBox.spinBox.setMaximum(100000)
-        updateIntervalSpinBox.spinBox.setValue(10)
-        updateIntervalSpinBox.valueChanged.connect(self.changeUpdateInterval)
-        self.changeUpdateInterval(updateIntervalSpinBox.spinBox.value())
-        layout.addWidget(updateIntervalSpinBox)
+        self.updateIntervalSpinBox = NamedHorizontalSpinBox('Интервал обновления', 'мс')
+        self.updateIntervalSpinBox.setFixedWidth(400)
+        self.updateIntervalSpinBox.label.setFixedWidth(210)
+        self.updateIntervalSpinBox.spinBox.setFixedWidth(100)
+        self.updateIntervalSpinBox.spinBox.setMaximum(100000)
+        self.updateIntervalSpinBox.spinBox.setValue(10)
+        self.updateIntervalSpinBox.valueChanged.connect(self.changeUpdateInterval)
+        layout.addWidget(self.updateIntervalSpinBox)
 
         warningIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
         chart0SettingsGroupBox = self.createChart0SettingsGroupBox(warningIcon)
@@ -128,7 +135,6 @@ class SettingsWindowReciever(QWidget):
 
         self.xMax.valueChanged.connect(self.changeXRange)
         self.xMin.valueChanged.connect(self.changeXRange)
-        self.changeXRange()
 
         layout.addWidget(self.xMax)
         layout.addWidget(self.xMin)
@@ -170,7 +176,6 @@ class SettingsWindowReciever(QWidget):
 
         self.yMax.valueChanged.connect(self.changeYRange)
         self.yMin.valueChanged.connect(self.changeYRange)
-        self.changeYRange()
 
         layout.addWidget(self.yMax)
         layout.addWidget(self.yMin)
@@ -207,29 +212,25 @@ class SettingsWindowReciever(QWidget):
         layout.setSpacing(0)
         deviceSettingsGroupBox.setLayout(layout)
 
-        deviceComboBox = QComboBox()
+        self.deviceComboBox = QComboBox()
         for inputDevice in self.inputAudioDeviceList:
-            deviceComboBox.addItem(inputDevice["name"])
-        deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
-        self.changeInputDevice(deviceComboBox.currentIndex())
-        layout.addWidget(deviceComboBox)
+            self.deviceComboBox.addItem(inputDevice["name"])
+        self.deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
+        layout.addWidget(self.deviceComboBox)
 
-        sampleRateSpinBox = NamedHorizontalSpinBox('Частота дискретизации', 'Гц')
-        sampleRateSpinBox.setFixedWidth(400)
-        sampleRateSpinBox.label.setFixedWidth(210)
-        sampleRateSpinBox.spinBox.setFixedWidth(100)
-        sampleRateSpinBox.spinBox.setMaximum(1000000)
-        sampleRateSpinBox.spinBox.setValue(44100)
-        sampleRateSpinBox.valueChanged.connect(self.changeSampleRate)
-        self.changeSampleRate(sampleRateSpinBox.spinBox.value())
-        layout.addWidget(sampleRateSpinBox)
+        self.sampleRateSpinBox = NamedHorizontalSpinBox('Частота дискретизации', 'Гц')
+        self.sampleRateSpinBox.setFixedWidth(400)
+        self.sampleRateSpinBox.label.setFixedWidth(210)
+        self.sampleRateSpinBox.spinBox.setFixedWidth(100)
+        self.sampleRateSpinBox.spinBox.setMaximum(1000000)
+        self.sampleRateSpinBox.spinBox.setValue(44100)
+        self.sampleRateSpinBox.valueChanged.connect(self.changeSampleRate)
+        layout.addWidget(self.sampleRateSpinBox)
 
         self.signalSourceSwitcher = NamedHorizontalSwitcher('Дальность', 'Скорость')
         self.signalSourceSwitcher.Switcher.setFixedWidth(150)
         self.signalSourceSwitcher.LeftLabel.setFixedWidth(100)
         self.signalSourceSwitcher.RightLabel.setFixedWidth(100)
-        self.signalSourceSwitcher.stateChanged.connect(self.switchSignalSource)
-        self.switchSignalSource(self.signalSourceSwitcher.Switcher.checkState())
         layout.addWidget(self.signalSourceSwitcher)
 
         return deviceSettingsGroupBox
@@ -265,5 +266,6 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     main = SettingsWindowReciever()
     main.show()
+    main.updateState()
 
     sys.exit(app.exec_())

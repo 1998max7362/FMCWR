@@ -42,7 +42,11 @@ class SettingsWindowTransmitter(QWidget):
         layout.addStretch()
 
         self.Period.textEdited.connect(self.changePeriod)
+
+    def updateState(self):
+        self.switchSignalType(SignalType.TRIANGLE,0)
         self.changePeriod(self.Period.LineEdit.text())
+        self.changeAudioDevice(self.deviceComboBox.currentIndex())
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -60,7 +64,6 @@ class SettingsWindowTransmitter(QWidget):
         self.deviceComboBox.addItems(self.devices_list)
 
         self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
-        self.changeAudioDevice(self.deviceComboBox.currentIndex())
         layout.addWidget(self.deviceComboBox)
 
     def changeAudioDevice(self, index):
@@ -91,6 +94,7 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
         self.signalsType[2].setIconSize(QSize(400,255))
 
+
     def switchSignalType(self,signalType, buttonNum:int):
         for RadioButton in self.signalsType:
             RadioButton.blockSignals(False)
@@ -118,5 +122,6 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     main = SettingsWindowTransmitter()
     main.show()
+    main.updateState()
 
     sys.exit(app.exec_())
