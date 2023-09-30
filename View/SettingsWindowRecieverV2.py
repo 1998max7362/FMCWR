@@ -21,6 +21,14 @@ class SettingsWindowReciever(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.current.inputDevice
+        self.current.sampleRate
+        self.current.updateInterval 
+        self.current.signalSource
+        self.current.downSampling 
+        self.current.yRange
+        self.current.xRange
+
         DefaultFont = QFont('Times', 10)
         self.inputAudioDeviceList = getAudioDevice("input")
 
@@ -72,7 +80,7 @@ class SettingsWindowReciever(QWidget):
         downSamplingSpinBox.spinBox.setMaximum(100)
         downSamplingSpinBox.spinBox.setValue(10)
         downSamplingSpinBox.valueChanged.connect(self.changeDownSampling)
-        self.changeDownSampling(downSamplingSpinBox.spinBox.value())
+        self.current.downSampling = downSamplingSpinBox.spinBox.value()
         layout.addWidget(downSamplingSpinBox)
 
         updateIntervalSpinBox = NamedHorizontalSpinBox('Интервал обновления', 'мс')
@@ -82,7 +90,7 @@ class SettingsWindowReciever(QWidget):
         updateIntervalSpinBox.spinBox.setMaximum(100000)
         updateIntervalSpinBox.spinBox.setValue(10)
         updateIntervalSpinBox.valueChanged.connect(self.changeUpdateInterval)
-        self.changeUpdateInterval(updateIntervalSpinBox.spinBox.value())
+        self.current.updateInterval = updateIntervalSpinBox.spinBox.value()
         layout.addWidget(updateIntervalSpinBox)
 
         warningIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
@@ -128,7 +136,7 @@ class SettingsWindowReciever(QWidget):
 
         self.xMax.valueChanged.connect(self.changeXRange)
         self.xMin.valueChanged.connect(self.changeXRange)
-        self.changeXRange()
+        self.current.xRange = [self.xMin.spinBox.value(),self.xMax.spinBox.value()]
 
         layout.addWidget(self.xMax)
         layout.addWidget(self.xMin)
@@ -170,7 +178,7 @@ class SettingsWindowReciever(QWidget):
 
         self.yMax.valueChanged.connect(self.changeYRange)
         self.yMin.valueChanged.connect(self.changeYRange)
-        self.changeYRange()
+        self.current.yRange = [self.yMin.spinBox.value(),self.yMax.spinBox.value()]
 
         layout.addWidget(self.yMax)
         layout.addWidget(self.yMin)
@@ -178,8 +186,9 @@ class SettingsWindowReciever(QWidget):
         return chart0SettingsBox
 
     def changeYRange(self):
-        if self.yMin.spinBox.value() < self.yMax.spinBox.value():
-            self.yRangeChanged.emit([self.yMin.spinBox.value(), self.yMax.spinBox.value()])
+        self.current.yRange = [self.yMin.spinBox.value(), self.yMax.spinBox.value()]
+        if self.current.yRange[1] < self.current.yRange[2]:
+            self.yRangeChanged.emit(self.current.yRange)
             self.yMin.labelUnits.setHidden(True)
             self.yMax.labelUnits.setHidden(True)
         else:
@@ -187,8 +196,9 @@ class SettingsWindowReciever(QWidget):
             self.yMax.labelUnits.setHidden(False)
 
     def changeXRange(self):
-        if self.xMin.spinBox.value() < self.xMax.spinBox.value():
-            self.xRangeChanged.emit([self.xMin.spinBox.value(), self.xMax.spinBox.value()])
+        self.current.xRange = [self.xMin.spinBox.value(), self.xMax.spinBox.value()]
+        if self.current.xRange[1] < self.current.xRange[2]:
+            self.xRangeChanged.emit(self.current.xRange)
             self.xMin.labelUnits.setHidden(True)
             self.xMax.labelUnits.setHidden(True)
         else:
@@ -196,7 +206,8 @@ class SettingsWindowReciever(QWidget):
             self.xMax.labelUnits.setHidden(False)
 
     def changeDownSampling(self, value):
-        self.downSamplingChanged.emit(value)
+        self.current.downSampling = value
+        self.downSamplingChanged.emit(self.current.downSampling)
 
 
     def createDeviceSettingsGroupBox(self, DefaultFont):
@@ -211,7 +222,7 @@ class SettingsWindowReciever(QWidget):
         for inputDevice in self.inputAudioDeviceList:
             deviceComboBox.addItem(inputDevice["name"])
         deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
-        self.changeInputDevice(deviceComboBox.currentIndex())
+        self.current.inputDevice = self.inputAudioDeviceList[deviceComboBox.currentIndex()]["index"] 
         layout.addWidget(deviceComboBox)
 
         sampleRateSpinBox = NamedHorizontalSpinBox('Частота дискретизации', 'Гц')
@@ -221,7 +232,7 @@ class SettingsWindowReciever(QWidget):
         sampleRateSpinBox.spinBox.setMaximum(1000000)
         sampleRateSpinBox.spinBox.setValue(44100)
         sampleRateSpinBox.valueChanged.connect(self.changeSampleRate)
-        self.changeSampleRate(sampleRateSpinBox.spinBox.value())
+        self.current.sampleRate = sampleRateSpinBox.spinBox.value()
         layout.addWidget(sampleRateSpinBox)
 
         self.signalSourceSwitcher = NamedHorizontalSwitcher('Дальность', 'Скорость')
@@ -230,18 +241,22 @@ class SettingsWindowReciever(QWidget):
         self.signalSourceSwitcher.RightLabel.setFixedWidth(100)
         self.signalSourceSwitcher.stateChanged.connect(self.switchSignalSource)
         self.switchSignalSource(self.signalSourceSwitcher.Switcher.checkState())
+        self.current.SignalSource = SignalSource.RANGE
         layout.addWidget(self.signalSourceSwitcher)
 
         return deviceSettingsGroupBox
 
     def changeInputDevice(self, index):
         deviceId = self.inputAudioDeviceList[index]["index"]
-        self.inputDeviceChanged.emit(deviceId)
+        self.current.inputDevice = deviceId
+        self.inputDeviceChanged.emit(self.current.inputDevice)
     
     def changeSampleRate(self,value):
-        self.sampleRateChanged.emit(value)
+        self.current.sampleRate = value
+        self.sampleRateChanged.emit(self.current.sampleRate)
 
     def switchSignalSource(self, state):
+        
         boldFont = QFont('Times', 10)
         boldFont.setBold(True)
         unboldFont = QFont('Times', 10)
@@ -254,10 +269,12 @@ class SettingsWindowReciever(QWidget):
             self.signalSourceSwitcher.LeftLabel.setFont(unboldFont)
             self.signalSourceSwitcher.RightLabel.setFont(boldFont)
             source = SignalSource.VELOCITY
-        self.signalSourceChanged.emit(source)
+        self.current.signalSource = source
+        self.signalSourceChanged.emit(self.current.signalSource)
     
     def changeUpdateInterval(self,value):
-        self.updateIntervalChanged.emit(value)
+        self.current.updateInterval = value
+        self.updateIntervalChanged.emit(self.current.updateInterval)
 
 if __name__ == '__main__':
 

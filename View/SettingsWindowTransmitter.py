@@ -19,6 +19,11 @@ class SettingsWindowTransmitter(QWidget):
     outputDeviceChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
+
+        self.current.signalType
+        self.current.period
+        self.current.outputDevice
+
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)
         layout = QVBoxLayout(self)
@@ -42,7 +47,7 @@ class SettingsWindowTransmitter(QWidget):
         layout.addStretch()
 
         self.Period.textEdited.connect(self.changePeriod)
-        self.changePeriod(self.Period.LineEdit.text())
+        self.current.period = self.Period.LineEdit.text()
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -60,11 +65,12 @@ class SettingsWindowTransmitter(QWidget):
         self.deviceComboBox.addItems(self.devices_list)
 
         self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
-        self.changeAudioDevice(self.deviceComboBox.currentIndex())
+        self.current.outputDevice = self.outputDevices[self.deviceComboBox.currentIndex()]["index"]
         layout.addWidget(self.deviceComboBox)
 
     def changeAudioDevice(self, index):
-        self.outputDeviceChanged.emit(self.outputDevices[index]["index"])
+        self.current.outputDevice = self.outputDevices[index]["index"]
+        self.outputDeviceChanged.emit(self.current.outputDevice)
 
     def initSignalType(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
@@ -83,7 +89,7 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[0].clicked.connect(lambda: self.switchSignalType(SignalType.TRIANGLE,0))
         self.signalsType[1].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_FRONT,1))
         self.signalsType[2].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2))
-        self.switchSignalType(SignalType.TRIANGLE,0)
+        self.current.signalType = SignalType.TRIANGLE
         self.signalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
         self.signalsType[0].setIconSize(QSize(400,255)) 
         self.signalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
@@ -92,11 +98,11 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[2].setIconSize(QSize(400,255))
 
     def switchSignalType(self,signalType, buttonNum:int):
+        self.current.signalType = signalType
         for RadioButton in self.signalsType:
             RadioButton.blockSignals(False)
         self.signalsType[buttonNum].blockSignals(True)
-        self.signalTypeChanged.emit(signalType)
-        print(signalType)
+        self.signalTypeChanged.emit(self.current.signalType)
 
     def convertBackToFloat(self, value):
         try:
@@ -107,7 +113,8 @@ class SettingsWindowTransmitter(QWidget):
         return str(value)
     
     def changePeriod(self, value):
-        self.signalPeriodChanged.emit(value)
+        self.current.period = value
+        self.signalPeriodChanged.emit(self.current.period)
         print(value)
 
 
