@@ -35,11 +35,26 @@ class MainWindow(QMainWindow):
         # self.recievedSignalQueueForSave = queue.Queue()
 
         self.setWindowTitle('Главное меню')
+        layout = QHBoxLayout(self)
 
         self.tranciever = Tranciever()
         self.settingsWindowReciever = SettingsWindowReciever()
         self.settingsWindowTransmitter = SettingsWindowTransmitter()
-        
+
+        self.dockSettingsWindowReciever = QDockWidget()
+        self.dockSettingsWindowReciever.setWindowTitle('Приёмник')
+        self.dockSettingsWindowReciever.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockSettingsWindowReciever.setWidget(self.settingsWindowReciever)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsWindowReciever)
+
+        self.dockSettingsWindowTransmitter = QDockWidget()
+        self.dockSettingsWindowTransmitter.setWindowTitle('Передатчик')
+        self.dockSettingsWindowTransmitter.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockSettingsWindowTransmitter.setWidget(self.settingsWindowTransmitter)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsWindowTransmitter)
+
+        self.tabifyDockWidget(self.dockSettingsWindowTransmitter, self.dockSettingsWindowReciever)
+
         
         self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
         self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
@@ -53,13 +68,17 @@ class MainWindow(QMainWindow):
         self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
         self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
 
+        self.initConnections()
+
+    
+    def test(self):
         self.tranciever.run()
 
 
     def initConnections(self):
-        self.settingsWindowReciever.inputDeviceChanged.connect(self.Tranciever.setInputDevice)
-        # settingsWindowReciever.startToggled.connect(self.Tranciever.)
-        self.settingsWindowReciever.sampleRateChanged.connect(self.Tranciever.setSamplerate)
+        self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
+        self.settingsWindowReciever.startToggled.connect(self.test)
+        self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
         # settingsWindowReciever.updateIntervalChanged.connect(self.Tranciever.)
         # settingsWindowReciever.signalSourceChanged.connect(self.Tranciever.set)
         # self.settingsWindowReciever.downSamplingChanged.connect(self.Tranciever.)

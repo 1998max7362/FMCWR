@@ -7,6 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 import queue
 from SignalType import SignalType
 from PyQt5 import QtWidgets
+import math
 
 
 class Transmitter(QObject):
@@ -19,11 +20,15 @@ class Transmitter(QObject):
 
         self.outputDeviceId = 4
         self.signalType = SignalType.SINE # форма сигнала
-        self.signalPeriod = 100 # период сигнала в мс
+        self.signalPeriod = 1 # период сигнала в мс
         self.samplerate = 44100 # частота дискретизации Гц
         print(self.samplerate)
 
-        self.createSignal()
+        self.blockSize = self.getBlockSize()
+        self.scale = np.arange(self.blockSize) / (self.blockSize - 1) # шкала x
+        self.signal = self.generateSignal() # сформированные отсчёты 1-го периода сигнала
+        self.blksize=self.blockSize
+
         # self.transmittedSignal = queue.Queue()
 
     def setSignalType(self, type):
@@ -42,23 +47,33 @@ class Transmitter(QObject):
         self.samplerate = samplerate
         print(samplerate)
 
-    def createSignal(self):
+    def getBlockSize(self):
         T = self.signalPeriod/1000 # из мс в с
-        self.blksize = int(T*self.samplerate) # кол-во отсчетов в блоке
-        self.scale = np.arange(self.blksize) / (self.blksize - 1) # шкала x
-        print()
+        blockSize = int(T*self.samplerate) # кол-во отсчетов в блоке (одном периоде сигнала)
+        return  blockSize
+
+    def generateSignal(self):
         match self.signalType:
             case SignalType.TRIANGLE:
-                halfScale, _ = np.split(self.scale, 2)
-                signalOne = -1 + 4 * halfScale
-                signalTwo = 1 - 4 * halfScale
-                self.signal = np.concatenate((signalOne, signalTwo), axis=0)
+                if self.scale.size%2==0:
+                    firstHalfScale, secondHalfScale = np.split(self.scale, 2)
+                else:
+                    print(math.ceil(self.scale.size/2))
+                    firstHalfScale = self.scale[0:math.ceil(self.scale.size/2)]
+                    secondHalfScale = self.scale[0:math.floor(self.scale.size/2)]
+                signalOne = -1 + 4 * firstHalfScale
+                signalTwo = 1 - 4 * secondHalfScale
+                signal = np.concatenate((signalOne, signalTwo), axis=0)
+                return signal.reshape(-1, 1)
             case SignalType.SAWTOOTH_FRONT:
-                self.signal = -1 + 2 * self.scale
+                signal = -1 + 2 * self.scale
+                return signal.reshape(-1, 1)
             case SignalType.SAWTOOTH_REVERSE:
-                self.signal = 1 - 2 * self.scale
+                signal = 1 - 2 * self.scale
+                return signal.reshape(-1, 1)
             case SignalType.SINE:
-                self.signal = np.sin(2 * np.pi * self.scale )
+                signal = np.sin(2 * np.pi * self.scale )
+                return signal.reshape(-1, 1)
 
     def startStop(self):
         self.isPlaying = ~self.isPlaying
@@ -68,7 +83,7 @@ class Transmitter(QObject):
         try:
             stream = sd.OutputStream(device=self.outputDeviceId,
                 samplerate=self.samplerate,
-                blocksize=self.blksize,
+                blocksize=self.blockSize,
                 # channels=1,
                 callback=self.callback)
             

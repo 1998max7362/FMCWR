@@ -92,7 +92,7 @@ class SettingsWindowTransmitter(QWidget):
         self.signalsType[0].clicked.connect(lambda: self.switchSignalType(SignalType.TRIANGLE,0))
         self.signalsType[1].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_FRONT,1))
         self.signalsType[2].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2))
-        self.currentSignalType = SignalType.TRIANGLE
+        self.currentSignalType = SignalType.SINE
         self.signalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
         self.signalsType[0].setIconSize(QSize(400,255)) 
         self.signalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))

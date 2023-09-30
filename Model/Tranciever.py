@@ -18,11 +18,11 @@ class Tranciever(QObject):
 
             # Параметры сигнала
             self.signalType = SignalType.SINE # форма сигнала
-            self.signalPeriod = 100 # период сигнала в мс
+            self.signalPeriod = 1 # период сигнала в мс
 
             # Параметры устройств ввода-вывода
-            self.outputDeviceId = 0
-            self.inputDeviceId = 1
+            self.outputDeviceId = 4
+            self.inputDeviceId = 2
             self.samplerate = 44100 # частота дискретизации Гц
             
             self.blockSize = self.getBlockSize()
