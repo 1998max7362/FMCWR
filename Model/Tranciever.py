@@ -73,6 +73,7 @@ class Tranciever(QObject):
                     blocksize=self.blockSize,
                     channels=(1,1),
                     callback=self.callback)
+                self.errorAppeared.emit('')
                 with stream:
                     while self.isWorking:
                         pass

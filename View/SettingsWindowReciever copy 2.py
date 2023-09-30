@@ -4,19 +4,10 @@ sys.path.insert(0, "././utils/components")
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import *
 from getAudioDevice import getAudioDevice
-from Clamp import Clamp
 from PyQt5.QtCore import *
 from WrapedUiElements import *
-from SignalType import SignalType
 from SignalSource import SignalSource
-from qtwidgets import Toggle, AnimatedToggle
-from PyQt5 import QtWidgets
-import numpy as np
-from PyQt5.QtCore import Qt
-from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
-import PyQt5
-
 
 class SettingsWindowReciever(QWidget):
     inputDeviceChanged = pyqtSignal(object)
@@ -41,16 +32,26 @@ class SettingsWindowReciever(QWidget):
         plotSettingsGroupBox = self.createGraphSettingsGroupBox(DefaultFont)
         layout.addWidget(plotSettingsGroupBox)
 
-        startStopButton = ToggleButton(
+        self.startStopButton = ToggleButton(
             textNotClicked='Start',
             textClicked='Stop',
             styleSheetNotClicked="background-color: white",
             styleSheetClicked="background-color: green")
-        startStopButton.setFont(DefaultFont)
-        startStopButton.setToolTip('Запуск устройства')
-        startStopButton.toggled.connect(self.startStop)
+        self.startStopButton.setFont(DefaultFont)
+        self.startStopButton.setToolTip('Запуск устройства')
+        self.startStopButton.toggled.connect(self.startStop)
+        layout.addWidget(self.startStopButton)
 
-        layout.addWidget(startStopButton)
+        self.errorLabel = QLabel('')
+        self.errorLabel.setFixedHeight(20)
+        layout.addWidget(self.errorLabel)
+    
+    def setErrorText(self, text:str):
+        errorIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)
+        if text!='':
+            self.errorLabel.setPixmap(errorIcon.pixmap(QSize(20, 20)))
+            self.startStopButton.toggle()
+        self.errorLabel.setText(text)
 
     def startStop(self,state):
         self.startToggled.emit(state)
