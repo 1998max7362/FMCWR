@@ -13,9 +13,11 @@ class SettingsWindowReciever(QWidget):
     inputDeviceChanged = pyqtSignal(object)
     startToggled = pyqtSignal(object)
     sampleRateChanged = pyqtSignal(object)
+    updateIntervalChanged = pyqtSignal(object)
     signalSourceChanged = pyqtSignal(object)
     downSamplingChanged = pyqtSignal(object)
     yRangeChanged = pyqtSignal(object)
+    xRangeChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
 
@@ -69,7 +71,8 @@ class SettingsWindowReciever(QWidget):
         downSamplingSpinBox.spinBox.setFixedWidth(100)
         downSamplingSpinBox.spinBox.setMaximum(100)
         downSamplingSpinBox.spinBox.setValue(10)
-        downSamplingSpinBox.valueChanged.connect(self.changeSampleRate)
+        downSamplingSpinBox.valueChanged.connect(self.changeDownSampling)
+        self.changeDownSampling(downSamplingSpinBox.spinBox.value())
         layout.addWidget(downSamplingSpinBox)
 
         updateIntervalSpinBox = NamedHorizontalSpinBox('Интервал обновления', 'мс')
@@ -78,7 +81,8 @@ class SettingsWindowReciever(QWidget):
         updateIntervalSpinBox.spinBox.setFixedWidth(100)
         updateIntervalSpinBox.spinBox.setMaximum(100000)
         updateIntervalSpinBox.spinBox.setValue(10)
-        updateIntervalSpinBox.valueChanged.connect(self.changeSampleRate)
+        updateIntervalSpinBox.valueChanged.connect(self.changeUpdateInterval)
+        self.changeUpdateInterval(updateIntervalSpinBox.spinBox.value())
         layout.addWidget(updateIntervalSpinBox)
 
         warningIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
@@ -124,6 +128,7 @@ class SettingsWindowReciever(QWidget):
 
         self.xMax.valueChanged.connect(self.changeXRange)
         self.xMin.valueChanged.connect(self.changeXRange)
+        self.changeXRange()
 
         layout.addWidget(self.xMax)
         layout.addWidget(self.xMin)
@@ -165,6 +170,7 @@ class SettingsWindowReciever(QWidget):
 
         self.yMax.valueChanged.connect(self.changeYRange)
         self.yMin.valueChanged.connect(self.changeYRange)
+        self.changeYRange()
 
         layout.addWidget(self.yMax)
         layout.addWidget(self.yMin)
@@ -182,7 +188,7 @@ class SettingsWindowReciever(QWidget):
 
     def changeXRange(self):
         if self.xMin.spinBox.value() < self.xMax.spinBox.value():
-            self.yRangeChanged.emit([self.xMin.spinBox.value(), self.xMax.spinBox.value()])
+            self.xRangeChanged.emit([self.xMin.spinBox.value(), self.xMax.spinBox.value()])
             self.xMin.labelUnits.setHidden(True)
             self.xMax.labelUnits.setHidden(True)
         else:
@@ -205,6 +211,7 @@ class SettingsWindowReciever(QWidget):
         for inputDevice in self.inputAudioDeviceList:
             deviceComboBox.addItem(inputDevice["name"])
         deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
+        self.changeInputDevice(deviceComboBox.currentIndex())
         layout.addWidget(deviceComboBox)
 
         sampleRateSpinBox = NamedHorizontalSpinBox('Частота дискретизации', 'Гц')
@@ -214,6 +221,7 @@ class SettingsWindowReciever(QWidget):
         sampleRateSpinBox.spinBox.setMaximum(1000000)
         sampleRateSpinBox.spinBox.setValue(44100)
         sampleRateSpinBox.valueChanged.connect(self.changeSampleRate)
+        self.changeSampleRate(sampleRateSpinBox.spinBox.value())
         layout.addWidget(sampleRateSpinBox)
 
         self.signalSourceSwitcher = NamedHorizontalSwitcher('Дальность', 'Скорость')
@@ -247,6 +255,9 @@ class SettingsWindowReciever(QWidget):
             self.signalSourceSwitcher.RightLabel.setFont(boldFont)
             source = SignalSource.VELOCITY
         self.signalSourceChanged.emit(source)
+    
+    def changeUpdateInterval(self,value):
+        self.updateIntervalChanged.emit(value)
 
 if __name__ == '__main__':
 

@@ -28,7 +28,7 @@ class SettingsWindowTransmitter(QWidget):
         self.deviceSettingsInit()
         layout.addWidget(self.DeviceSettingsGroupBox)
 
-        self.SignalTypeInit()
+        self.initSignalType()
         layout.addWidget(self.signalTypesGroupBox)
 
         self.Period = NewNamedLineEditHorizontal("Период:", "мкс")
@@ -42,6 +42,7 @@ class SettingsWindowTransmitter(QWidget):
         layout.addStretch()
 
         self.Period.textEdited.connect(self.changePeriod)
+        self.changePeriod(self.Period.LineEdit.text())
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -59,39 +60,41 @@ class SettingsWindowTransmitter(QWidget):
         self.deviceComboBox.addItems(self.devices_list)
 
         self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
+        self.changeAudioDevice(self.deviceComboBox.currentIndex())
         layout.addWidget(self.deviceComboBox)
 
     def changeAudioDevice(self, index):
         self.outputDeviceChanged.emit(self.outputDevices[index]["index"])
 
-    def SignalTypeInit(self):
+    def initSignalType(self):
         self.signalTypesGroupBox = QGroupBox('Тип сигнала')
         self.signalTypesGroupBox.setFont(self.DefaultFont)
         layout = QVBoxLayout()
         layout.setSpacing(0)
         self.signalTypesGroupBox.setLayout(layout)
-        self.SignalsType = []
-        SignalTypeSelecter = QButtonGroup(self)
-        self.SignalsType.append(QRadioButton())
-        self.SignalsType.append(QRadioButton())
-        self.SignalsType.append(QRadioButton())
-        for Signal in self.SignalsType:
-            SignalTypeSelecter.addButton(Signal)
+        self.signalsType = []
+        signalTypeSelecter = QButtonGroup(self)
+        self.signalsType.append(QRadioButton())
+        self.signalsType.append(QRadioButton())
+        self.signalsType.append(QRadioButton())
+        for Signal in self.signalsType:
+            signalTypeSelecter.addButton(Signal)
             layout.addWidget(Signal)
-        self.SignalsType[0].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.TRIANGLE,0))
-        self.SignalsType[1].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SAWTOOTH_FRONT,1))
-        self.SignalsType[2].clicked.connect(lambda: self.SignalTypeSwitched(SignalType.SAWTOOTH_REVERSE,2))
-        self.SignalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
-        self.SignalsType[0].setIconSize(QSize(400,255)) 
-        self.SignalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
-        self.SignalsType[1].setIconSize(QSize(400,255))
-        self.SignalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
-        self.SignalsType[2].setIconSize(QSize(400,255))
+        self.signalsType[0].clicked.connect(lambda: self.switchSignalType(SignalType.TRIANGLE,0))
+        self.signalsType[1].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_FRONT,1))
+        self.signalsType[2].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2))
+        self.switchSignalType(SignalType.TRIANGLE,0)
+        self.signalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
+        self.signalsType[0].setIconSize(QSize(400,255)) 
+        self.signalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
+        self.signalsType[1].setIconSize(QSize(400,255))
+        self.signalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
+        self.signalsType[2].setIconSize(QSize(400,255))
 
-    def SignalTypeSwitched(self,signalType, buttonNum:int):
-        for RadioButton in self.SignalsType:
+    def switchSignalType(self,signalType, buttonNum:int):
+        for RadioButton in self.signalsType:
             RadioButton.blockSignals(False)
-        self.SignalsType[buttonNum].blockSignals(True)
+        self.signalsType[buttonNum].blockSignals(True)
         self.signalTypeChanged.emit(signalType)
         print(signalType)
 
