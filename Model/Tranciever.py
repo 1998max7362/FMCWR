@@ -29,8 +29,8 @@ class Tranciever(QObject):
             self.scale = np.arange(self.blockSize) / (self.blockSize - 1) # шкала x
             self.signal = self.generateSignal() # сформированные отсчёты 1-го периода сигнала
 
-            self.recievedSignal = queue.Queue(maxsize=10) # Очередь для записи принятого сигнала
-            self.transmittedSignal = queue.Queue(maxsize=10) # Очередь для записи излученного сигнала
+            self.recievedSignal = queue.Queue(maxsize=5) # Очередь для записи принятого сигнала
+            self.transmittedSignal = queue.Queue(maxsize=5) # Очередь для записи излученного сигнала
 
 
         def generateSignal(self):
@@ -39,7 +39,6 @@ class Tranciever(QObject):
                     if self.scale.size%2==0:
                         firstHalfScale, secondHalfScale = np.split(self.scale, 2)
                     else:
-                        print(math.ceil(self.scale.size/2))
                         firstHalfScale = self.scale[0:math.ceil(self.scale.size/2)]
                         secondHalfScale = self.scale[0:math.floor(self.scale.size/2)]
                     signalOne = -1 + 4 * firstHalfScale
@@ -91,11 +90,12 @@ class Tranciever(QObject):
             if status:
                 print(status)
             outdata[:] = self.signal
-            # self.transmittedSignal.put(self.signal) # записываем в очеред излученный сигнал
-            # self.recievedSignal.put(indata) # записываем в очеред принятый сигнал
-
-            
-            
+            if self.transmittedSignal.full(): #Чистим очередь, если она переполняется
+                self.transmittedSignal.get() # записываем в очеред излученный сигнал
+            if self.recievedSignal.full(): #Чистим очередь, если она переполняется
+                self.recievedSignal.get() # записываем в очеред принятый сигнал
+            self.transmittedSignal.put(outdata[:]) # записываем в очеред излученный сигнал
+            self.recievedSignal.put(indata[:]) # записываем в очеред принятый сигнал
         
         def setSignalType(self, type):
             self.signalType = type
