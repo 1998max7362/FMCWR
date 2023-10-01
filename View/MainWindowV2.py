@@ -110,6 +110,7 @@ class MainWindow(QMainWindow):
     def runStop(self, state):
         if state:
             self.settingsWindowTransmitter.setEnabled(False)
+            self.Chart0.clearPlots(True) 
             self.chartUpdateTimer.start()
             self.tranciever.run()
         else:
