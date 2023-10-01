@@ -37,7 +37,15 @@ class MainWindow(QMainWindow):
         self.tranciever = Tranciever()
         self.settingsWindowReciever = SettingsWindowReciever()
         self.settingsWindowTransmitter = SettingsWindowTransmitter()
+        self.Chart0 = GraphWindow()
+        self.Chart1 = WaterFallWindow()
+        self.chartUpdateTimer = QtCore.QTimer()
+        
+        self.Chart0.setMinimumSize(300,200)
+        self.Chart1.setMinimumSize(300,200)
 
+
+        # Dock Widgets
         self.dockSettingsWindowReciever = QDockWidget()
         self.dockSettingsWindowReciever.setWindowTitle('Приёмник')
         self.dockSettingsWindowReciever.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
@@ -52,43 +60,72 @@ class MainWindow(QMainWindow):
 
         self.tabifyDockWidget(self.dockSettingsWindowTransmitter, self.dockSettingsWindowReciever)
 
+        self.dockChart0 = QDockWidget("Осциллограмма ")
+        self.dockChart0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockChart0.setWidget(self.Chart0)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dockChart0)
+
+        self.dockChart1 = QDockWidget("Спектрограмма ")
+        self.dockChart1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockChart1.setWidget(self.Chart1)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dockChart1)
+
         # Set initial values
         self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
         self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
         self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
         self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
         self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
-
-        self.graphUpdateInterval = self.settingsWindowReciever.currentUpdateInterval
-        self.signalSource = self.settingsWindowReciever.currentSignalSource
-        self.downSampling = self.settingsWindowReciever.currentDownSampling 
-        # = self.settingsWindowReciever.currentYRange
-        # = self.settingsWindowReciever.currentXRange
+        self.Chart0.setRangeY(self.settingsWindowReciever.currentYRange)
+        self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange) 
+        self.setSignalSource(self.settingsWindowReciever.currentSignalSource)
+        self.setDownSampling(self.settingsWindowReciever.currentDownSampling)
+        self.chartUpdateTimer.setInterval(self.settingsWindowReciever.currentUpdateInterval)
 
         self.initConnections()
+    
+    def updateCharts(self):
+        indata = self.tranciever.recievedSignal.get()
+        downSampledIndata = indata[::self.downSampling]
+        self.Chart0.plotData(downSampledIndata)
+        # print('update')
 
     def runStop(self, state):
         if state:
+            self.settingsWindowTransmitter.setEnabled(False)
+            self.chartUpdateTimer.start()
             self.tranciever.run()
         else:
+            self.settingsWindowTransmitter.setEnabled(True)
+            self.chartUpdateTimer.stop()
             self.tranciever.stop()
+
 
     def initConnections(self):
         self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
         self.settingsWindowReciever.startToggled.connect(self.runStop)
         self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
-        # settingsWindowReciever.updateIntervalChanged.connect(self.Tranciever.)
-        # settingsWindowReciever.signalSourceChanged.connect(self.Tranciever.set)
-        # self.settingsWindowReciever.downSamplingChanged.connect(self.Tranciever.)
-        # self.settingsWindowReciever.yRangeChanged.connect(self.Tranciever.)
-        # self.settingsWindowReciever.xRangeChanged.connect(self.Tranciever.)
+        self.settingsWindowReciever.updateIntervalChanged.connect(self.setChartUpdateInterval)
+        self.settingsWindowReciever.signalSourceChanged.connect(self.setSignalSource)
+        self.settingsWindowReciever.downSamplingChanged.connect(self.setDownSampling)
+        self.settingsWindowReciever.yRangeChanged.connect(self.Chart0.setRangeY)
+        self.settingsWindowReciever.xRangeChanged.connect(self.Chart1.setRangeX)
         self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
         self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
         self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
         self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
+        self.chartUpdateTimer.timeout.connect(self.updateCharts)
 
-    def setGraphUpdateInterval(self,value):
-        self.graphUpdateInterval = value
+    def setChartUpdateInterval(self,value):
+        self.chartUpdateTimer.setInterval(value)
+    
+    def setSignalSource(self, value):
+        self.signalSource = value
+    
+    def setDownSampling(self, value):
+        self.downSampling = value
+
+    
 
 if __name__ == '__main__':
 
