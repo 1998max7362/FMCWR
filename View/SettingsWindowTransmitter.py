@@ -22,6 +22,7 @@ class SettingsWindowTransmitter(QWidget):
 
         self.outputDeviceList = getAudioDevice("output")
 
+        # Начальные значения
         self.currentSignalType = SignalType.TRIANGLE
         self.currentPeriod = 10
         self.currentOutputDevice = self.outputDeviceList[5]["index"]
@@ -33,11 +34,11 @@ class SettingsWindowTransmitter(QWidget):
         self.DefaultFont = QFont('Times',10)
         self.setFont(self.DefaultFont)
 
-        self.deviceSettingsInit()
-        layout.addWidget(self.DeviceSettingsGroupBox)
+        deviceSettingsGroupBox = self.createDeviceSettingsGroupBox()
+        layout.addWidget(deviceSettingsGroupBox)
 
-        self.initSignalType()
-        layout.addWidget(self.signalTypesGroupBox)
+        signalTypesGroupBox = self.createSignalTypeGroupBox()
+        layout.addWidget(signalTypesGroupBox)
 
         preiodSpinBox = NamedHorizontalSpinBox('Период', 'мкс')
         preiodSpinBox.setFixedWidth(400)
@@ -50,33 +51,32 @@ class SettingsWindowTransmitter(QWidget):
 
         layout.addStretch()
 
-    def deviceSettingsInit(self):
-        self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
-        self.DeviceSettingsGroupBox.setFont(QFont('Times',10))
+    def createDeviceSettingsGroupBox(self):
+        deviceSettingsGroupBox = QGroupBox('Настройки устройства')
+        deviceSettingsGroupBox.setFont(QFont('Times',10))
         layout = QGridLayout()
         layout.setSpacing(0)
-        self.DeviceSettingsGroupBox.setLayout(layout)
+        deviceSettingsGroupBox.setLayout(layout)
         
-        self.deviceComboBox = QComboBox()
+        deviceComboBox = QComboBox()
         for outputDevice in self.outputDeviceList:
-            self.deviceComboBox.addItem(outputDevice["name"])
+            deviceComboBox.addItem(outputDevice["name"])
             if self.currentOutputDevice == outputDevice['index']:
-                print(self.deviceComboBox.count())
-                self.deviceComboBox.setCurrentIndex(self.deviceComboBox.count()-1)
-        self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
-        layout.addWidget(self.deviceComboBox)
+                deviceComboBox.setCurrentIndex(deviceComboBox.count()-1)
+        deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
+        layout.addWidget(deviceComboBox)
+        return deviceSettingsGroupBox
 
     def changeAudioDevice(self, index):
         self.currentOutputDevice = self.outputDeviceList[index]["index"]
         self.outputDeviceChanged.emit(self.currentOutputDevice)
 
-    def initSignalType(self):
-        self.signalTypesGroupBox = QGroupBox('Тип сигнала')
-        self.signalTypesGroupBox.setFont(self.DefaultFont)
+    def createSignalTypeGroupBox(self):
+        signalTypesGroupBox = QGroupBox('Тип сигнала')
+        signalTypesGroupBox.setFont(self.DefaultFont)
         layout = QVBoxLayout()
         layout.setSpacing(0)
-        self.signalTypesGroupBox.setLayout(layout)
-        self.signalTypes = []
+        signalTypesGroupBox.setLayout(layout)
         signalTypeSelecter = QButtonGroup(self)
         signalTypeSelecter.setExclusive(True)
         for type in SignalType:
@@ -88,9 +88,9 @@ class SettingsWindowTransmitter(QWidget):
             layout.addWidget(signalTypeButton)
             if type == self.currentSignalType: 
                 signalTypeButton.setChecked(True)
+        return signalTypesGroupBox
 
     def switchSignalType(self,signalType):
-        print(signalType)
         self.currentSignalType = signalType
         self.signalTypeChanged.emit(self.currentSignalType)
 
@@ -105,7 +105,6 @@ class SettingsWindowTransmitter(QWidget):
     def changePeriod(self, value):
         self.currentPeriod = value
         self.signalPeriodChanged.emit(self.currentPeriod)
-        print(value)
 
 
 

@@ -1,262 +1,276 @@
 import sys
 sys.path.insert(0, "././utils/constants")
 sys.path.insert(0, "././utils/components")
-import PyQt5
-from PyQt5.QtWidgets import *
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-import numpy as np
-from PyQt5 import QtWidgets
-from qtwidgets import Toggle, AnimatedToggle
-from SignalSource import SignalSource
-from SignalType import SignalType
-from WrapedUiElements import *
-from PyQt5.QtGui import * 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import * 
-from PyQt5.QtCore import Qt
-from Clamp import Clamp
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import *
 from getAudioDevice import getAudioDevice
-from PyQt5.QtCore import pyqtSignal 
+from PyQt5.QtCore import *
+from WrapedUiElements import *
+from SignalSource import SignalSource
+from PyQt5.QtWidgets import *
 
 class SettingsWindowReciever(QWidget):
     inputDeviceChanged = pyqtSignal(object)
+    startToggled = pyqtSignal(object)
+    sampleRateChanged = pyqtSignal(object)
+    updateIntervalChanged = pyqtSignal(object)
+    signalSourceChanged = pyqtSignal(object)
+    downSamplingChanged = pyqtSignal(object)
+    yRangeChanged = pyqtSignal(object)
+    xRangeChanged = pyqtSignal(object)
     def __init__(self):
         super().__init__()
+
+        DefaultFont = QFont('Times', 10)
+        self.inputAudioDeviceList = getAudioDevice("input")
+
+        # Начальные значения
+        self.currentInputDevice = self.inputAudioDeviceList[2]["index"] 
+        self.currentSampleRate = 44100
+        self.currentUpdateInterval = 20
+        self.currentSignalSource = SignalSource.RANGE
+        self.currentDownSampling = 10
+        self.currentYRange = [-1,1]
+        self.currentXRange = [1, 20000]
+
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)
-        self.warningIcon=QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
         layout = QVBoxLayout(self)
 
-        self.StartStopClamp = Clamp()
-        self.xRangeClamp = Clamp()
-        self.yRangeClamp = Clamp()
-        self.SignalTypeClamp=Clamp()
-        self.isMeasuring = False
-        
-        self.DefaultFont = QFont('Times',10)
+        self.deviceSettingsGroupBox = self.createDeviceSettingsGroupBox(DefaultFont)
+        layout.addWidget(self.deviceSettingsGroupBox)
 
-        self.input_audio_deviceInfos = getAudioDevice("input")
-        #  Настройка параметров устройства
-        self.deviceSettings()
-        layout.addWidget(self.DeviceSettingsGroupBox)
+        plotSettingsGroupBox = self.createGraphSettingsGroupBox()
+        layout.addWidget(plotSettingsGroupBox)
 
-        #  Настройка параметров графиков
-        self.graphSettingsInit()
-        layout.addWidget(self.GraphSettingsGroupBox)
+        self.startStopButton = ToggleButton(
+            textNotClicked='Start',
+            textClicked='Stop',
+            styleSheetNotClicked="background-color: white",
+            styleSheetClicked="background-color: green")
+        self.startStopButton.setFont(DefaultFont)
+        self.startStopButton.setToolTip('Запуск устройства')
+        self.startStopButton.toggled.connect(self.startStop)
+        layout.addWidget(self.startStopButton)
 
-        self.StartStopButton = ClampedToggleButton('Start','100,0,0')
-        self.StartStopButton.Text_NOT_CLICKED = ('Start')
-        self.StartStopButton.Text_LEFT_CLICKED = ('Stop')
-        self.StartStopButton.setFont(self.DefaultFont)
-        self.StartStopButton.Style_NOT_CLICKED = "background-color: white"
-        self.StartStopButton.Style_LEFT_CLICKED = "background-color: green"
-        self.StartStopButton.toState(ToggleButtonState.NOT_CLICKED)
-        self.StartStopButton.customContextMenuRequested.disconnect(self.StartStopButton.rightClickHandler)
-        self.StartStopButton.customContextMenuRequested.connect(self.NoneMethod)
-        self.StartStopButton.setToolTip('Запуск устройства')
-        self.StartStopButton.clicked.connect(self.StartStop)
+        self.errorLabel = QLabel('')
+        layout.addWidget(self.errorLabel)
 
-        layout.addWidget(self.StartStopButton)
-
-        self.infoLabel = ClampedLabel()
-        self.infoLabel.setStyleSheet('font-size: 12px')
-        layout.addWidget(self.infoLabel)
         layout.addStretch()
+    
+    def setErrorText(self, text:str):
+        errorIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)
+        if text!='':
+            self.errorLabel.setPixmap(errorIcon.pixmap(QSize(20, 20)))
+            self.startStopButton.toggle()
+        self.errorLabel.setText(text)
 
-        # self.xRangeChanged(False)
-        # self.yRangeChanged(False)
+    def startStop(self,state):
+        self.startToggled.emit(state)
+        self.deviceSettingsGroupBox.setEnabled(not state)
+    
+    def createGraphSettingsGroupBox(self):
+        plotSettingsGroupBox = QGroupBox('Настройки графиков')
+        plotSettingsGroupBox.setFont(QFont('Times', 10))
+        layout = QVBoxLayout()
+        plotSettingsGroupBox.setLayout(layout)
 
+        downSamplingSpinBox = NamedHorizontalSpinBox('downsample', '')
+        downSamplingSpinBox.setFixedWidth(400)
+        downSamplingSpinBox.label.setFixedWidth(210)
+        downSamplingSpinBox.spinBox.setFixedWidth(100)
+        downSamplingSpinBox.spinBox.setMaximum(100)
+        downSamplingSpinBox.spinBox.setValue(self.currentDownSampling)
+        downSamplingSpinBox.valueChanged.connect(self.changeDownSampling)
+        layout.addWidget(downSamplingSpinBox)
 
-    def deviceSettings(self):
-        self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
-        self.DeviceSettingsGroupBox.setFont(QFont('Times',10))
-        layout = QGridLayout()
-        layout.setSpacing(0)
-        self.DeviceSettingsGroupBox.setLayout(layout)
+        updateIntervalSpinBox = NamedHorizontalSpinBox('Интервал обновления', 'мс')
+        updateIntervalSpinBox.setFixedWidth(400)
+        updateIntervalSpinBox.label.setFixedWidth(210)
+        updateIntervalSpinBox.spinBox.setFixedWidth(100)
+        updateIntervalSpinBox.spinBox.setMaximum(100000)
+        updateIntervalSpinBox.spinBox.setValue(self.currentUpdateInterval)
+        updateIntervalSpinBox.valueChanged.connect(self.changeUpdateInterval)
+        layout.addWidget(updateIntervalSpinBox)
 
-        self.devices_list = []
-        for device in self.input_audio_deviceInfos:
-            self.devices_list.append(device["name"])
-        
-        self.deviceComboBox = ClampedComboBox()
-        self.deviceComboBox.addItems(self.devices_list)
-        self.deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
-        layout.addWidget(self.deviceComboBox)
+        warningIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
+        chart0SettingsGroupBox = self.createChart0SettingsGroupBox(warningIcon)
+        chart1SettingsGroupBox = self.createChart1SettingsGroupBox(warningIcon)
+        layout.addWidget(chart0SettingsGroupBox)
+        layout.addWidget(chart1SettingsGroupBox)
 
-        self.SampleRateLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Частота дискретизации','Гц') 
-        self.SampleRateLineEdit.label.setFixedWidth(200)
-        self.SampleRateLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]+")))
-        self.SampleRateLineEdit.LineEdit.setText('44100')
-        layout.addWidget(self.SampleRateLineEdit)
+        return plotSettingsGroupBox
+    
+    def createChart1SettingsGroupBox(self,warningIcon):
+        chart1SettingsBox = QGroupBox('График 1')
+        layout = QVBoxLayout()
+        chart1SettingsBox.setLayout(layout)
 
-        self.SignalTypeSwitcher=NamedHorizontalSwitcher('Дальность','Скорость')
-        self.SignalTypeSwitcher.Switcher.setFixedWidth(150)
-        self.SignalTypeSwitcher.LeftLabel.setFixedWidth(100)
-        self.SignalTypeSwitcher.RightLabel.setFixedWidth(100)
-        self.SignalTypeSwitcher.Switcher.stateChanged.connect(self.SignalSourceTypeSwitched)
-        layout.addWidget(self.SignalTypeSwitcher)
-
-        if self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.RANGE.value:
-            self.SignalTypeClamp.Send(SignalSource.RANGE)
-        elif self.SignalTypeSwitcher.Switcher._handle_position == SignalSource.VELOCITY.value:
-            self.SignalTypeClamp.Send(SignalSource.VELOCITY)
-
-    def changeInputDevice(self, index):
-        deviceId = self.input_audio_deviceInfos[index]["index"]
-        self.inputDeviceChanged.emit(deviceId)
-
-    def graphSettingsInit(self):
-        self.GraphSettingsGroupBox = QGroupBox('Настройки графиков')
-        self.GraphSettingsGroupBox.setFont(QFont('Times',10))
-        layout=QVBoxLayout()
-        self.GraphSettingsGroupBox.setLayout(layout)
-
-        self.downSamplLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'downsample',None) 
-        self.downSamplLineEdit.label.setFixedWidth(200)
-        self.downSamplLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,2}")))
-        self.downSamplLineEdit.LineEdit.setText('10')
-        layout.addWidget(self.downSamplLineEdit)
-
-        self.IntervalLineEdit = NamedLineEditHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Интервал обновления','мс') 
-        self.IntervalLineEdit.label.setFixedWidth(200)
-        self.IntervalLineEdit.LineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]+")))
-        self.IntervalLineEdit.LineEdit.setText('10')
-        layout.addWidget(self.IntervalLineEdit)
-
-        gridLayout = QGridLayout()
-        layout.addLayout(gridLayout)
-        gridLayout.setSpacing(0)
-
-        self.Chart0Settings()
-        self.Chart1Settings()
-        layout.addWidget(self.Chart0SettingsBox)
-        layout.addWidget(self.Chart1SettingsBox)
-
-    def Chart0Settings(self):
-        self.Chart0SettingsBox = QGroupBox('График 0')
-        layout = QVBoxLayout(self)
-        self.Chart0SettingsBox.setLayout(layout)
-        self.yMin = ClampedNamedDoubleSliderHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),'Ymin:')
-        self.yMax = ClampedNamedDoubleSliderHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToFloat),'Ymax:')
-        self.yMin.label.setFixedWidth(70)
-        self.yMax.label.setFixedWidth(70)
-        self.yMin.slider.setMinimum(-10)
-        self.yMin.slider.setMaximum(10)
-        self.yMax.slider.setMinimum(-10)
-        self.yMax.slider.setMaximum(10)
-        self.yMin.slider.setValue(-1)
-        self.yMax.slider.setValue(1)
-        self.yMin.slider.setSingleStep(0.1) # Сначала нужно ставить шаг
-        self.yMax.slider.setSingleStep(0.1) # Сначала нужно ставить шаг
-        self.yMin.slider.setFixedWidth(160)
-        self.yMax.slider.setFixedWidth(160)
-        self.yMin.labelUnits.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
-        self.yMax.labelUnits.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
-        self.yMin.labelUnits.setToolTip('Ymin не может быть больше Ymax')
-        self.yMax.labelUnits.setToolTip('Ymin не может быть больше Ymax')
-        self.yMin.labelUnits.setHidden(True)
-        self.yMax.labelUnits.setHidden(True)
-        self.yMin.lineEdit.setText('-1.0')
-        self.yMax.lineEdit.setText('1.0')
-        self.yMin.lineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1}")))
-        self.yMax.lineEdit.setValidator(QRegExpValidator(QRegExp("[+-]?[0-9]{1,2}[\.][0-9]{1}")))
-        self.yMin.lineEdit.setFixedWidth(50)
-        self.yMax.lineEdit.setFixedWidth(50)
-        layout.addWidget(self.yMin)
-        layout.addWidget(self.yMax)
-        self.yMin.ValueClamp.HandleWithSend(self.yRangeChanged)
-        self.yMax.ValueClamp.HandleWithSend(self.yRangeChanged)
-
-    def Chart1Settings(self):
-        self.Chart1SettingsBox = QGroupBox('График 1')
-        layout = QVBoxLayout(self)
-        self.Chart1SettingsBox.setLayout(layout)
-        self.xMin = NamedSliderHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Xmin:')
-        self.xMax = NamedSliderHorizontal(ClampedLineEdit(self.convertToStr,self.convertBackToInt),'Xmax:')
-        self.xMin.label.setFixedWidth(70)
-        self.xMax.label.setFixedWidth(70)
-        self.xMin.slider.setMinimum(1)
-        self.xMin.slider.setMaximum(20000)
+        self.xMax=NamedDoubleSliderHorizontal('Xmax')
+        self.xMax.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
+        self.xMax.labelUnits.setToolTip('Xmax не может меньше больше либо равно Xmin')
+        self.xMax.labelUnits.setHidden(True)
+        self.xMax.label.setFixedWidth(50)
+        self.xMax.slider.setFixedWidth(140)
         self.xMax.slider.setMinimum(1)
         self.xMax.slider.setMaximum(20000)
-        self.xMin.slider.setValue(1)
-        self.xMax.slider.setValue(20000)
-        self.xMin.slider.setFixedWidth(160)
-        self.xMax.slider.setFixedWidth(160)
-        self.xMin.labelUnits.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
-        self.xMax.labelUnits.setPixmap(self.warningIcon.pixmap(QSize(20, 20)))
-        self.xMin.labelUnits.setToolTip('Xmin не может быть больше Ymax')
-        self.xMax.labelUnits.setToolTip('Xmin не может быть больше Ymax')
+        self.xMax.slider.setValue(self.currentXRange[1])
+        self.xMax.slider.setSingleStep(1)  # Сначала нужно ставить шаг
+        self.xMax.spinBox.setMinimum(1)
+        self.xMax.spinBox.setMaximum(20000)
+        self.xMax.spinBox.setValue(self.currentXRange[1])
+
+        self.xMin=NamedDoubleSliderHorizontal('Xmin')
+        self.xMin.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
+        self.xMin.labelUnits.setToolTip('Xmin не может быть больше либо равно Xmax')
         self.xMin.labelUnits.setHidden(True)
-        self.xMax.labelUnits.setHidden(True)
-        self.xMin.lineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,5}")))
-        self.xMax.lineEdit.setValidator(QRegExpValidator(QRegExp("[0-9]{1,5}")))
-        self.xMin.lineEdit.setFixedWidth(60)
-        self.xMax.lineEdit.setFixedWidth(60)
-        layout.addWidget(self.xMin)
+        self.xMin.label.setFixedWidth(50)
+        self.xMin.slider.setFixedWidth(140)
+        self.xMin.slider.setMinimum(1)
+        self.xMin.slider.setMaximum(20000)
+        self.xMin.slider.setValue(self.currentXRange[0])
+        self.xMin.slider.setSingleStep(1)  # Сначала нужно ставить шаг
+        self.xMin.spinBox.setMinimum(1)
+        self.xMin.spinBox.setMaximum(20000)
+        self.xMin.spinBox.setValue(self.currentXRange[0])
+
+        self.xMax.valueChanged.connect(self.changeXRange)
+        self.xMin.valueChanged.connect(self.changeXRange)
+
         layout.addWidget(self.xMax)
-        self.xMin.ValueClamp.HandleWithSend(self.xRangeChanged)
-        self.xMax.ValueClamp.HandleWithSend(self.xRangeChanged)
-
-
-    def SignalSourceTypeSwitched(self,type): # 0 - первый источник, 2 - второй источник
-        boldFont = QFont('Times',10)
-        boldFont.setBold(True)
-        unboldFont = QFont('Times',10)
-        unboldFont.setBold(False)
-        if type == 0:
-            self.SignalTypeSwitcher.RightLabel.setFont(unboldFont)
-            self.SignalTypeSwitcher.LeftLabel.setFont(boldFont)
-            type = SignalSource.RANGE
-        if type == 2:
-            self.SignalTypeSwitcher.LeftLabel.setFont(unboldFont)
-            self.SignalTypeSwitcher.RightLabel.setFont(boldFont)
-            type = SignalSource.VELOCITY
-        self.SignalTypeClamp.Send(type)
-        # print(type)
+        layout.addWidget(self.xMin)
+        
+        return chart1SettingsBox    
     
-    def convertToStr(self, value):
-        if value=='':
-            value=1
-        return str(value)
+    def createChart0SettingsGroupBox(self,warningIcon):
+        chart0SettingsBox = QGroupBox('График 0')
+        layout = QVBoxLayout()
+        chart0SettingsBox.setLayout(layout)
 
-    def convertBackToInt(self, value):
-        if value=='':
-            value=1
-        return int(value)
+        self.yMax=NamedDoubleSliderHorizontal('Ymax')
+        self.yMax.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
+        self.yMax.labelUnits.setToolTip('Ymax не может меньше больше либо равно Ymin')
+        self.yMax.labelUnits.setHidden(True)
+        self.yMax.label.setFixedWidth(50)
+        self.yMax.slider.setFixedWidth(140)
+        self.yMax.slider.setMinimum(-10)
+        self.yMax.slider.setMaximum(10)
+        self.yMax.slider.setValue(self.currentYRange[1])
+        self.yMax.slider.setSingleStep(0.1)  # Сначала нужно ставить шаг
+        self.yMax.spinBox.setMinimum(-10)
+        self.yMax.spinBox.setMaximum(10)
+        self.yMax.spinBox.setValue(self.currentYRange[1])
 
-    def convertBackToFloat(self, value):
-        if value=='':
-            value=1
-        return float(value)
+        self.yMin=NamedDoubleSliderHorizontal('Ymin')
+        self.yMin.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
+        self.yMin.labelUnits.setToolTip('Ymin не может быть больше либо равно Ymax')
+        self.yMin.labelUnits.setHidden(True)
+        self.yMin.label.setFixedWidth(50)
+        self.yMin.slider.setFixedWidth(140)
+        self.yMin.slider.setMinimum(-10)
+        self.yMin.slider.setMaximum(10)
+        self.yMin.slider.setValue(self.currentYRange[0])
+        self.yMin.slider.setSingleStep(0.1)  # Сначала нужно ставить шаг
+        self.yMin.spinBox.setMinimum(-10)
+        self.yMin.spinBox.setMaximum(10)
+        self.yMin.spinBox.setValue(self.currentYRange[0])
 
-    def xRangeChanged(self,smth):
-        if self.xMin.slider.value()<self.xMax.slider.value():
-            self.xRangeClamp.Send([self.xMin.slider.value(),self.xMax.slider.value()])
-            self.xMin.labelUnits.setHidden(True)
-            self.xMax.labelUnits.setHidden(True)
-        else:
-            self.xMin.labelUnits.setHidden(False)
-            self.xMax.labelUnits.setHidden(False)
+        self.yMax.valueChanged.connect(self.changeYRange)
+        self.yMin.valueChanged.connect(self.changeYRange)
 
-    def yRangeChanged(self,smth):
-        if self.yMin.slider.value()<self.yMax.slider.value():
-            self.yRangeClamp.Send([self.yMin.slider.value(),self.yMax.slider.value()])
+        layout.addWidget(self.yMax)
+        layout.addWidget(self.yMin)
+        
+        return chart0SettingsBox
+
+    def changeYRange(self):
+        self.currentYRange= [self.yMin.spinBox.value(), self.yMax.spinBox.value()]
+        if self.currentYRange[0] < self.currentYRange[1]:
+            self.yRangeChanged.emit(self.currentYRange)
             self.yMin.labelUnits.setHidden(True)
             self.yMax.labelUnits.setHidden(True)
         else:
             self.yMin.labelUnits.setHidden(False)
             self.yMax.labelUnits.setHidden(False)
 
-    def NoneMethod(self):
-        pass 
+    def changeXRange(self):
+        self.currentXRange = [self.xMin.spinBox.value(), self.xMax.spinBox.value()]
+        if self.currentXRange[0] < self.currentXRange[1]:
+            self.xRangeChanged.emit(self.currentXRange)
+            self.xMin.labelUnits.setHidden(True)
+            self.xMax.labelUnits.setHidden(True)
+        else:
+            self.xMin.labelUnits.setHidden(False)
+            self.xMax.labelUnits.setHidden(False)
 
-    def StartStop(self):
-        self.isMeasuring = not(self.isMeasuring)
-        self.StartStopClamp.Send(self.isMeasuring)
+    def changeDownSampling(self, value):
+        self.currentDownSampling = value
+        self.downSamplingChanged.emit(self.currentDownSampling)
 
-        self.deviceComboBox.setEnabled(not self.isMeasuring)
+
+    def createDeviceSettingsGroupBox(self, DefaultFont):
+        deviceSettingsGroupBox = QGroupBox('Настройки устройства')
+        deviceSettingsGroupBox.setFont(DefaultFont)
+
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        deviceSettingsGroupBox.setLayout(layout)
+
+        deviceComboBox = QComboBox()
+        for inputDevice in self.inputAudioDeviceList:
+            deviceComboBox.addItem(inputDevice["name"])
+            if self.currentInputDevice == inputDevice['index']:
+                deviceComboBox.setCurrentIndex(deviceComboBox.count()-1)
+        deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
+        layout.addWidget(deviceComboBox)
+
+        sampleRateSpinBox = NamedHorizontalSpinBox('Частота дискретизации', 'Гц')
+        sampleRateSpinBox.setFixedWidth(400)
+        sampleRateSpinBox.label.setFixedWidth(210)
+        sampleRateSpinBox.spinBox.setFixedWidth(100)
+        sampleRateSpinBox.spinBox.setMaximum(1000000)
+        sampleRateSpinBox.spinBox.setValue(self.currentSampleRate)
+        sampleRateSpinBox.valueChanged.connect(self.changeSampleRate)
+        layout.addWidget(sampleRateSpinBox)
+
+        self.signalSourceSwitcher = NamedHorizontalSwitcher('Дальность', 'Скорость')
+        self.signalSourceSwitcher.Switcher.setFixedWidth(150)
+        self.signalSourceSwitcher.LeftLabel.setFixedWidth(100)
+        self.signalSourceSwitcher.RightLabel.setFixedWidth(100)
+        self.signalSourceSwitcher.Switcher.setCheckState(self.currentSignalSource.value)
+        self.signalSourceSwitcher.stateChanged.connect(self.switchSignalSource)
+        layout.addWidget(self.signalSourceSwitcher)
+
+        return deviceSettingsGroupBox
+
+    def changeInputDevice(self, index):
+        deviceId = self.inputAudioDeviceList[index]["index"]
+        self.currentInputDevice = deviceId
+        self.inputDeviceChanged.emit(self.currentInputDevice)
+    
+    def changeSampleRate(self,value):
+        self.currentSampleRate = value
+        self.sampleRateChanged.emit(self.currentSampleRate)
+
+    def switchSignalSource(self, state):
+        boldFont = QFont('Times', 10)
+        boldFont.setBold(True)
+        unboldFont = QFont('Times', 10)
+        unboldFont.setBold(False)
+        if state == 0:
+            self.signalSourceSwitcher.RightLabel.setFont(unboldFont)
+            self.signalSourceSwitcher.LeftLabel.setFont(boldFont)
+            source = SignalSource.RANGE
+        if state == 2:
+            self.signalSourceSwitcher.LeftLabel.setFont(unboldFont)
+            self.signalSourceSwitcher.RightLabel.setFont(boldFont)
+            source = SignalSource.VELOCITY
+        self.currentSignalSource = source
+        self.signalSourceChanged.emit(self.currentSignalSource)
+    
+    def changeUpdateInterval(self,value):
+        self.currentUpdateInterval = value
+        self.updateIntervalChanged.emit(self.currentUpdateInterval)
 
 if __name__ == '__main__':
 
@@ -266,4 +280,3 @@ if __name__ == '__main__':
     main.show()
 
     sys.exit(app.exec_())
-

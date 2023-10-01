@@ -14,7 +14,7 @@ from scipy.io.wavfile import write
 from scipy.io import wavfile
 from datetime import datetime
 
-from SettingsWindowRecieverV2 import SettingsWindowReciever
+from SettingsWindowReciever import SettingsWindowReciever
 from SettingsWindowTransmitter import SettingsWindowTransmitter
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
@@ -55,18 +55,18 @@ class MainWindow(QMainWindow):
 
         self.tabifyDockWidget(self.dockSettingsWindowTransmitter, self.dockSettingsWindowReciever)
 
-        
+        # Set initial values
+        self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
+        self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
+        self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
         self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
         self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
+
         self.graphUpdateInterval = self.settingsWindowReciever.currentUpdateInterval
         self.signalSource = self.settingsWindowReciever.currentSignalSource
         self.downSampling = self.settingsWindowReciever.currentDownSampling 
         # = self.settingsWindowReciever.currentYRange
         # = self.settingsWindowReciever.currentXRange
-
-        self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
-        self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
-        self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
 
         self.initConnections()
 
