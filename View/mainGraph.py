@@ -35,20 +35,22 @@ class GraphWindow(QWidget):
         self.input.HandleWithReceive(self.plotData)
         self.clearClamp.HandleWithReceive(self.clearPlots)
         self.rangeClamp.HandleWithReceive(self.setRangeY)
-        # self.xRangeMax = 1136
+        self.maxRangeX = 1136
 
 
     # классовые методы
-    # self.
+    def setMaxRangeX(self,value):
+        self.maxRangeX = value
 
     # построение графиков
-    def plotData(self, data: list):
+    def plotData(self, data):
         self.y = np.append(self.y,data)
         # self.i += 1 
         # self.x.append(self.i*np.array(range(len(data))))
 
-        if len(self.y) >= 1136:
+        if len(self.y) >= self.maxRangeX:
            self.y = self.y[len(data):]
+           print(self.y.size)
 
         # self.data_line.setData(self.x, np.real(self.y))
         self.data_line.setData(np.real(self.y))

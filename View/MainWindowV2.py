@@ -77,6 +77,7 @@ class MainWindow(QMainWindow):
         self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
         self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
         self.Chart0.setRangeY(self.settingsWindowReciever.currentYRange)
+        self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
         self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange) 
         self.setSignalSource(self.settingsWindowReciever.currentSignalSource)
         self.setDownSampling(self.settingsWindowReciever.currentDownSampling)

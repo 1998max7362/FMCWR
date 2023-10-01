@@ -79,7 +79,7 @@ class Tranciever(QObject):
                     device=(self.inputDeviceId, self.outputDeviceId),
                     samplerate=self.samplerate,
                     blocksize=self.blockSize,
-                    # channels=(1,1),
+                    channels=(1,1),
                     callback=self.callback)
                 self.errorAppeared.emit('')
                 with stream:
