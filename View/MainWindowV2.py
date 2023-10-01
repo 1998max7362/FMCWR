@@ -76,19 +76,35 @@ class MainWindow(QMainWindow):
         self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
         self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
         self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
-        self.Chart0.setRangeY(self.settingsWindowReciever.currentYRange)
-        self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
-        self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange) 
         self.setSignalSource(self.settingsWindowReciever.currentSignalSource)
         self.setDownSampling(self.settingsWindowReciever.currentDownSampling)
         self.chartUpdateTimer.setInterval(self.settingsWindowReciever.currentUpdateInterval)
+        self.Chart0.setRangeY(self.settingsWindowReciever.currentYRange)
+        self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
+        self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange)
+        self.Chart1.set_fs(self.settingsWindowReciever.currentSampleRate)
 
-        self.initConnections()
-    
+        # Set connections
+        self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
+        self.settingsWindowReciever.startToggled.connect(self.runStop)
+        self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
+        self.settingsWindowReciever.updateIntervalChanged.connect(self.setChartUpdateInterval)
+        self.settingsWindowReciever.signalSourceChanged.connect(self.setSignalSource)
+        self.settingsWindowReciever.downSamplingChanged.connect(self.setDownSampling)
+        self.settingsWindowReciever.downSamplingChanged.connect(self.Chart1.set_fs)
+        self.settingsWindowReciever.yRangeChanged.connect(self.Chart0.setRangeY)
+        self.settingsWindowReciever.xRangeChanged.connect(self.Chart1.setRangeX)
+        self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
+        self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
+        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
+        self.chartUpdateTimer.timeout.connect(self.updateCharts)
+
     def updateCharts(self):
         indata = self.tranciever.recievedSignal.get()
         downSampledIndata = indata[::self.downSampling]
         self.Chart0.plotData(downSampledIndata)
+        self.Chart1.specImage(indata)
         # print('update')
 
     def runStop(self, state):
@@ -100,22 +116,6 @@ class MainWindow(QMainWindow):
             self.settingsWindowTransmitter.setEnabled(True)
             self.chartUpdateTimer.stop()
             self.tranciever.stop()
-
-
-    def initConnections(self):
-        self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
-        self.settingsWindowReciever.startToggled.connect(self.runStop)
-        self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
-        self.settingsWindowReciever.updateIntervalChanged.connect(self.setChartUpdateInterval)
-        self.settingsWindowReciever.signalSourceChanged.connect(self.setSignalSource)
-        self.settingsWindowReciever.downSamplingChanged.connect(self.setDownSampling)
-        self.settingsWindowReciever.yRangeChanged.connect(self.Chart0.setRangeY)
-        self.settingsWindowReciever.xRangeChanged.connect(self.Chart1.setRangeX)
-        self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
-        self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
-        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
-        self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
-        self.chartUpdateTimer.timeout.connect(self.updateCharts)
 
     def setChartUpdateInterval(self,value):
         self.chartUpdateTimer.setInterval(value)

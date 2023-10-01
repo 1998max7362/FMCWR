@@ -48,9 +48,8 @@ class GraphWindow(QWidget):
         # self.i += 1 
         # self.x.append(self.i*np.array(range(len(data))))
 
-        if len(self.y) >= self.maxRangeX:
+        if len(self.y) > self.maxRangeX:
            self.y = self.y[len(data):]
-           print(self.y.size)
 
         # self.data_line.setData(self.x, np.real(self.y))
         self.data_line.setData(np.real(self.y))
