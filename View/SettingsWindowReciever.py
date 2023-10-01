@@ -61,13 +61,15 @@ class SettingsWindowReciever(QWidget):
     def setErrorText(self, text:str):
         errorIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)
         if text!='':
+            self.deviceSettingsGroupBox.setEnabled(True)
             self.errorLabel.setPixmap(errorIcon.pixmap(QSize(20, 20)))
             self.startStopButton.toggle()
         self.errorLabel.setText(text)
 
     def startStop(self,state):
-        self.startToggled.emit(state)
         self.deviceSettingsGroupBox.setEnabled(not state)
+        self.startToggled.emit(state)
+        
     
     def createGraphSettingsGroupBox(self):
         plotSettingsGroupBox = QGroupBox('Настройки графиков')

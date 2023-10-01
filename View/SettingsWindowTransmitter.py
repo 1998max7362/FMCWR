@@ -25,7 +25,7 @@ class SettingsWindowTransmitter(QWidget):
         # Начальные значения
         self.currentSignalType = SignalType.TRIANGLE
         self.currentPeriod = 10
-        self.currentOutputDevice = self.outputDeviceList[5]["index"]
+        self.currentOutputDevice = self.outputDeviceList[1]["index"]
 
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)

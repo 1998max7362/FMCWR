@@ -26,9 +26,6 @@ from WrapedUiElements import *
 from Transmitter import Transmitter
 from Tranciever import Tranciever
 
-
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -70,20 +67,28 @@ class MainWindow(QMainWindow):
 
         self.initConnections()
 
-    
-    def test(self):
-        self.tranciever.run()
-
+    def runStop(self, state):
+        if state:
+            self.tranciever.run()
+        else:
+            self.tranciever.stop()
 
     def initConnections(self):
         self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
-        self.settingsWindowReciever.startToggled.connect(self.test)
+        self.settingsWindowReciever.startToggled.connect(self.runStop)
         self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
         # settingsWindowReciever.updateIntervalChanged.connect(self.Tranciever.)
         # settingsWindowReciever.signalSourceChanged.connect(self.Tranciever.set)
         # self.settingsWindowReciever.downSamplingChanged.connect(self.Tranciever.)
         # self.settingsWindowReciever.yRangeChanged.connect(self.Tranciever.)
         # self.settingsWindowReciever.xRangeChanged.connect(self.Tranciever.)
+        self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
+        self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
+        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
+
+    def setGraphUpdateInterval(self,value):
+        self.graphUpdateInterval = value
 
 if __name__ == '__main__':
 

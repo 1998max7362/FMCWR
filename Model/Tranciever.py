@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, "././utils/constants")
+sys.path.insert(0, "././utils/components")
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
@@ -8,6 +9,7 @@ import queue
 from SignalType import SignalType
 from PyQt5 import QtWidgets
 import math
+from getAudioDevice import getAudioDevice
 
 class Tranciever(QObject):
         errorAppeared = pyqtSignal(object)
@@ -69,6 +71,7 @@ class Tranciever(QObject):
             self.isWorking = False
         
         def run(self):
+            d = getAudioDevice()
             self.isWorking=True
             try:
                 QtWidgets.QApplication.processEvents()
