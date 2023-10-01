@@ -21,16 +21,16 @@ class SettingsWindowReciever(QWidget):
     def __init__(self):
         super().__init__()
 
-        # self.currentInputDevice
-        # self.currentSampleRate
-        # self.currentUpdateInterval 
-        # self.currentSignalSource
-        # self.currentDownSampling 
-        # self.currentYRange
-        # self.currentXRange
-
         DefaultFont = QFont('Times', 10)
         self.inputAudioDeviceList = getAudioDevice("input")
+
+        self.currentInputDevice = self.inputAudioDeviceList[2]["index"] 
+        self.currentSampleRate = 44100
+        self.currentUpdateInterval = 20
+        self.currentSignalSource = SignalSource.RANGE
+        self.currentDownSampling = 10
+        self.currentYRange = [-1,1]
+        self.currentXRange = [1, 20000]
 
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)
@@ -78,9 +78,8 @@ class SettingsWindowReciever(QWidget):
         downSamplingSpinBox.label.setFixedWidth(210)
         downSamplingSpinBox.spinBox.setFixedWidth(100)
         downSamplingSpinBox.spinBox.setMaximum(100)
-        downSamplingSpinBox.spinBox.setValue(10)
+        downSamplingSpinBox.spinBox.setValue(self.currentDownSampling)
         downSamplingSpinBox.valueChanged.connect(self.changeDownSampling)
-        self.currentDownSampling = downSamplingSpinBox.spinBox.value()
         layout.addWidget(downSamplingSpinBox)
 
         updateIntervalSpinBox = NamedHorizontalSpinBox('Интервал обновления', 'мс')
@@ -88,9 +87,8 @@ class SettingsWindowReciever(QWidget):
         updateIntervalSpinBox.label.setFixedWidth(210)
         updateIntervalSpinBox.spinBox.setFixedWidth(100)
         updateIntervalSpinBox.spinBox.setMaximum(100000)
-        updateIntervalSpinBox.spinBox.setValue(10)
+        updateIntervalSpinBox.spinBox.setValue(self.currentUpdateInterval)
         updateIntervalSpinBox.valueChanged.connect(self.changeUpdateInterval)
-        self.currentUpdateInterval = updateIntervalSpinBox.spinBox.value()
         layout.addWidget(updateIntervalSpinBox)
 
         warningIcon = QApplication.style().standardIcon(QStyle.SP_MessageBoxWarning)
@@ -114,11 +112,11 @@ class SettingsWindowReciever(QWidget):
         self.xMax.slider.setFixedWidth(140)
         self.xMax.slider.setMinimum(1)
         self.xMax.slider.setMaximum(20000)
-        self.xMax.slider.setValue(20000)
+        self.xMax.slider.setValue(self.currentXRange[1])
         self.xMax.slider.setSingleStep(1)  # Сначала нужно ставить шаг
         self.xMax.spinBox.setMinimum(1)
         self.xMax.spinBox.setMaximum(20000)
-        self.xMax.spinBox.setValue(20000)
+        self.xMax.spinBox.setValue(self.currentXRange[1])
 
         self.xMin=NamedDoubleSliderHorizontal('Xmin')
         self.xMin.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
@@ -128,15 +126,14 @@ class SettingsWindowReciever(QWidget):
         self.xMin.slider.setFixedWidth(140)
         self.xMin.slider.setMinimum(1)
         self.xMin.slider.setMaximum(20000)
-        self.xMin.slider.setValue(1)
+        self.xMin.slider.setValue(self.currentXRange[0])
         self.xMin.slider.setSingleStep(1)  # Сначала нужно ставить шаг
         self.xMin.spinBox.setMinimum(1)
         self.xMin.spinBox.setMaximum(20000)
-        self.xMin.spinBox.setValue(1)
+        self.xMin.spinBox.setValue(self.currentXRange[0])
 
         self.xMax.valueChanged.connect(self.changeXRange)
         self.xMin.valueChanged.connect(self.changeXRange)
-        self.currentXRange = [self.xMin.spinBox.value(),self.xMax.spinBox.value()]
 
         layout.addWidget(self.xMax)
         layout.addWidget(self.xMin)
@@ -156,11 +153,11 @@ class SettingsWindowReciever(QWidget):
         self.yMax.slider.setFixedWidth(140)
         self.yMax.slider.setMinimum(-10)
         self.yMax.slider.setMaximum(10)
-        self.yMax.slider.setValue(1)
+        self.yMax.slider.setValue(self.currentYRange[1])
         self.yMax.slider.setSingleStep(0.1)  # Сначала нужно ставить шаг
         self.yMax.spinBox.setMinimum(-10)
         self.yMax.spinBox.setMaximum(10)
-        self.yMax.spinBox.setValue(1)
+        self.yMax.spinBox.setValue(self.currentYRange[1])
 
         self.yMin=NamedDoubleSliderHorizontal('Ymin')
         self.yMin.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
@@ -170,15 +167,14 @@ class SettingsWindowReciever(QWidget):
         self.yMin.slider.setFixedWidth(140)
         self.yMin.slider.setMinimum(-10)
         self.yMin.slider.setMaximum(10)
-        self.yMin.slider.setValue(-1)
+        self.yMin.slider.setValue(self.currentYRange[0])
         self.yMin.slider.setSingleStep(0.1)  # Сначала нужно ставить шаг
         self.yMin.spinBox.setMinimum(-10)
         self.yMin.spinBox.setMaximum(10)
-        self.yMin.spinBox.setValue(-1)
+        self.yMin.spinBox.setValue(self.currentYRange[0])
 
         self.yMax.valueChanged.connect(self.changeYRange)
         self.yMin.valueChanged.connect(self.changeYRange)
-        self.currentYRange= [self.yMin.spinBox.value(),self.yMax.spinBox.value()]
 
         layout.addWidget(self.yMax)
         layout.addWidget(self.yMin)
@@ -221,8 +217,9 @@ class SettingsWindowReciever(QWidget):
         deviceComboBox = QComboBox()
         for inputDevice in self.inputAudioDeviceList:
             deviceComboBox.addItem(inputDevice["name"])
+            if self.currentInputDevice == inputDevice['index']:
+                deviceComboBox.setCurrentIndex(deviceComboBox.count()-1)
         deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
-        self.currentInputDevice = self.inputAudioDeviceList[deviceComboBox.currentIndex()]["index"] 
         layout.addWidget(deviceComboBox)
 
         sampleRateSpinBox = NamedHorizontalSpinBox('Частота дискретизации', 'Гц')
@@ -230,18 +227,16 @@ class SettingsWindowReciever(QWidget):
         sampleRateSpinBox.label.setFixedWidth(210)
         sampleRateSpinBox.spinBox.setFixedWidth(100)
         sampleRateSpinBox.spinBox.setMaximum(1000000)
-        sampleRateSpinBox.spinBox.setValue(44100)
+        sampleRateSpinBox.spinBox.setValue(self.currentSampleRate)
         sampleRateSpinBox.valueChanged.connect(self.changeSampleRate)
-        self.currentSampleRate = sampleRateSpinBox.spinBox.value()
         layout.addWidget(sampleRateSpinBox)
 
         self.signalSourceSwitcher = NamedHorizontalSwitcher('Дальность', 'Скорость')
         self.signalSourceSwitcher.Switcher.setFixedWidth(150)
         self.signalSourceSwitcher.LeftLabel.setFixedWidth(100)
         self.signalSourceSwitcher.RightLabel.setFixedWidth(100)
+        self.signalSourceSwitcher.Switcher.setCheckState(self.currentSignalSource.value)
         self.signalSourceSwitcher.stateChanged.connect(self.switchSignalSource)
-        self.switchSignalSource(self.signalSourceSwitcher.Switcher.checkState())
-        self.currentSignalSource = SignalSource.RANGE
         layout.addWidget(self.signalSourceSwitcher)
 
         return deviceSettingsGroupBox

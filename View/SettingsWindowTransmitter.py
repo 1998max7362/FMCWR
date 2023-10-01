@@ -20,9 +20,11 @@ class SettingsWindowTransmitter(QWidget):
     def __init__(self):
         super().__init__()
 
-        # self.currentSignalType
-        # self.currentPeriod
-        # self.currentOutputDevice
+        self.outputDeviceList = getAudioDevice("output")
+
+        self.currentSignalType = SignalType.TRIANGLE
+        self.currentPeriod = 10
+        self.currentOutputDevice = self.outputDeviceList[5]["index"]
 
         self.setWindowTitle("Настройки")
         self.setFixedWidth(440)
@@ -42,15 +44,11 @@ class SettingsWindowTransmitter(QWidget):
         preiodSpinBox.label.setFixedWidth(210)
         preiodSpinBox.spinBox.setFixedWidth(100)
         preiodSpinBox.spinBox.setMaximum(100)
-        preiodSpinBox.spinBox.setValue(10)
+        preiodSpinBox.spinBox.setValue(self.currentPeriod)
         preiodSpinBox.valueChanged.connect(self.changePeriod)
-        self.currentPeriod = preiodSpinBox.spinBox.value()
         layout.addWidget(preiodSpinBox)
 
         layout.addStretch()
-
-        
-
 
     def deviceSettingsInit(self):
         self.DeviceSettingsGroupBox = QGroupBox('Настройки устройства')
@@ -58,21 +56,18 @@ class SettingsWindowTransmitter(QWidget):
         layout = QGridLayout()
         layout.setSpacing(0)
         self.DeviceSettingsGroupBox.setLayout(layout)
-
-        self.outputDevices = getAudioDevice("output")
-        self.devices_list = []
-        for device in self.outputDevices:
-            self.devices_list.append(device["name"])
         
         self.deviceComboBox = QComboBox()
-        self.deviceComboBox.addItems(self.devices_list)
-
+        for outputDevice in self.outputDeviceList:
+            self.deviceComboBox.addItem(outputDevice["name"])
+            if self.currentOutputDevice == outputDevice['index']:
+                print(self.deviceComboBox.count())
+                self.deviceComboBox.setCurrentIndex(self.deviceComboBox.count()-1)
         self.deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
-        self.currentOutputDevice = self.outputDevices[self.deviceComboBox.currentIndex()]["index"]
         layout.addWidget(self.deviceComboBox)
 
     def changeAudioDevice(self, index):
-        self.currentOutputDevice = self.outputDevices[index]["index"]
+        self.currentOutputDevice = self.outputDeviceList[index]["index"]
         self.outputDeviceChanged.emit(self.currentOutputDevice)
 
     def initSignalType(self):
@@ -81,41 +76,22 @@ class SettingsWindowTransmitter(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(0)
         self.signalTypesGroupBox.setLayout(layout)
-        self.signalsType = []
+        self.signalTypes = []
         signalTypeSelecter = QButtonGroup(self)
-        self.signalsType.append(QRadioButton())
-        self.signalsType.append(QRadioButton())
-        self.signalsType.append(QRadioButton())
-        for Signal in self.signalsType:
-            signalTypeSelecter.addButton(Signal)
-            layout.addWidget(Signal)
-        self.signalsType[0].clicked.connect(lambda: self.switchSignalType(SignalType.TRIANGLE,0))
-        self.signalsType[1].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_FRONT,1))
-        self.signalsType[2].clicked.connect(lambda: self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2))
-        self.currentSignalType = SignalType.SINE
-        self.signalsType[0].setIcon(QIcon('ExtraFiles/Icons/new/Triangle.png'))
-        self.signalsType[0].setIconSize(QSize(400,255)) 
-        self.signalsType[1].setIcon(QIcon('ExtraFiles/Icons/new/Sawtooth.png'))
-        self.signalsType[1].setIconSize(QSize(400,255))
-        self.signalsType[2].setIcon(QIcon('ExtraFiles/Icons/new/SawtoothReverse.png'))
-        self.signalsType[2].setIconSize(QSize(400,255))
+        signalTypeSelecter.setExclusive(True)
+        for type in SignalType:
+            signalTypeButton = QRadioButton()
+            signalTypeButton.clicked.connect(lambda checked,type=type: self.switchSignalType(type))
+            signalTypeButton.setIcon(QIcon(type.IconPath))
+            signalTypeButton.setIconSize(QSize(400, 255))
+            signalTypeSelecter.addButton(signalTypeButton)
+            layout.addWidget(signalTypeButton)
+            if type == self.currentSignalType: 
+                signalTypeButton.setChecked(True)
 
-
-    def checkSignalTypesSelected(self):
-        if self.signalsType[0].isChecked():
-            self.switchSignalType(SignalType.TRIANGLE,0)
-        if self.signalsType[1].isChecked():
-            self.switchSignalType(SignalType.SAWTOOTH_FRONT,1)
-        if self.signalsType[2].isChecked():
-            self.switchSignalType(SignalType.SAWTOOTH_REVERSE,2)
-
-
-
-    def switchSignalType(self,signalType, buttonNum:int):
+    def switchSignalType(self,signalType):
+        print(signalType)
         self.currentSignalType = signalType
-        for RadioButton in self.signalsType:
-            RadioButton.blockSignals(False)
-        self.signalsType[buttonNum].blockSignals(True)
         self.signalTypeChanged.emit(self.currentSignalType)
 
     def convertBackToFloat(self, value):

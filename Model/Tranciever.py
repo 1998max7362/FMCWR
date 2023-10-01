@@ -17,7 +17,7 @@ class Tranciever(QObject):
             self.isWorking = False
 
             # Параметры сигнала
-            self.signalType = SignalType.SINE # форма сигнала
+            self.signalType = SignalType.TRIANGLE # форма сигнала
             self.signalPeriod = 1 # период сигнала в мс
 
             # Параметры устройств ввода-вывода
