@@ -122,7 +122,7 @@ class TrancieverProcess(Process):
             if self.recievedSignal.full(): #Чистим очередь, если она переполняется
                 self.recievedSignal.get() # записываем в очеред принятый сигнал
             self.transmittedSignal.put(outdata[:]) # записываем в очеред излученный сигнал
-            self.recievedSignal.put(indata[:]) # записываем в очеред принятый сигнал
+            self.recievedSignal.put(indata[:,[0]]) # записываем в очеред принятый сигнал
         
         def setSignalType(self, type):
             self.signalType = type
