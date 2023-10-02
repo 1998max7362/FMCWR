@@ -177,6 +177,7 @@ class WaterFallWindow(QWidget):
         # win = np.hanning(len(s))
         # f, spectra = signal.welch(s, self.fs, window='hann', nfft=self.nfft, scaling='spectrum')
         spectra = abs(np.fft.fft(s,int(self.nfft)))**2
+        a = s[:][]
         spectra = spectra[:int(self.nfft/2)]
         # spectra = spectra / len(spectra)
         spectra = np.reshape(spectra, (len(spectra), ))
