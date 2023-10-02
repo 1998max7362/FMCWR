@@ -70,6 +70,7 @@ class Transceiver():
         self.channels = []
         self.channels.append(ch)
         self.mapping = [c - 1 for c in self.channels]
+        print()
     
     def setDevice(self, hostapi = 0):
         # set device hostapi
