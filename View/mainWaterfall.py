@@ -12,7 +12,7 @@ from Clamp import Clamp
 from threading import Thread
 from SignalSource import SignalSource
 import pyqtspecgram
-
+from PyQt5 import QtWidgets
 
 class WaterFallWindow(QWidget):
     def __init__(self):
@@ -171,6 +171,7 @@ class WaterFallWindow(QWidget):
 
     # вычисление спектра
     def specgram(self, s):
+        QtWidgets.QApplication.processEvents()
         #self.y = self.y[1:]
         # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,window='hann')
         # win = np.hanning(len(s))

@@ -83,6 +83,7 @@ class MainWindow(QMainWindow):
         self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
         self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange)
         self.Chart1.set_fs(self.settingsWindowReciever.currentSampleRate)
+        self.Chart1.set_tSeg(self.settingsWindowTransmitter.currentPeriod)
 
         # Set connections
         self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
@@ -97,6 +98,7 @@ class MainWindow(QMainWindow):
         self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
         self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
         self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.Chart1.set_tSeg)
         self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
         self.chartUpdateTimer.timeout.connect(self.updateCharts)
 
@@ -127,7 +129,6 @@ class MainWindow(QMainWindow):
     def setDownSampling(self, value):
         self.downSampling = value
 
-    
 
 if __name__ == '__main__':
 

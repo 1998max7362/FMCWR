@@ -10,9 +10,10 @@ from SignalType import SignalType
 from PyQt5 import QtWidgets
 import math
 from getAudioDevice import getAudioDevice
+import multiprocessing as mp
 
-class Tranciever(QObject):
-        errorAppeared = pyqtSignal(object)
+class Tranciever():
+        # errorAppeared = pyqtSignal(object)
         def __init__(self):
             super().__init__()
 
@@ -70,6 +71,10 @@ class Tranciever(QObject):
         def stop(self):
             self.isWorking = False
         
+        def runProcess(self):
+            p = mp.Process(target = self.run)
+            p.start()
+
         def run(self):
             self.isWorking=True
             try:
@@ -122,4 +127,5 @@ class Tranciever(QObject):
 
 if __name__ == '__main__':
     tranciever = Tranciever()
-    tranciever.run()
+    tranciever.runProcess()
+    # tranciever.run()

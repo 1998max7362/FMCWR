@@ -3,16 +3,12 @@ sys.path.insert(0, "././utils/constants")
 sys.path.insert(0, "././utils/components")
 import numpy as np
 import sounddevice as sd
-import soundfile as sf
-from PyQt5.QtCore import QObject, pyqtSignal
-import queue
 from SignalType import SignalType
-from PyQt5 import QtWidgets
 import math
-from getAudioDevice import getAudioDevice
+import multiprocessing as mp
+import threading as th
 
-class Tranciever(QObject):
-        errorAppeared = pyqtSignal(object)
+class Tranciever():
         def __init__(self):
             super().__init__()
 
@@ -31,8 +27,8 @@ class Tranciever(QObject):
             self.scale = np.arange(self.blockSize) / (self.blockSize - 1) # шкала x
             self.signal = self.generateSignal() # сформированные отсчёты 1-го периода сигнала
 
-            self.recievedSignal = queue.Queue(maxsize=5) # Очередь для записи принятого сигнала
-            self.transmittedSignal = queue.Queue(maxsize=5) # Очередь для записи излученного сигнала
+            self.recievedSignal = mp.Queue(maxsize=5) # Очередь для записи принятого сигнала
+            self.transmittedSignal = mp.Queue(maxsize=5) # Очередь для записи излученного сигнала
 
 
         def generateSignal(self):
@@ -70,23 +66,23 @@ class Tranciever(QObject):
         def stop(self):
             self.isWorking = False
         
+        def runProcess(self):
+            p = mp.Process(target = self.run)
+            p.start()
+
         def run(self):
             self.isWorking=True
             try:
-                # QtWidgets.QApplication.processEvents()
                 stream = sd.Stream(
                     device=(self.inputDeviceId, self.outputDeviceId),
                     samplerate=self.samplerate,
                     blocksize=self.blockSize,
                     channels=(1,1),
                     callback=self.callback)
-                self.errorAppeared.emit('')
                 with stream:
                     while self.isWorking:
                         pass
-                        # QtWidgets.QApplication.processEvents()
             except Exception as e:
-                self.errorAppeared.emit(e.args[0])
                 print(type(e).__name__ + ': ' + str(e))
         
         def callback(self, indata, outdata, frames, time, status):
@@ -122,4 +118,5 @@ class Tranciever(QObject):
 
 if __name__ == '__main__':
     tranciever = Tranciever()
-    tranciever.run()
+    tranciever.runProcess()
+    # tranciever.run()
