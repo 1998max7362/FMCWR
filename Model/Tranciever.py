@@ -3,13 +3,10 @@ sys.path.insert(0, "././utils/constants")
 sys.path.insert(0, "././utils/components")
 import numpy as np
 import sounddevice as sd
-import soundfile as sf
 from PyQt5.QtCore import QObject, pyqtSignal
 import queue
 from SignalType import SignalType
-from PyQt5 import QtWidgets
 import math
-from getAudioDevice import getAudioDevice
 
 class Tranciever(QObject):
         errorAppeared = pyqtSignal(object)
