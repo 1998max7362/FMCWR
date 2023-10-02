@@ -1,9 +1,9 @@
 import tensorflow as tf
 from sys             import exit, argv
-import multiprocessing as mp
 from multiprocessing import Process, Queue
 from PyQt5.QtWidgets import QPushButton, QApplication, QHBoxLayout, QWidget, QLabel
 from PyQt5.QtCore    import QRunnable, QObject, pyqtSignal, QThreadPool
+import threading as th
 
 class Window(QWidget):
 
@@ -75,23 +75,28 @@ class Mnist(Process):
         self.__queue = queue
 
     def run(self):
-        mnist = tf.keras.datasets.mnist  # 28x28 Bilder hangeschriebener Ziffern von 0-9
+        # mnist = tf.keras.datasets.mnist  # 28x28 Bilder hangeschriebener Ziffern von 0-9
 
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        # (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-        x_train = tf.keras.utils.normalize(x_train, axis=1)
+        # x_train = tf.keras.utils.normalize(x_train, axis=1)
 
-        model   = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(128, activation=tf.nn.relu))
-        model.add(tf.keras.layers.Dense(128, activation=tf.nn.relu))
-        model.add(tf.keras.layers.Dense(10, activation=tf.nn.softmax))
+        # model   = tf.keras.models.Sequential()
+        # model.add(tf.keras.layers.Flatten())
+        # model.add(tf.keras.layers.Dense(128, activation=tf.nn.relu))
+        # model.add(tf.keras.layers.Dense(128, activation=tf.nn.relu))
+        # model.add(tf.keras.layers.Dense(10, activation=tf.nn.softmax))
 
-        model.compile(optimizer="adam",
-                      loss="sparse_categorical_crossentropy",
-                      metrics=['accuracy'])
+        # model.compile(optimizer="adam",
+        #               loss="sparse_categorical_crossentropy",
+        #               metrics=['accuracy'])
 
-        model.fit(x_train, y_train, epochs=8)
+        # model.fit(x_train, y_train, epochs=8)
+        # condition = th.Condition()
+        # condition.acquire()
+        # condition.wait()
+        while True:
+            self.__queue.put(1)
         self.__queue.put(NetSignal.finished)
         self.__queue.close()
 
