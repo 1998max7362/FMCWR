@@ -6,309 +6,167 @@ sys.path.insert(0, "././Test/")
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
-import numpy as np
-from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
-import queue
+from multiprocessing import Queue
+import numpy as np
 from scipy.io.wavfile import write
-from scipy.io import wavfile
 from datetime import datetime
 
 from SettingsWindowReciever import SettingsWindowReciever
 from SettingsWindowTransmitter import SettingsWindowTransmitter
 from mainWaterfall import WaterFallWindow
 from mainGraph import GraphWindow
-from Clamp import Clamp
 from Worker import *
-from SignalSource import SignalSource
-from Reciever import Reciever
 from WrapedUiElements import *
-from Transmitter import Transmitter
-
-
-
+from TrancieverProcess import TrancieverProcess
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.save_signal = queue.Queue()
-        self.wav_data=np.array([])
+        self.wavData=np.array([])
+
         self.setWindowTitle('Главное меню')
-        self.threadpool = QThreadPool()
-        self.threadpool.setMaxThreadCount(1)
+        layout = QHBoxLayout(self)
+
+        self.recievedSignal = Queue(maxsize=5) # Очередь для записи принятого сигнала
+        self.transmittedSignal = Queue(maxsize=5) # Очередь для записи излученного сигнала
 
         self._createActions()
         self._connectActions()
         self._createMenubar()
-
-        #  Signal Settings
-        fs = 44100
-        segment = 100e-3 # 100 ms 
-        self.signalType=SignalSource.RANGE
-
-        # Reciever
-        self.Reciever = Reciever()
-        self.Reciever.setDevice(0)             # choose device with hostapi = 0
-        self.Reciever.setChannels(1)           # set number of input channels
-        self.Reciever.setFs(fs) 
-        self.Reciever.downsample = 1
-
-        #Transmitter
-        self.Transmitter = Transmitter()
-
-        # Graph window settings
+        
+        self.settingsWindowReciever = SettingsWindowReciever()
+        self.settingsWindowTransmitter = SettingsWindowTransmitter()
         self.Chart0 = GraphWindow()
         self.Chart1 = WaterFallWindow()
-        self.Chart1.set_fs(fs)
-        self.Chart1.set_tSeg(segment)
-        self.downSample = 10            # задаваемое пользователем начальное прореживание (надо убрать)
-        self.downSampleUsed = 10        # скорректированное значение прореживания с учетом частоты дискретизации
-        self.bufCurrent = np.array([])  # буфер отображаемого фрейма в спектрограмме
-        self.bufNext = np.array([])     # буфер следующего фремйа в спектрограмме
-
-        #  Add Clamps
-        self.StartStopClamp = Clamp()
-        self.SignalTypeClamp = Clamp()
-
-        # разметка
-        layout = QHBoxLayout(self)
-        # добавление виджетов
-        self.settingsReciever = SettingsWindowReciever()
-        self.dockSettingsReciever = QDockWidget()
-        self.dockSettingsReciever.setWindowTitle('Приёмник')
-        self.dockSettingsReciever.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
-        self.dockSettingsReciever.setWidget(self.settingsReciever)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsReciever)
-
-        self.settingsTransmitter = SettingsWindowTransmitter()
-        self.dockSettingsTransmitter = QDockWidget()
-        self.dockSettingsTransmitter.setWindowTitle('Передатчик')
-        self.dockSettingsTransmitter.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
-        self.dockSettingsTransmitter.setWidget(self.settingsTransmitter)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsTransmitter)
-
-        self.tabifyDockWidget(self.dockSettingsTransmitter, self.dockSettingsReciever)
-
-        self.dockGraph0 = QDockWidget("Осциллограмма ")
-        self.dockGraph1 = QDockWidget("Спектрограмма")
-        self.dockGraph0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
-        self.dockGraph1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
-
-        # настройки виджетов
+        self.chartUpdateTimer = QtCore.QTimer()
+        
         self.Chart0.setMinimumSize(300,200)
         self.Chart1.setMinimumSize(300,200)
-        self.dockGraph0.setWidget(self.Chart0)
-        self.dockGraph1.setWidget(self.Chart1)
 
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph0)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dockGraph1)
-        
-        self.StartStopClamp.ConnectFrom(self.settingsReciever.StartStopClamp)
-        self.StartStopClamp.HandleWithReceive(self.StartStop)
-        self.SignalTypeClamp.HandleWithReceive(self.getSignalType)
 
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(10)
-        self.timer.timeout.connect(self.Process_2)
+        # Dock Widgets
+        self.dockSettingsWindowReciever = QDockWidget()
+        self.dockSettingsWindowReciever.setWindowTitle('Приёмник')
+        self.dockSettingsWindowReciever.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockSettingsWindowReciever.setWidget(self.settingsWindowReciever)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsWindowReciever)
 
-        self.settingsReciever.xRangeClamp.ConnectTo(self.Chart1.rangeClamp)
-        self.settingsReciever.yRangeClamp.ConnectTo(self.Chart0.rangeClamp)
-        self.settingsReciever.SignalTypeClamp.ConnectTo(self.SignalTypeClamp)
-        self.settingsReciever.SignalTypeClamp.ConnectTo(self.Chart1.SignalTypeClamp)
+        self.dockSettingsWindowTransmitter = QDockWidget()
+        self.dockSettingsWindowTransmitter.setWindowTitle('Передатчик')
+        self.dockSettingsWindowTransmitter.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockSettingsWindowTransmitter.setWidget(self.settingsWindowTransmitter)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockSettingsWindowTransmitter)
 
-        self.settingsReciever.inputDeviceChanged.connect(self.deviceUpdate)
-        self.settingsReciever.SampleRateLineEdit.LineEdit.Text.ConnectTo(self.Reciever.FsClamp)
-        self.settingsReciever.infoLabel.TextClamp.ConnectFrom(self.Reciever.ErrorClamp)
-        self.settingsReciever.downSamplLineEdit.LineEdit.Text.HandleWithSend(self.setDownSample)
-        self.settingsReciever.IntervalLineEdit.LineEdit.Text.HandleWithSend(self.timer.setInterval)
+        self.tabifyDockWidget(self.dockSettingsWindowTransmitter, self.dockSettingsWindowReciever)
 
-        self.settingsTransmitter.signalTypeChanged.connect(self.Transmitter.setSignalType)
-        self.settingsTransmitter.signalPeriodChanged.connect(self.Transmitter.setSignalPeriod)
-        self.settingsTransmitter.outputDeviceChanged.connect(self.Transmitter.setOutputDevice)
+        self.dockChart0 = QDockWidget("Осциллограмма ")
+        self.dockChart0.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockChart0.setWidget(self.Chart0)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dockChart0)
 
-    def StartStop(self,start_stop):
-        # Обработчик нажатия на кнопку Старт/Стоп
-        print(start_stop) # выводим в поток сообщений value кнопки Старт/Стоп
-        # считываем все настройки для переинициализии микрофона
-        # self.Tranciver.samplerate = ...
-        if start_stop:
-            # нажали на кнопку, получили "1"
-            #  проверим для начала пустая ли очередь?
-            #  если она пуста, то идем дальше, а если нет, тогда смотрим
-            #  изменился ли режим работы.
-            #  Режим не менялся - идем дальше
-            #  спектрограмму не сбрасываем
-            #  Режим поменялся - предлагаем сохранить очередь прежде чем писать новую
-            #  сбрасываем спектрограмму для того, чтобы она не поломалась
-            # корректируем размер блока обработки И другие параметры зависящие от режима
-            self.settingsReciever.xMin.slider.setValue(0)                # текущее значение xMin
-            fs = self.Reciever.samplerate
-            # корректировка децимирующего коэффициента
-            self.downSampleUsed = int(self.downSample*(np.round(fs/44100)))
-            if self.downSampleUsed == 0:
-                self.downSampleUsed = 1
+        self.dockChart1 = QDockWidget("Спектрограмма ")
+        self.dockChart1.setFeatures(QDockWidget.DockWidgetMovable|QDockWidget.DockWidgetFloatable)
+        self.dockChart1.setWidget(self.Chart1)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dockChart1)
 
-            if self.signalType.value == 0 :
-                self.Reciever.setBlkSz(int(30e-3*fs))  # на 30 мс размер буфера для дальности
-                self.Chart1.set_tSeg(23.3e-3)           # параметры стенда на 23.3 мс
-                self.Chart1.set_fs(fs)
-                coef = 3e8*23.3e-3/2/(221e6*(2.4/5))
-                self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
-                self.settingsReciever.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
-                self.settingsReciever.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
-                pos = int(30/(coef*fs/2)*self.Chart1.nfft/2) # отсчет соотвествующий 30 метрам
-                self.settingsReciever.xMax.slider.setValue(pos) # текущее значение xMax
-            else:
-                self.Reciever.setBlkSz(int(50e-3*self.Reciever.samplerate))# на 100 мс для скорости
-                self.Chart1.set_tSeg(50e-3)
-                self.Chart1.set_fs(self.Reciever.samplerate)
-                coef = 0.125/2
-                self.Chart1.setRangeX([1,int(self.Chart1.nfft/2)]) # выставляем правильно шкалу на спектрограмме по режиму
-                self.settingsReciever.xMin.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMin
-                self.settingsReciever.xMax.slider.setMaximum(int(self.Chart1.nfft/2)) # предельное значение xMax
-                vel = int(40/(coef*fs/2)*self.Chart1.nfft/2) #  отсчет соответствующий 40 м/с
-                self.settingsReciever.xMax.slider.setValue(vel)               # текущее значение xMax, m/s
+        # Set initial values
+        self.setSignalSource(self.settingsWindowReciever.currentSignalSource)
+        self.setDownSampling(self.settingsWindowReciever.currentDownSampling)
+        self.chartUpdateTimer.setInterval(self.settingsWindowReciever.currentUpdateInterval)
+        self.Chart0.setRangeY(self.settingsWindowReciever.currentYRange)
+        self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange)
+        self.Chart1.set_fs(self.settingsWindowReciever.currentSampleRate)
+        self.Chart1.set_tSeg(self.settingsWindowTransmitter.currentPeriod)
 
-            self.settingsReciever.DeviceSettingsGroupBox.setEnabled(False)  # отключаем часть интерфейса
-            self.MainWindowMenuBar.setEnabled(False)                # отключаем часть интерфейса
-            self.Chart0.clearPlots(True)                            # ставим признак перерисовки окна
-            self.Reciever.working = True                           # ставим признак работы Tranciver
-            self.worker_1  = Worker(self.Reciever.run_realtime)    # упаковываем в отдельный поток запись с микрофомна
-            self.firstQue = 1                                       # номер записи в очереди
-            self.threadpool.start(self.worker_1)                    # запускаем поток получения данных с микрофона
-            self.timer.start()                                      # запускаем таймер для передергивания интерфейса
-            # self.worker_4  = Worker(self.Transmitter.runRealtime)
-            # self.threadpool.start(self.worker_4)
-        else:
-            # нажали на кнопку, получили "0"
-            self.settingsReciever.DeviceSettingsGroupBox.setEnabled(True)   # включаем часть интерфейса
-            self.MainWindowMenuBar.setEnabled(True)                 # включаем часть интерфейса
-            self.Reciever.working = False                          # ставим признак выключения Tranciver
-            self.timer.stop()                                       # отключаем таймер обновления
-            # ждем снятия блокировки с очереди для записи и очищаем массив с записанным сигналом
-            with self.Reciever.received_signal.mutex: 
-                self.Reciever.received_signal.queue.clear()
-            self.threadpool.clear()
+        # Set connections
+        self.settingsWindowReciever.startToggled.connect(self.runStop)
+        self.settingsWindowReciever.updateIntervalChanged.connect(self.setChartUpdateInterval)
+        self.settingsWindowReciever.signalSourceChanged.connect(self.setSignalSource)
+        self.settingsWindowReciever.downSamplingChanged.connect(self.setDownSampling)
+        self.settingsWindowReciever.downSamplingChanged.connect(self.Chart1.set_fs)
+        self.settingsWindowReciever.yRangeChanged.connect(self.Chart0.setRangeY)
+        self.settingsWindowReciever.xRangeChanged.connect(self.Chart1.setRangeX)
+        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.Chart1.set_tSeg)
+        self.chartUpdateTimer.timeout.connect(self.updateCharts)
 
-            # saving data from the queue для записи в файл
-            while not self.save_signal.empty():
-                QtWidgets.QApplication.processEvents()
-                self.wav_data=np.append(self.wav_data, self.save_signal.get())
-
-    def Process_2(self):
-        self.c = 0
-        QtWidgets.QApplication.processEvents()
-        if not self.Reciever.received_signal.empty(): 
-            currentData = np.concatenate(self.Reciever.received_signal.get_nowait())
-            n = int(self.Reciever.samplerate*23.3e-3) # длина модулирующего импульса для режима дальность
-            # выбор варианта обработки currentData (скорость или дальность)
-            if self.signalType.value:
-                # "1" обработка скорости
-                self.Chart0.plotData(currentData[::self.downSampleUsed])
-                self.Chart1.specImage(currentData)
-            elif self.firstQue == 1:
-                # "0" обработка дальности
-                # 1) взять производную текущего фрейма
-                diffSignal = abs(np.diff(currentData))**8
-                # 2) найти положение максимума
-                maxind = np.argmax(diffSignal)
-                # этот максимум соотвествует началу записи, но  не началу сигнала, поэтому ищем следующий
-                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
-                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
-                self.bufNext = currentData[maxind:-1]
-                # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
-                if len(self.bufCurrent) < n :
-                    self.bufCurrent = np.concatenate((np.zeros(n-len(self.bufCurrent)),self.bufCurrent))
-                else:
-                    self.bufCurrent = self.bufCurrent[-n-1:-1]
-                # 4) обобразить спектрограмму (здесь нули, т.к. есть задержка включения устройства)
-                self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
-                self.Chart1.specImage(self.bufCurrent)
-                # 5) текущий буфер заменить буфером следующего кадра
-                self.bufCurrent = self.bufNext
-                self.firstQue = 2
-            elif self.firstQue == 2:
-                # 1) взять производную текущего фрейма
-                diffSignal = abs(np.diff(currentData))**3
-                # 2) найти положение истинного максимума - это начало второго импульса
-                maxind = np.argmax(diffSignal)
-                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
-                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:maxind]))
-                self.bufNext = currentData[maxind:-1]
-                # 3.2) поправить размер буфера, чтобы не развалилась спектрограмма
-                if len(self.bufCurrent) < n :
-                    self.bufCurrent = np.concatenate((np.zeros(n-len(self.bufCurrent)),self.bufCurrent))
-                else:
-                    self.bufCurrent = self.bufCurrent[-n-1:-1]
-                # 4) обобразить спектрограмму (здесь случайный остаток сигнала)
-                self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
-                self.Chart1.specImage(self.bufCurrent)
-                # 5) текущий буфер заменить буфером следующего кадра
-                self.bufCurrent = self.bufNext # (здесь неполный второй сигнал)
-                self.firstQue = 0               
-            else:
-                m = n - len(self.bufCurrent)  # эту часть надо забрать из новых данных
-                # 3.1) пристыковать левую часть к текущему буфферу кадра, правую к следующему кадру
-                self.bufCurrent = np.concatenate((self.bufCurrent,currentData[:m])) # определили конце сигнала
-                self.bufNext = currentData[m:-1]# здесь начало следующего импульса сигнала
-                self.Chart0.plotData(self.bufCurrent[::self.downSampleUsed])
-                self.Chart1.specImage(self.bufCurrent)
-                # 6) проверить на наличие еще одного импульса
-                if len(self.bufNext) > n:
-                    k = len(self.bufNext)-n
-                    self.bufCurrent = self.bufNext[-k-1:-1]
-                    self.Chart0.plotData(self.bufNext[:n:self.downSampleUsed])
-                    self.Chart1.specImage(self.bufNext[:n])
-                else:
-                    # 5) текущий буфер заменить буфером следующего кадра
-                    self.bufCurrent = self.bufNext
-
-            self.save_signal.put(currentData)   
-            # todo : use checkbox to save current queue or all queue since program start (continues)
-            # now save only data pushed start|stop button
-
-    def saveFile(self):
-        #  создаем диалоговое окно сохранения файла 
-        filename = self._saveFileDialog('Сохранение сигнала')
-        if filename!='':
-            write(filename+'_'+self.signalType.name+'_'+self.getCurDateTime()+".wav", int(self.Reciever.samplerate), self.wav_data.astype(np.float32))
-            self.wav_data = np.array([])
-            QMessageBox.information(self,'Сохранение данных', 'Сохранено')
-
-    def loadFile(self):
-        #  загрузка файла 
-        fileName, filter = QFileDialog.getOpenFileName()
-        if fileName!='':
-            if fileName[-4:]!='.wav':
-                QMessageBox.warning(self,'Таблица','Неподходящий файл',QMessageBox.Ok)
-            else:
-                samplerate, data = wavfile.read(fileName)
-                print('Loaded')
-                # тут логика должна быть следующей: открываем файл, у нас есть кнопка Плей, 
-                # она должна активироваться (тут вообще хороший вопрос, а должна ли она активироваться, 
-                # если мы просто записали файл и сразу хотим его воспроизвести).
-                # 2) нажимаем плей, в зависимости от типа файла (вот тут тоже косяк, пользователь как бы должен
-                # наперед знать тип данных) нарезаем его на блоки (и тут снова косяк, размеры блоков мы могли менять,
-                # например меняя частоту дискретизации, т.е. надо определить базовую например 44100 и относительно
-                # нее делать все изменения по размерам блоков) и выводим на спектрограмму и осциллограмму пока 
-                # файл не закончится. 
-                
-                # Вероятно нам захочется воспроизводить файл с заданной скоростью, тогда должны быть предусмотрены кнопки
-                # x0.5, x2 и т.д. рядом с кнопкой плей
-
-    def getCurDateTime(self):
-        # возвращает метку времени ггггммдд_ччммсс
-        now = datetime.now()
-        current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
-        return current_date_time
-
-    def getSignalType(self,SignalType):
-        # установка типа записываемого сигнала 
-        self.signalType=SignalType
+        self.updateTranciever()
     
-    def setDownSample(self,value):
-        # установка прореживания для вывода осциллограммы
-        self.downSample = value
+    def updateTranciever(self):
+        self.tranciever = TrancieverProcess(self.recievedSignal,self.transmittedSignal)
+        # Set initial values
+        self.tranciever.setSignalSource(self.settingsWindowReciever.currentSignalSource)
+        self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
+        self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
+        self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
+        self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
+        self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
+        self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
+        self.setTrancieverConnections()
+
+    def setTrancieverConnections(self):
+        # Set connections
+        self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
+        self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
+        self.settingsWindowReciever.signalSourceChanged.connect(self.tranciever.setSignalSource)
+        self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
+        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
+        # self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
+
+    def unsetTrancieverConnections(self):
+        # Unset connections
+        self.settingsWindowReciever.inputDeviceChanged.disconnect(self.tranciever.setInputDevice)
+        self.settingsWindowReciever.sampleRateChanged.disconnect(self.tranciever.setSamplerate)
+        self.settingsWindowTransmitter.signalTypeChanged.disconnect(self.tranciever.setSignalType)
+        self.settingsWindowTransmitter.signalPeriodChanged.disconnect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.outputDeviceChanged.disconnect(self.tranciever.setOutputDevice)
+        # self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
+    
+    def updateCharts(self):
+        indata = np.concatenate(self.tranciever.recievedSignal.get()) 
+        downSampledIndata = indata[::self.downSampling]
+        self.Chart0.plotData(downSampledIndata)
+        self.Chart1.specImage(indata)
+        self.wavData=np.append(self.wavData, indata)
+        # print('update')
+
+    def runStop(self, state):
+        if state:
+            self.settingsWindowTransmitter.setEnabled(False)
+            self.wavData=np.array([])
+            self.Chart0.clearPlots(True) 
+            self.unsetTrancieverConnections()
+            self.chartUpdateTimer.start()
+            self.tranciever.start()
+        else:
+            self.settingsWindowTransmitter.setEnabled(True)
+            self.chartUpdateTimer.stop()
+            self.tranciever.end_process()
+            self.updateTranciever()
+
+    def setChartUpdateInterval(self,value):
+        self.chartUpdateTimer.setInterval(value)
+    
+    def setSignalSource(self, value):
+        self.signalSource = value
+    
+    def setDownSampling(self, value):
+        self.downSampling = value
+    
+    def _createMenubar(self):
+        # делаем пользовательское меню
+        menuBar = self.menuBar()
+        self.MainWindowMenuBar = menuBar.addMenu("&Файл")
+        self.MainWindowMenuBar.addAction(self.saveAction)
+
+    def _createActions(self):
+        # делаем кнопки пользовательского меню
+        self.saveAction = QAction("&Сохранить",self)
+    
+    def _connectActions(self):
+        # соединяем кнопки пользовательского меню с обработчиками событий
+        self.saveAction.triggered.connect(self.saveFile)
 
     def _saveFileDialog(self,text):
         # настройка диалогового окна сохраанения файла 
@@ -316,27 +174,20 @@ class MainWindow(QMainWindow):
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
         return fileName
-
-    def deviceUpdate(self,deviceId):
-        self.Reciever.device=deviceId
-
-    def _createMenubar(self):
-        # делаем пользовательское меню
-        menuBar = self.menuBar()
-        self.MainWindowMenuBar = menuBar.addMenu("&Файл")
-        self.MainWindowMenuBar.addAction(self.saveAction)
-        self.MainWindowMenuBar.addAction(self.loadAction)
-
-    def _createActions(self):
-        # делаем кнопки пользовательского меню
-        self.saveAction = QAction("&Сохранить",self)
-        self.loadAction = QAction("&Загрузить",self)
     
-    def _connectActions(self):
-        # соединяем кнопки пользовательского меню с обработчиками событий
-        self.saveAction.triggered.connect(self.saveFile)
-        self.loadAction.triggered.connect(self.loadFile)
+    def saveFile(self):
+        #  создаем диалоговое окно сохранения файла 
+        filename = self._saveFileDialog('Сохранение сигнала')
+        if filename!='':
+            write(filename+'_'+self.getCurDateTime()+".wav", int(self.settingsWindowReciever.currentSampleRate), self.wavData.astype(np.float32))
+            self.wavData = np.array([])
+            QMessageBox.information(self,'Сохранение данных', 'Сохранено')
 
+    def getCurDateTime(self):
+        # возвращает метку времени ггггммдд_ччммсс
+        now = datetime.now()
+        current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
+        return current_date_time
 
 if __name__ == '__main__':
 
