@@ -171,7 +171,7 @@ class WaterFallWindow(QWidget):
 
     # вычисление спектра
     def specgram(self, s):
-        QtWidgets.QApplication.processEvents()
+        # QtWidgets.QApplication.processEvents()
         #self.y = self.y[1:]
         # f, t, spectra = signal.spectrogram(np.real(s), self.fs, noverlap=0.25*self.nPerseg,nperseg=self.nPerseg,nfft=self.nfft,window='hann')
         # win = np.hanning(len(s))

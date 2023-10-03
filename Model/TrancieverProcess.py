@@ -4,6 +4,7 @@ sys.path.insert(0, "././utils/components")
 import numpy as np
 import sounddevice as sd
 from SignalType import SignalType
+from SignalSource import SignalSource
 import math
 from multiprocessing import Process, Queue
 from threading import  Condition
@@ -54,6 +55,7 @@ class TrancieverProcess(Process):
             self.transmittedSignal = transmittedSignal
 
             # Параметры сигнала
+            self.signalSource = SignalSource.RANGE
             self.signalType = SignalType.TRIANGLE # форма сигнала
             self.signalPeriod = 1 # период сигнала в мс
 
@@ -67,6 +69,9 @@ class TrancieverProcess(Process):
             self.signal = self.generateSignal() # сформированные отсчёты 1-го периода сигнала
 
         def generateSignal(self):
+            if self.signalSource == SignalSource.VELOCITY:
+                signal = np.zeros(self.scale.size) #0* self.scale
+                return signal.reshape(-1, 1)  
             match self.signalType:
                 case SignalType.TRIANGLE:
                     if self.scale.size%2==0:
@@ -124,6 +129,10 @@ class TrancieverProcess(Process):
             self.transmittedSignal.put(outdata[:]) # записываем в очеред излученный сигнал
             self.recievedSignal.put(indata[:,[0]]) # записываем в очеред принятый сигнал
         
+        def setSignalSource(self, signalSource):
+            self.signalSource = signalSource
+            self.updateSignal()
+
         def setSignalType(self, type):
             self.signalType = type
             self.updateSignal()

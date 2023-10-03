@@ -8,6 +8,9 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import *
 from multiprocessing import Queue
+import numpy as np
+from scipy.io.wavfile import write
+from datetime import datetime
 
 from SettingsWindowReciever import SettingsWindowReciever
 from SettingsWindowTransmitter import SettingsWindowTransmitter
@@ -20,7 +23,7 @@ from TrancieverProcess import TrancieverProcess
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        # self.recievedSignalQueueForSave = queue.Queue()
+        self.wavData=np.array([])
 
         self.setWindowTitle('Главное меню')
         layout = QHBoxLayout(self)
@@ -28,7 +31,10 @@ class MainWindow(QMainWindow):
         self.recievedSignal = Queue(maxsize=5) # Очередь для записи принятого сигнала
         self.transmittedSignal = Queue(maxsize=5) # Очередь для записи излученного сигнала
 
-        self.tranciever = TrancieverProcess(self.recievedSignal,self.transmittedSignal)
+        self._createActions()
+        self._connectActions()
+        self._createMenubar()
+        
         self.settingsWindowReciever = SettingsWindowReciever()
         self.settingsWindowTransmitter = SettingsWindowTransmitter()
         self.Chart0 = GraphWindow()
@@ -65,54 +71,79 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockChart1)
 
         # Set initial values
-        self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
-        self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
-        self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
-        self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
-        self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
         self.setSignalSource(self.settingsWindowReciever.currentSignalSource)
         self.setDownSampling(self.settingsWindowReciever.currentDownSampling)
         self.chartUpdateTimer.setInterval(self.settingsWindowReciever.currentUpdateInterval)
         self.Chart0.setRangeY(self.settingsWindowReciever.currentYRange)
-        self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
         self.Chart1.setRangeX(self.settingsWindowReciever.currentXRange)
         self.Chart1.set_fs(self.settingsWindowReciever.currentSampleRate)
         self.Chart1.set_tSeg(self.settingsWindowTransmitter.currentPeriod)
 
         # Set connections
-        self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
         self.settingsWindowReciever.startToggled.connect(self.runStop)
-        self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
         self.settingsWindowReciever.updateIntervalChanged.connect(self.setChartUpdateInterval)
         self.settingsWindowReciever.signalSourceChanged.connect(self.setSignalSource)
         self.settingsWindowReciever.downSamplingChanged.connect(self.setDownSampling)
         self.settingsWindowReciever.downSamplingChanged.connect(self.Chart1.set_fs)
         self.settingsWindowReciever.yRangeChanged.connect(self.Chart0.setRangeY)
         self.settingsWindowReciever.xRangeChanged.connect(self.Chart1.setRangeX)
-        # self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
-        self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
-        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
         self.settingsWindowTransmitter.signalPeriodChanged.connect(self.Chart1.set_tSeg)
-        self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
         self.chartUpdateTimer.timeout.connect(self.updateCharts)
 
+        self.updateTranciever()
+    
+    def updateTranciever(self):
+        self.tranciever = TrancieverProcess(self.recievedSignal,self.transmittedSignal)
+        # Set initial values
+        self.tranciever.setSignalSource(self.settingsWindowReciever.currentSignalSource)
+        self.tranciever.setSignalType(self.settingsWindowTransmitter.currentSignalType) 
+        self.tranciever.setSignalPeriod(self.settingsWindowTransmitter.currentPeriod) 
+        self.tranciever.setOutputDevice(self.settingsWindowTransmitter.currentOutputDevice) 
+        self.tranciever.setInputDevice(self.settingsWindowReciever.currentInputDevice)
+        self.tranciever.setSamplerate(self.settingsWindowReciever.currentSampleRate) 
+        self.Chart0.setMaxRangeX(self.tranciever.blockSize*10)
+        self.setTrancieverConnections()
+
+    def setTrancieverConnections(self):
+        # Set connections
+        self.settingsWindowReciever.inputDeviceChanged.connect(self.tranciever.setInputDevice)
+        self.settingsWindowReciever.sampleRateChanged.connect(self.tranciever.setSamplerate)
+        self.settingsWindowReciever.signalSourceChanged.connect(self.tranciever.setSignalSource)
+        self.settingsWindowTransmitter.signalTypeChanged.connect(self.tranciever.setSignalType)
+        self.settingsWindowTransmitter.signalPeriodChanged.connect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.outputDeviceChanged.connect(self.tranciever.setOutputDevice)
+        # self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
+
+    def unsetTrancieverConnections(self):
+        # Unset connections
+        self.settingsWindowReciever.inputDeviceChanged.disconnect(self.tranciever.setInputDevice)
+        self.settingsWindowReciever.sampleRateChanged.disconnect(self.tranciever.setSamplerate)
+        self.settingsWindowTransmitter.signalTypeChanged.disconnect(self.tranciever.setSignalType)
+        self.settingsWindowTransmitter.signalPeriodChanged.disconnect(self.tranciever.setSignalPeriod)
+        self.settingsWindowTransmitter.outputDeviceChanged.disconnect(self.tranciever.setOutputDevice)
+        # self.tranciever.errorAppeared.connect(self.settingsWindowReciever.setErrorText)
+    
     def updateCharts(self):
-        indata = self.tranciever.recievedSignal.get()
+        indata = np.concatenate(self.tranciever.recievedSignal.get()) 
         downSampledIndata = indata[::self.downSampling]
         self.Chart0.plotData(downSampledIndata)
         self.Chart1.specImage(indata)
+        self.wavData=np.append(self.wavData, indata)
         # print('update')
 
     def runStop(self, state):
         if state:
             self.settingsWindowTransmitter.setEnabled(False)
+            self.wavData=np.array([])
             self.Chart0.clearPlots(True) 
+            self.unsetTrancieverConnections()
             self.chartUpdateTimer.start()
             self.tranciever.start()
         else:
             self.settingsWindowTransmitter.setEnabled(True)
             self.chartUpdateTimer.stop()
             self.tranciever.end_process()
+            self.updateTranciever()
 
     def setChartUpdateInterval(self,value):
         self.chartUpdateTimer.setInterval(value)
@@ -122,7 +153,41 @@ class MainWindow(QMainWindow):
     
     def setDownSampling(self, value):
         self.downSampling = value
+    
+    def _createMenubar(self):
+        # делаем пользовательское меню
+        menuBar = self.menuBar()
+        self.MainWindowMenuBar = menuBar.addMenu("&Файл")
+        self.MainWindowMenuBar.addAction(self.saveAction)
 
+    def _createActions(self):
+        # делаем кнопки пользовательского меню
+        self.saveAction = QAction("&Сохранить",self)
+    
+    def _connectActions(self):
+        # соединяем кнопки пользовательского меню с обработчиками событий
+        self.saveAction.triggered.connect(self.saveFile)
+
+    def _saveFileDialog(self,text):
+        # настройка диалогового окна сохраанения файла 
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,text,"","All Files (*);;wav files (*.wav)", options=options)
+        return fileName
+    
+    def saveFile(self):
+        #  создаем диалоговое окно сохранения файла 
+        filename = self._saveFileDialog('Сохранение сигнала')
+        if filename!='':
+            write(filename+'_'+self.getCurDateTime()+".wav", int(self.settingsWindowReciever.currentSampleRate), self.wavData.astype(np.float32))
+            self.wavData = np.array([])
+            QMessageBox.information(self,'Сохранение данных', 'Сохранено')
+
+    def getCurDateTime(self):
+        # возвращает метку времени ггггммдд_ччммсс
+        now = datetime.now()
+        current_date_time = str(now.year)+str(now.month)+str(now.day)+'_'+str(now.hour)+str(now.minute)+str(now.second)
+        return current_date_time
 
 if __name__ == '__main__':
 
