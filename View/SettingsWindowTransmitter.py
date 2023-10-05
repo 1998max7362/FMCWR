@@ -40,7 +40,7 @@ class SettingsWindowTransmitter(QWidget):
         signalTypesGroupBox = self.createSignalTypeGroupBox()
         layout.addWidget(signalTypesGroupBox)
 
-        preiodSpinBox = NamedHorizontalSpinBox('Период', 'мкс')
+        preiodSpinBox = NamedHorizontalSpinBox('Период', 'мс')
         preiodSpinBox.setFixedWidth(400)
         preiodSpinBox.label.setFixedWidth(210)
         preiodSpinBox.spinBox.setFixedWidth(100)

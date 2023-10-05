@@ -93,7 +93,7 @@ class WaterFallWindow(QWidget):
         
     def set_tSeg(self,set_tSeg):
         """ изменяем время анализа, а следовательно размер выборки и размер бпф"""
-        self.tSeg = set_tSeg
+        self.tSeg = set_tSeg/1000 # переводим в мс
         self.nPerseg = int(self.tSeg*self.fs)
         self.nfft = 2**(np.round(np.log2(self.nPerseg)))  # правильно его делать 2^n,  уменьшаем
         self.First = True
