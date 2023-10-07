@@ -12,7 +12,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import pyqtSignal 
 from PyQt5.QtCore import *
 from getAudioDevice import getAudioDevice
-
+import sounddevice as sd
 class SettingsWindowTransmitter(QWidget):
     signalTypeChanged = pyqtSignal(object)
     signalPeriodChanged = pyqtSignal(object)
@@ -59,9 +59,10 @@ class SettingsWindowTransmitter(QWidget):
         deviceSettingsGroupBox.setLayout(layout)
         
         deviceComboBox = QComboBox()
+        _,outputId=sd.default.device
         for outputDevice in self.outputDeviceList:
             deviceComboBox.addItem(outputDevice["name"])
-            if self.currentOutputDevice == outputDevice['index']:
+            if outputId == outputDevice['index']:
                 deviceComboBox.setCurrentIndex(deviceComboBox.count()-1)
         deviceComboBox.currentIndexChanged.connect(self.changeAudioDevice)
         layout.addWidget(deviceComboBox)
@@ -83,7 +84,7 @@ class SettingsWindowTransmitter(QWidget):
             signalTypeButton = QRadioButton()
             signalTypeButton.clicked.connect(lambda checked,type=type: self.switchSignalType(type))
             signalTypeButton.setIcon(QIcon(type.IconPath))
-            signalTypeButton.setIconSize(QSize(400, 255))
+            signalTypeButton.setIconSize(QSize(360, 204))
             signalTypeSelecter.addButton(signalTypeButton)
             layout.addWidget(signalTypeButton)
             if type == self.currentSignalType: 

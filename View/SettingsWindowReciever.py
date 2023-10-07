@@ -8,6 +8,7 @@ from PyQt5.QtCore import *
 from WrapedUiElements import *
 from SignalSource import SignalSource
 from PyQt5.QtWidgets import *
+import sounddevice as sd
 
 class SettingsWindowReciever(QWidget):
     inputDeviceChanged = pyqtSignal(object)
@@ -25,7 +26,7 @@ class SettingsWindowReciever(QWidget):
         self.inputAudioDeviceList = getAudioDevice("input")
 
         # Начальные значения
-        self.currentInputDevice = self.inputAudioDeviceList[2]["index"] 
+        self.currentInputDevice = self.inputAudioDeviceList[1]["index"] 
         self.currentSampleRate = 44100
         self.currentUpdateInterval = 20
         self.currentSignalSource = SignalSource.RANGE
@@ -219,9 +220,11 @@ class SettingsWindowReciever(QWidget):
         deviceSettingsGroupBox.setLayout(layout)
 
         deviceComboBox = QComboBox()
+        inputId,_=sd.default.device
         for inputDevice in self.inputAudioDeviceList:
             deviceComboBox.addItem(inputDevice["name"])
-            if self.currentInputDevice == inputDevice['index']:
+            inputId,_=sd.default.device
+            if inputId == inputDevice['index']:
                 deviceComboBox.setCurrentIndex(deviceComboBox.count()-1)
         deviceComboBox.currentIndexChanged.connect(self.changeInputDevice)
         layout.addWidget(deviceComboBox)
