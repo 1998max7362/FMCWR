@@ -1,5 +1,5 @@
 import sys, os
-sys.path.insert(0, "././utils/compoents")
+sys.path.insert(0, "././utils/components")
 sys.path.insert(0, "././Model/")
 sys.path.insert(0, "././View/")
 sys.path.insert(0, "././Test/")

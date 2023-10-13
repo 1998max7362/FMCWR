@@ -15,7 +15,7 @@ class Tranciever(QObject):
 
             self.isWorking = False
 
-            self.signalAmp = 0.15
+            self.signalAmp = 0.1
 
             # Параметры сигнала
             self.signalType = SignalType.TRIANGLE # форма сигнала
