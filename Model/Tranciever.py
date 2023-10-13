@@ -15,6 +15,8 @@ class Tranciever(QObject):
 
             self.isWorking = False
 
+            self.signalAmp = 0.15
+
             # Параметры сигнала
             self.signalType = SignalType.TRIANGLE # форма сигнала
             self.signalPeriod = 1 # период сигнала в мс
@@ -42,16 +44,16 @@ class Tranciever(QObject):
                         secondHalfScale = self.scale[0:math.floor(self.scale.size/2)]
                     signalOne = -1 + 4 * firstHalfScale
                     signalTwo = 1 - 4 * secondHalfScale
-                    signal = np.concatenate((signalOne, signalTwo), axis=0)
+                    signal = self.signalAmp*np.concatenate((signalOne, signalTwo), axis=0)
                     return signal.reshape(-1, 1)
                 case SignalType.SAWTOOTH_FRONT:
-                    signal = -1 + 2 * self.scale
+                    signal = self.signalAmp*(-1 + 2 * self.scale)
                     return signal.reshape(-1, 1)
                 case SignalType.SAWTOOTH_REVERSE:
-                    signal = 1 - 2 * self.scale
+                    signal = self.signalAmp*(1 - 2 * self.scale)
                     return signal.reshape(-1, 1)
                 case SignalType.SINE:
-                    signal = np.sin(2 * np.pi * self.scale )
+                    signal = self.signalAmp*np.sin(2 * np.pi * self.scale )
                     return signal.reshape(-1, 1)
                 
         def updateSignal(self):
