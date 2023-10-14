@@ -122,6 +122,7 @@ class SettingsWindowReciever(QWidget):
         self.xMax.spinBox.setMinimum(1)
         self.xMax.spinBox.setMaximum(20000)
         self.xMax.spinBox.setValue(self.currentXRange[1])
+        self.xMax.spinBox.setSingleStep(0.1)
 
         self.xMin=NamedDoubleSliderHorizontal('Xmin')
         self.xMin.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
@@ -136,6 +137,7 @@ class SettingsWindowReciever(QWidget):
         self.xMin.spinBox.setMinimum(1)
         self.xMin.spinBox.setMaximum(20000)
         self.xMin.spinBox.setValue(self.currentXRange[0])
+        self.xMin.spinBox.setSingleStep(0.1)
 
         self.xMax.valueChanged.connect(self.changeXRange)
         self.xMin.valueChanged.connect(self.changeXRange)
@@ -163,6 +165,7 @@ class SettingsWindowReciever(QWidget):
         self.yMax.spinBox.setMinimum(-10)
         self.yMax.spinBox.setMaximum(10)
         self.yMax.spinBox.setValue(self.currentYRange[1])
+        self.yMax.spinBox.setSingleStep(0.1)
 
         self.yMin=NamedDoubleSliderHorizontal('Ymin')
         self.yMin.labelUnits.setPixmap(warningIcon.pixmap(QSize(20, 20)))
@@ -177,6 +180,7 @@ class SettingsWindowReciever(QWidget):
         self.yMin.spinBox.setMinimum(-10)
         self.yMin.spinBox.setMaximum(10)
         self.yMin.spinBox.setValue(self.currentYRange[0])
+        self.yMin.spinBox.setSingleStep(0.1)
 
         self.yMax.valueChanged.connect(self.changeYRange)
         self.yMin.valueChanged.connect(self.changeYRange)
